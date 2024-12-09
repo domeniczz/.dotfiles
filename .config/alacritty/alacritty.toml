@@ -1,0 +1,62 @@
+# https://alacritty.org/config-alacritty.html
+
+[env]
+TERM = "xterm-256color"
+
+[window]
+# startup_mode = "Fullscreen"
+opacity = 0.85
+blur = false
+padding.x = 5
+
+[font]
+normal.family = "Hack Nerd Font"
+bold.family = "Hack Nerd Font"
+italic.family = "Hack Nerd Font"
+bold_italic.family = "Hack Nerd Font"
+size = 10
+# offset.x = 1
+
+[colors]
+# KDE Konsole default color scheme (except primary.background)
+primary.foreground = "#fcfcfc"
+primary.background = "#020202"
+primary.dim_foreground = "#eff0f1"
+normal.black = "#232627"
+normal.red = "#ed1515"
+normal.green = "#11d116"
+normal.yellow = "#f67400"
+normal.blue = "#1d99f3"
+normal.magenta = "#9b59b6"
+normal.cyan = "#1abc9c"
+normal.white = "#fcfcfc"
+bright.black = "#7f8c8d"
+bright.red = "#c0392b"
+bright.green = "#1cdc9a"
+bright.yellow = "#fdbc4b"
+bright.blue = "#3daee9"
+bright.magenta = "#8e44ad"
+bright.cyan = "#16a085"
+bright.white = "#ffffff"
+dim.black = "#31363b"
+dim.red = "#783228"
+dim.green = "#17a262"
+dim.yellow = "#b65619"
+dim.blue = "#1b668f"
+dim.magenta = "#614a73"
+dim.cyan = "#186c60"
+dim.white = "#63686d"
+transparent_background_colors = true
+
+[selection]
+save_to_clipboard = true
+
+[mouse]
+hide_when_typing = true
+
+[keyboard]
+bindings= [
+{key = "F11", action = "ToggleFullscreen"},
+# {key = "F12", action = "ClearHistory"},  
+]
+

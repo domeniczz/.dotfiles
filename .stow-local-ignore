@@ -1,0 +1,38 @@
+# GNU Stow ignore file doc:
+# https://www.gnu.org/software/stow/manual/stow.html#Ignore-Lists 
+
+# Syntax for .stow-local-ignore:
+# - Regex with '/' matches against full path (with leading '/') relative to package root
+# - Regex without '/' matches against basename only
+# - '^/' specifically matches files/dirs in root directory only
+# - Escape special chars with backslash (\)
+# - Matches are exact (anchored to start/end)
+
+RCS
+.+,v
+
+CVS
+\.\#.+       # CVS conflict files / emacs lock files
+\.cvsignore
+
+\.svn
+_darcs
+\.hg
+
+\.git
+\.gitmodules
+# Ignore .gitignore files in subdirectories, but not in root
+# This pattern matches paths like "/.config/foo/.gitignore" but not "/.gitignore"
+/.+/\.gitignore
+
+.+~          # emacs backup files
+\#.*\#       # emacs autosave files
+
+etc
+
+\.DS_Store
+
+^/README.*
+^/LICENSE.*
+^/COPYING
+^/GUIDES.md
