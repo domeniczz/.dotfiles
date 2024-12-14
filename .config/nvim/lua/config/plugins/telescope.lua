@@ -7,7 +7,16 @@ return {
   -- [[ Configure Telescope ]]
   -- See `:help telescope` and `:help telescope.setup()`
   config = function()
+    local actions = require("telescope.actions")
     require('telescope').setup({
+      defaults = {
+        mappings = {
+          -- Exit telescope with single Esc
+          i = {
+            ["<esc>"] = actions.close,
+          },
+        },
+      },
       -- defaults = {
       --   -- See `:help telescope.setup()`
       --   layout_config = {
