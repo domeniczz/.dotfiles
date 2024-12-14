@@ -22,12 +22,12 @@ Server = https://mirrors.bfsu.edu.cn/archlinuxcn/$arch
 
 # Check if the repository section already exist to avoid duplicate entries
 if grep -q '^\[archlinuxcn\]' /etc/pacman.conf; then
-    echo "The [archlinuxcn] repository is already in /etc/pacman.conf"
+  echo "The [archlinuxcn] repository is already in /etc/pacman.conf"
 else
-    # Append the content to /etc/pacman.conf
-    echo "Adding the [archlinuxcn] repository to /etc/pacman.conf"
-    echo "$PACMAN_CONFIG" | sudo tee -a /etc/pacman.conf > /dev/null
-    echo "Repository added successfully."
+  # Append the content to /etc/pacman.conf
+  echo "Adding the [archlinuxcn] repository to /etc/pacman.conf"
+  echo "$PACMAN_CONFIG" | sudo tee -a /etc/pacman.conf > /dev/null
+  echo "Repository added successfully."
 fi
 
 # Update source
@@ -49,8 +49,10 @@ sudo pacman -S --noconfirm archlinuxcn-keyring
 ##### Enable bluetooth utility #####
 ####################################
 
-sudo pacman -S --noconfirm --disable-download-timeout bluez
+sudo pacman -S --noconfirm --disable-download-timeout bluez bluez-libs bluez-utils
 sudo systemctl enable --now bluetooth.service
+
+sudo pacman -S --noconfirm --disable-download-timeout pulseaudio-alsa pulseaudio-bluetooth
 
 
 #################################
@@ -91,10 +93,10 @@ sudo pacman -S --noconfirm --disable-download-timeout zsh
 chsh -l
 chsh -s /usr/bin/zsh
 
-sudo pacman -S --nocomfirm --disable-download-timeout wmenu 
+sudo pacman -S --nocomfirm --disable-download-timeout cronie 
+sudo pacman -S --nocomfirm --disable-download-timeout bemenu 
 sudo pacman -S --nocomfirm --disable-download-timeout neovim
-sudo pacman -S --nocomfirm --disable-download-timeout nnn
-sudo pacman -S --nocomfirm --disable-download-timeout mc
+sudo pacman -S --nocomfirm --disable-download-timeout joshuto
 sudo pacman -S --nocomfirm --disable-download-timeout fd
 sudo pacman -S --nocomfirm --disable-download-timeout ripgrep
 sudo pacman -S --nocomfirm --disable-download-timeout fzf
@@ -103,6 +105,7 @@ sudo pacman -S --nocomfirm --disable-download-timeout bat
 sudo pacman -S --nocomfirm --disable-download-timeout eza
 sudo pacman -S --nocomfirm --disable-download-timeout zoxide
 sudo pacman -S --nocomfirm --disable-download-timeout man
+sudo pacman -S --nocomfirm --disable-download-timeout tldr
 sudo pacman -S --nocomfirm --disable-download-timeout tree-sitter
 sudo pacman -S --nocomfirm --disable-download-timeout alacritty
 
@@ -123,14 +126,14 @@ git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-m
 
 # Check if wayland protocol is used
 check_wayland() {
-    if [ "$XDG_SESSION_TYPE"="wayland" ]; then
-        return 0
-    fi
-    return 1
+  if [ "$XDG_SESSION_TYPE"="wayland" ]; then
+    return 0
+  fi
+  return 1
 }
 
 if check_wayland; then
-    sudo pacman -S --noconfirm --disable-download-timeout wl-clipboard
+  sudo pacman -S --noconfirm --disable-download-timeout wl-clipboard
 fi
 
 sudo pacman -S --noconfirm --disable-download-timeout cliphist
@@ -157,10 +160,16 @@ yay -Sy fsearch
 yay -Sy localsend-bin
 
 # Timeshift
-sudo pacman -S --no-confirm --disable-download-timeout timeshift
+sudo pacman -S --noconfirm --disable-download-timeout timeshift
 # xorg-xhost is required to start Timeshift GUI
 # https://wiki.archlinux.org/title/Timeshift#Timeshift_GUI_not_launching_on_Wayland
-sudo pacman -S --no-confirm --disable-download-timeout xorg-xhost
+sudo pacman -S --noconfirm --disable-download-timeout xorg-xhost
+
+# Dictionary
+sudo pacman -S --noconfirm --disable-download-timeout goldendict-ng
+
+# Spotify
+yay -Sy spotify
 
 
 ###################################################
@@ -197,29 +206,29 @@ yay -Sy visual-studio-code-bin
 ####################
 
 # pacman -S --nocomfirm --disable-download-timeout libxau libxi libxss libxtst libxcursor libxcomposite libxdamage libxfixes libxrandr libxrender mesa-libgl alsa-lib libglvnd
-#
+# 
 # is_anaconda_version_valid() {
-#     if [ -z "$1" ]; then
-#         return 1
-#     fi
-#     return 0
+#   if [ -z "$1" ]; then
+#     return 1
+#   fi
+#   return 0
 # }
-#
+# 
 # while true; do
-#     echo -e "View a full list of Anaconda Distribution installers at https://repo.anaconda.com/archive/\nInput the anacoonda version (Anaconda3-<INSTALLER_VERSION>-Linux-x86_64.sh): "
-#     read anaconda_installer_version
-#     if is_anaconda_version_valid "$anaconda_installer_version"; then
-#         break
-#     else
-#         echo "Invalid installer version"
-#     fi
+#   echo -e "View a full list of Anaconda Distribution installers at https://repo.anaconda.com/archive/\nInput the anacoonda version (Anaconda3-<INSTALLER_VERSION>-Linux-x86_64.sh): "
+#   read anaconda_installer_version
+#   if is_anaconda_version_valid "$anaconda_installer_version"; then
+#     break
+#  else
+#     echo "Invalid installer version"
+#   fi
 # done
-#
+# 
 # anaconda_installer_url="https://repo.anaconda.com/archive/Anaconda3-${anaconda_installer_version}-Linux-x86_64.sh"
 # echo "Downloading anaconda installer from: $anaconda_installer_url"
-#
+# 
 # curl -o "$anaconda_installer_url"
-#
+# 
 # bash Anaconda3-2024.10-1-Linux-x86_64.sh
 
 
@@ -269,9 +278,9 @@ git restore .
 
 reboot_countdown = 5
 while [ $reboot_countdown -gt 0 ]; do
-    echo -ne "Rebooting in $reboot_countdown seconds...\r"
-    sleep 1
-    reboot_countdown=$((reboot_countdown - 1))
+  echo -ne "Rebooting in $reboot_countdown seconds...\r"
+  sleep 1
+  reboot_countdown=$((reboot_countdown - 1))
 done
 
 sudo reboot

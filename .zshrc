@@ -41,10 +41,10 @@ source $ZSH/oh-my-zsh.sh
 # -----------------------------------------------------------------------------
 
 # Autocompletion Config
-zstyle ':completion:*' completer _expand _complete _ignored _approximate
+zstyle ':completion:*' menu select completer _expand _complete _ignored _approximate
 zstyle :compinstall filename "$HOME/.zshrc"
 autoload -Uz compinit; compinit
-bindkey '^[[Z' autosuggest-accept  # shift + tab to accept autosuggestion
+bindkey '\t\t' autosuggest-accept  # Tab to accept autosuggestion
 
 # Command history
 HISTFILE=$HOME/.zsh_history
@@ -56,7 +56,7 @@ bindkey -v
 # Default terminal editor
 export EDITOR='nvim'
 # Set default systemd editor
-# Also, `sudo visudo` then add: Defaults env_keep += "SYSTEMD_EDITOR"
+# AND `sudo visudo` then add: Defaults env_keep += "SYSTEMD_EDITOR"
 # Start a new bash session to take effect
 export SYSTEMD_EDITOR='nvim'
 
@@ -88,7 +88,7 @@ fi
 # Credit: https://www.josean.com/posts/7-amazing-cli-tools
 eval "$(fzf --zsh)"
 # Configure FZF settings
-if type rg &> /dev/null; then
+if command -v rg >/dev/null 2>&1; then
   export FZF_DEFAULT_COMMAND='rg --files --hidden --no-require-git'
 fi
 # if type fd &> /dev/null; then
@@ -148,10 +148,10 @@ alias hibernate="systemctl hibernate"
 alias vi="nvim"
 alias grep="grep --color=auto"
 
+alias tmuxa='tmux new-session -A -s general'
 alias ls="eza --group-directories-first --color=always --git --git-repos-no-status --long --no-filesize"  # Eza (better ls)
 alias cd="z"  # Zoxide (better cd)
 alias cat="bat"  # Bat (better cat)
-alias nnp="nnn -PP"  # nnn file manager with preview-tui enabled
-alias NNP='sudo -E nnn -PP'
-alias tmuxa='tmux new-session -A -s general'
+alias fm='joshuto'
+alias FM='sudo joshuto'
 

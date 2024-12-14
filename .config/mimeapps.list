@@ -1,0 +1,25 @@
+# All types: https://www.iana.org/assignments/media-types/media-types.xhtml
+# Use `xdg-mime query filetype <filename>` to check mimetype of the file
+#   e.g. `xdg-mime query filetype ~/.bashrc`
+# Use `xdg-mime default <.desktop file> <mimetype>` to set a default application for given mimetype
+#   e.g. `xdg-mime default nvim.desktop text/plain`
+
+[Added Associations]
+
+[Removed Associations]
+
+[Default Applications]
+# Default file manager
+inode/directory=thunar.desktop
+# Default editor for text file
+text/plain=nvim.desktop
+text/markdown=nvim.desktop
+text/troff=nvim.desktop
+text/x-asm=nvim.desktop
+text/x-c=nvim.desktop
+text/x-fortran=nvim.desktop
+text/x-java-source=nvim.desktop
+text/x-parscal=nvim.desktop
+text/x-python=nvim.desktop
+text/x-shellscript=nvim.desktop
+

@@ -41,7 +41,7 @@ fi
 # Credit: https://www.josean.com/posts/7-amazing-cli-tools
 eval "$(fzf --bash)"
 # Configure FZF settings
-if type rg &> /dev/null; then
+if command -v rg >/dev/null 2>&1; then
   export FZF_DEFAULT_COMMAND='rg --files --hidden --no-require-git'
 fi
 # if type fd &> /dev/null; then

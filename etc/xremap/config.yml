@@ -1,0 +1,10 @@
+# https://github.com/xremap/xremap
+modmap:
+  # Remap CapsLock key. Tap to Esc; Hold to Ctrl
+  - name: Caps-Esc-Ctrl
+    remap:
+      KEY_CAPSLOCK:
+        held: Ctrl_L
+        alone: ESC
+        alone_timeout_millis: 120
+
