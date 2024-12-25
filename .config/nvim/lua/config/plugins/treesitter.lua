@@ -6,7 +6,7 @@ return {
       -- A list of parser names, or "all"
       ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "elixir", "heex", "javascript", "html" },
       -- List of parsers to ignore installing (or "all")
-      ignore_install = { "javascript" },
+      ignore_install = { "javascript", "latex", "tex" },
 
       -- Install parsers synchronously (only applied to `ensure_installed`)
       sync_install = false,
@@ -24,6 +24,7 @@ return {
         -- Instead of true it can also be a list of languages
         -- additional_vim_regex_highlighting = false,
         additional_vim_regex_highlighting = { "markdown" },
+        disable = { "latex" },
       },
     })
 

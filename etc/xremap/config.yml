@@ -7,4 +7,3 @@ modmap:
         held: Ctrl_L
         alone: ESC
         alone_timeout_millis: 120
-

@@ -21,14 +21,13 @@ _darcs
 
 \.git
 \.gitmodules
-# Ignore .gitignore files in subdirectories, but not in root
-# This pattern matches paths like "/.config/foo/.gitignore" but not "/.gitignore"
 /.+/\.gitignore
 
 .+~          # emacs backup files
 \#.*\#       # emacs autosave files
 
-etc
+^/etc
+^/.mozilla
 
 \.DS_Store
 

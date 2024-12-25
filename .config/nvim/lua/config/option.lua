@@ -1,4 +1,3 @@
--- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
 
 -- Disable netrw (vim builtin file explorer)
@@ -14,18 +13,20 @@ local opt = vim.opt
 
 opt.termguicolors = true
 
--- Configure Tab behavior
 opt.tabstop = 4 -- A TAB character looks like 4 spaces
 opt.expandtab = true -- Pressing the TAB key will insert spaces instead of a TAB character
 opt.softtabstop = 4 -- Number of spaces inserted instead of a TAB character
 opt.shiftwidth = 4 -- Number of spaces inserted when indenting
 
--- Relative line numbering
 opt.relativenumber = true
 opt.number = true
 
 opt.hlsearch = true
 opt.incsearch = true
+
+-- Highlight current cursor line / column
+-- vim.opt.cursorline = true
+-- vim.opt.cursorcolumn = true
 
 -- Allow left and right arrow keys to move across lines in Insert mode
 opt.whichwrap = '<,>,[,]'

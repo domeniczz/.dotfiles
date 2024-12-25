@@ -1,0 +1,10 @@
+--no-folding
+--dotfiles
+--verbose 2
+--target=$HOME
+--dir=$HOME/.dotfiles
+--ignore=".git"
+--ignore="README.*"
+--ignore="LICENSE"
+--ignore=".stow-local-ignore"
+--ignore=".setup.sh"

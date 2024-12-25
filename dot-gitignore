@@ -1,0 +1,36 @@
+# -----------------------------------------------------------------------------
+# gitignore for fzf (with ripgrep/fd/...)
+# -----------------------------------------------------------------------------
+
+.DS_Store
+.hg
+.svn
+
+/*/
+
+!/.config/
+!/.dotfiles/
+
+!/Desktop/
+!/Documents/
+!/Downloads/
+!/Musics/
+!/Personal/
+!/Pictures/
+!/Videos/
+!/Templates/
+
+!/Programs/
+!/Public/
+!/Work/
+
+!/Trash/
+
+anaconda3/
+miniconda3/
+telemetry/
+.config/Cursor/
+.config/Code/
+.config/Spotify/
+.config/libreoffice/
+.config/goldendict/

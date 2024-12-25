@@ -1,13 +1,16 @@
+#!/usr/bin/env bash
+
 # -----------------------------------------------------------------------------
 # Launch programs within tmux
 #
 # Usage:
-#   <script-name> [--program PROGRAM] [--mode MODE] [--sudo] [--winname WINNAME]
+#   <script-name> [--program PROGRAM] [--mode MODE] ... 
 # 
 # Options:
 #   --program PROGRAM  Program to launch
 #   --mode MODE        Launch mode: split, or newwin (default: newwin)
 #   --sudo             Run program with sudo privileges
+#   --path PATH   Path to start program in
 #   --winname          Newly created tmux window name (default: <program-name>)
 # 
 # Examples:
@@ -16,7 +19,6 @@
 #   ./<script-name> --program htop --sudo
 # -----------------------------------------------------------------------------
 
-# Variables
 LAUNCH_MODE="newwin"
 PROGRAM=""
 USE_SUDO=0
@@ -27,7 +29,6 @@ START_PATH=$(tmux display-message -p "#{pane_current_path}")
 # Aruguments parsing
 # -----------------------------------------------------------------------------
 
-# Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
     --mode)
@@ -47,13 +48,16 @@ while [[ $# -gt 0 ]]; do
       USE_SUDO=1
       shift 1
       ;;
+    --path)
+      START_PATH="$2"
+      shift 2
+      ;;
     --winname)
       WIN_NAME="$2"
       shift 2
       ;;
     *)
-      echo "Unknown option: $1"
-      exit 1
+      shift
       ;;
   esac
 done
@@ -68,7 +72,6 @@ WIN_NAME=${WIN_NAME:-$PROGRAM}
 # If the program to launch is lazygit, get the git root path (launch in the root path of the git repo)
 # If can not find a git root path, then display a message
 if [[ "$PROGRAM" == "lazygit" ]]; then
-  # Find git repository root directory
   find_git_root() {
     local max_iterations=10
     local path="$1"
@@ -108,36 +111,36 @@ if [[ "$PROGRAM" == "lazygit" ]]; then
 fi
 
 # ------------------------------------------------------------------------------
-# Launch logics
+# Launch logic
 # ------------------------------------------------------------------------------
 
-# Check if the program is installed
 if ! command -v $PROGRAM >/dev/null 2>&1; then
   echo "'$PROGRAM' is not installed!"
   exit 1
 fi
 
-# Prepare the launch command with optional sudo
 if [ "$USE_SUDO" -eq 1 ]; then
+  # Preserve user's existing environment variables
   CMD="sudo -E $PROGRAM"
 else
   CMD="$PROGRAM"
 fi
 
-# Launch in vertically split pane within current window
+if [[ "$LAUNCH_MODE" = "newwin" && -n "$START_PATH" ]]; then
+  # WRAPPER_CMD is used for not closing window after exit program
+  # WRAPPER_CMD="bash -c '$CMD; if [ \$(tmux list-windows | wc -l) -eq 1 ]; then tmux new-window; tmux kill-window -t !; else tmux kill-window; fi'"
+  # tmux new-window -c "$START_PATH" -n "$WIN_NAME" "$WRAPPER_CMD"
+  tmux new-window -c "$START_PATH" -n "$WIN_NAME" "$CMD"
+  exit
+fi
+
 if [[ "$LAUNCH_MODE" = "split" && -n "$START_PATH" ]]; then
   # Caluclate the optimal percentage taken by the new tmux pane (ideal pane_width 155)
   # Percantage range is [40, 70]
   current_pane_width=$(tmux display-message -p "#{pane_width}")
   ideal_pct=$((155 * 100 / current_pane_width))
   split_pct=$((ideal_pct < 40 ? 40 : ideal_pct > 70 ? 70 : ideal_pct))
-  tmux split-window -h -p "$split_pct" -c "$START_PATH" $CMD
-  exit
-fi
-
-# Launch in new window
-if [[ "$LAUNCH_MODE" = "newwin" && -n "$START_PATH" ]]; then
-  tmux new-window -c "$START_PATH" -n "$WIN_NAME" $CMD
+  tmux split-window -h -p "$split_pct" -c "$START_PATH" "$CMD"
   exit
 fi
 
@@ -152,10 +155,7 @@ fi
 # fi
 # 
 # if [[ -n "$is_editor_running" ]]; then
-#   # If editor is running, launch in new window
-#   tmux new-window -n "$WIN_NAME" $CMD
+#   tmux new-window -n "$WIN_NAME" "$CMD"
 # else
-#   # If no editor is running, launch in current window
 #   tmux send-keys "$CMD" C-m
 # fi
-

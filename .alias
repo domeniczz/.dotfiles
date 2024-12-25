@@ -1,0 +1,15 @@
+alias update="sudo pacman -Syu && yay"
+alias hibernate="systemctl hibernate"
+alias vi="nvim"
+alias grep="grep --color=auto"
+alias python="python3"
+
+alias myip="ip address | grep --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
+
+alias tp="trash-put"
+alias tmuxa="tmux new-session -A -s general"
+alias ls="eza --group-directories-first --color=always --git --git-repos-no-status --long --no-filesize"  # Eza (better ls)
+alias cd="z"  # Zoxide (better cd)
+alias cat="bat"  # Bat (better cat)
+alias fm="joshuto"
+alias FM="sudo joshuto"

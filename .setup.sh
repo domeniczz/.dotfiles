@@ -1,5 +1,3 @@
-#!/bin/bash
-
 ################
 ##### Font #####
 ################
@@ -45,14 +43,19 @@ sudo pacman -S --noconfirm archlinuxcn-keyring
 # sudo reflector --verbose --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 
 
-####################################
-##### Enable bluetooth utility #####
-####################################
+#############################
+##### Bluetooth utility #####
+#############################
 
 sudo pacman -S --noconfirm --disable-download-timeout bluez bluez-libs bluez-utils
 sudo systemctl enable --now bluetooth.service
 
-sudo pacman -S --noconfirm --disable-download-timeout pulseaudio-alsa pulseaudio-bluetooth
+
+################################
+##### Multimedia framework #####
+################################
+
+sudo pacman -S --noconfirm --disable-download-timeout pipewire pipewire-alsa pipewire-pulse pipewire-jack
 
 
 #################################
@@ -61,6 +64,16 @@ sudo pacman -S --noconfirm --disable-download-timeout pulseaudio-alsa pulseaudio
 
 # sudo pacman -S --noconfirm intel-ucode
 # sudo pacman -S --noconfirm amd-ucode
+
+
+############################
+##### Power management #####
+############################
+
+# sudo pacman -S --noconfirm --disable-download-timeout tlp
+# systemctl enable --now tlp.service
+# sudo systemctl mask systemd-rfkill.service
+# sudo systemctl mask systemd-rfkill.socket
 
 
 ##################
@@ -94,7 +107,7 @@ chsh -l
 chsh -s /usr/bin/zsh
 
 sudo pacman -S --nocomfirm --disable-download-timeout cronie 
-sudo pacman -S --nocomfirm --disable-download-timeout bemenu 
+sudo pacman -S --nocomfirm --disable-download-timeout bemenu-wayland 
 sudo pacman -S --nocomfirm --disable-download-timeout neovim
 sudo pacman -S --nocomfirm --disable-download-timeout joshuto
 sudo pacman -S --nocomfirm --disable-download-timeout fd
@@ -109,8 +122,18 @@ sudo pacman -S --nocomfirm --disable-download-timeout tldr
 sudo pacman -S --nocomfirm --disable-download-timeout tree-sitter
 sudo pacman -S --nocomfirm --disable-download-timeout alacritty
 
+sudo pacman -S --nocomfirm --disable-download-timeout playerctl
+
+# Notification daemon
+sudo pacman -S --nocomfirm --disable-download-timeout mako
+
 sudo pacman -S --nocomfirm --disable-download-timeout zip unzip
 # sudo pacman -S --nocomfirm --disable-download-timeout hyperfine
+sudo pacman -S --nocomfirm --disable-download-timeout imv
+sudo pacman -S --nocomfirm --disable-download-timeout swayimg
+sudo pacman -S --nocomfirm --disable-download-timeout mpv
+
+sudo pacman -S --nocomfirm --disable-download-timeout fastfetch
 
 # Install theme for bat
 mkdir -p "$(bat --config-dir)/themes"
@@ -144,11 +167,16 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # Contributed scripts to pacman (e.g. paccache)
 sudo pacman -S --noconfirm --disable-download-timeout pacman-contrib
+# Autorun paccache serive
+sudo systemctl enable --now paccache.service
+
+# cheat.sh
+curl -s https://cht.sh/:cht.sh | sudo tee /usr/local/bin/cht.sh && sudo chmod +x /usr/local/bin/cht.sh
 
 
-#################################
-##### Useful Tools with GUI #####
-#################################
+########################################
+##### Useful Applications with GUI #####
+########################################
 
 # Xfce Thunar File Manager
 sudo pacman -S --noconfirm --disable-download-timeout thunar
@@ -168,8 +196,20 @@ sudo pacman -S --noconfirm --disable-download-timeout xorg-xhost
 # Dictionary
 sudo pacman -S --noconfirm --disable-download-timeout goldendict-ng
 
+# Document viewer
+sudo pacman -S --noconfirm --disable-download-timeout zathura zathura-pdf-mupdf
+
 # Spotify
 yay -Sy spotify
+
+
+#################
+##### LaTeX #####
+#################
+
+sudo pacman -S --noconfirm --disable-download-timeout texlive-latex texlive-latexextra texlive-bibtexextra
+sudo pacman -S --noconfirm --disable-download-timeout texlive-binextra
+sudo pacman -S --noconfirm --disable-download-timeout perl-tk
 
 
 ###################################################
@@ -180,11 +220,14 @@ yay -Sy spotify
 
 
 ###################
-##### Firefox #####
+##### Broswer #####
 ###################
 
 # flatpak install flathub org.mozilla.firefox
 sudo pacman -S --noconfirm --disable-download-timeout firefox
+
+sudo pacman -S --noconfirm --disable-download-timeout qutebrowser
+sudo pacman -S --noconfirm --disable-download-timeout qt6-wayland
 
 
 #######################
@@ -199,6 +242,13 @@ sudo pacman -S --noconfirm --disable-download-timeout firefox
 ###########################
 
 yay -Sy visual-studio-code-bin
+
+
+####################################
+##### Node version manager nvm #####
+####################################
+
+# curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 
 
 ####################
@@ -284,4 +334,3 @@ while [ $reboot_countdown -gt 0 ]; do
 done
 
 sudo reboot
-

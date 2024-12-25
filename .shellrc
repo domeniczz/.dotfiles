@@ -1,0 +1,81 @@
+export EDITOR='nvim'
+# Set default systemd editor
+# AND `sudo visudo` then add: Defaults env_keep += "SYSTEMD_EDITOR"
+export SYSTEMD_EDITOR='nvim'
+
+export TMUX_CONF_PATH="$HOME/.config/tmux"
+
+condainit() {
+  local CONDA_BASE="$HOME/Programs"
+  
+  if [[ -f "$CONDA_BASE/miniconda3/bin/activate" ]]; then
+    source "$CONDA_BASE/miniconda3/bin/activate"
+    return 0
+  elif [[ -f "$CONDA_BASE/anaconda3/bin/activate" ]]; then
+    source "$CONDA_BASE/anaconda3/bin/activate"
+    return 0
+  else
+    echo "Neither Miniconda nor Anaconda installation found in $CONDA_BASE"
+    return 1
+  fi
+}
+
+nvminit() {
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+}
+
+if command -v tmux &> /dev/null; then
+  if [ -z "$TMUX" ]; then
+    tmux new-session -A -s general
+  fi
+else
+  echo "tmux is not installed"
+fi
+
+# Setup fzf keybinding and fuzzy completion
+eval "$(fzf --$(ps -p $$ -o comm=))"
+if command -v rg >/dev/null 2>&1; then
+  export FZF_DEFAULT_COMMAND='rg --files --hidden --no-require-git'
+elif command -v fd >/dev/null 2>&1; then
+  export FZF_DEFAULT_COMMAND='fd --type file --hidden --exclude .git'
+  export FZF_ALT_C_COMMAND='fd --type directory --hidden'
+fi
+export FZF_DEFAULT_OPTS='-m --height 60% --border'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_CTRL_T_OPTS="--preview 'bat -n --color=always --line-range :500 {}'"
+export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} | head -200'"
+# Advanced customization
+# - The first argument to the function is the name of the command.
+# - You should make sure to pass the rest of the arguments to fzf.
+_fzf_comprun() {
+  local command=$1
+  shift
+  case "$command" in
+    cd)           fzf --preview 'eza --tree --level=2 --color=always {} | head -200' "$@" ;;
+    export|unset) fzf --preview "eval 'echo $'{}"         "$@" ;;
+    ssh)          fzf --preview 'dig {}'                   "$@" ;;
+    *)            fzf --preview "bat -n --color=always --line-range :500 {}" "$@" ;;
+  esac
+}
+# Searching Git objects
+# Repo: https://github.com/junegunn/fzf-git.sh
+# - CTRL-G-F for Files
+# - CTRL-G-B for Branches
+# - CTRL-G-T for Tags
+# - CTRL-G-R for Remotes
+# - CTRL-G-H for commit Hashes
+# - CTRL-G-S for Stashes
+# - CTRL-G-L for reflogs
+# - CTRL-G-W for Worktrees
+# - CTRL-G-E for Each ref (git for-each-ref)
+if [ -f $HOME/clone/fzf-git.sh/fzf-git.sh ]; then
+  source $HOME/clone/fzf-git.sh/fzf-git.sh
+fi
+
+# eval $(thefuck --alias)
+# eval $(thefuck --alias fk)
+eval "$(zoxide init $(ps -p $$ -o comm=))"
+
+export BAT_THEME=tokyonight_night

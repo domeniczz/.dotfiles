@@ -26,7 +26,7 @@ autocmd("TextYankPost", {
 })
 
 -- Toggle to relative numbers when in normal mode and focused
-number_toggle = augroup("numbertoggle")
+local number_toggle = augroup("numbertoggle")
 autocmd({ 'BufEnter', 'FocusGained', 'InsertLeave', 'WinEnter' }, {
   group = number_toggle,
   callback = function()
@@ -35,7 +35,6 @@ autocmd({ 'BufEnter', 'FocusGained', 'InsertLeave', 'WinEnter' }, {
     end
   end,
 })
-
 -- Toggle to absolute numbers when unfocused or in insert mode
 autocmd({ 'BufLeave', 'FocusLost', 'InsertEnter', 'WinLeave' }, {
   group = number_toggle,
@@ -44,3 +43,17 @@ autocmd({ 'BufLeave', 'FocusLost', 'InsertEnter', 'WinLeave' }, {
   end,
 })
 
+-- Only show cursorline in active buffer while focused
+local cursorline_toggle = augroup("cursorlinetoggle")
+autocmd({ "VimEnter", "WinEnter", "BufWinEnter", "FocusGained" }, {
+    group = cursorline_toggle,
+    callback = function()
+        vim.opt_local.cursorline = true
+    end,
+})
+autocmd({ "WinLeave", "FocusLost" }, {
+    group = cursorline_toggle,
+    callback = function()
+        vim.opt_local.cursorline = false
+    end,
+})

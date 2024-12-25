@@ -4,8 +4,8 @@ mouse_support = true
 focus_on_create = true
 use_trash = true
 watch_files = true
-xdg_open = false
-xdg_open_fork = false
+xdg_open = true
+xdg_open_fork = true
 case_insensitive_ext = false
 zoxide_update = false
 
@@ -51,6 +51,9 @@ glob_case_sensitivity = "sensitive"
 regex_case_sensitivity = "sensitive"
 # see above
 fzf_case_sensitivity = "insensitive"
+
+[cmd_aliases]
+q = "quit"
 
 [tab]
 # inherit, home, root

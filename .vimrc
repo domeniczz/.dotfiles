@@ -9,7 +9,7 @@ set softtabstop=4
 set shiftwidth=4
 set expandtab
 set hlsearch
-set wrap "Wrap lines
+set wrap
 
 " allow left and right arrow keys to move across lines in Insert mode
 set whichwrap+=<,>,[,]
@@ -41,6 +41,9 @@ augroup END
 let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
 
+" Allow files to be saved as root when forgetting to start vim using sudo
+command W :execute ':silent! write !sudo tee % > /dev/null' | :edit!
+
 function! Clearregs() abort
   let regs=split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"', '\zs')
   for r in regs
@@ -50,4 +53,3 @@ endfunction
 
 " Optionally, map a key to call this function
 " nnoremap <leader>cr :call Clearregs()<CR>
-
