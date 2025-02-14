@@ -1,11 +1,9 @@
 local wezterm = require ("wezterm")
 local config = wezterm.config_builder()
 
--- Tab
 config.hide_tab_bar_if_only_one_tab = true
 config.switch_to_last_active_tab_when_closing_tab = true
 
--- Appearance
 config.window_background_opacity = 0.85
 config.front_end = 'WebGpu'
 config.webgpu_power_preference = 'HighPerformance'
@@ -16,23 +14,17 @@ config.window_padding = {
   bottom = 0,
 }
 
--- Font
 config.font_size = 10.0
 config.font = wezterm.font 'JetBrains Mono'
 
--- Miscellaneous
 config.automatically_reload_config = true
 config.adjust_window_size_when_changing_font_size = false
 config.enable_scroll_bar = true
 config.hide_mouse_cursor_when_typing = true
 config.window_close_confirmation = 'NeverPrompt'
 
--- Colors
 config.colors = {
-  -- KDE Konsole default color scheme (except background)
-  -- The default text color
   foreground = '#fcfcfc',
-  -- The default background color
   background = '#020202',
   ansi = {
     '#232627',

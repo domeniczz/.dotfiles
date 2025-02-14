@@ -3,10 +3,8 @@
 
 HISTFILE=$HOME/.zsh_history
 HISTSIZE=1000
-SAVEHIST=8000
+SAVEHIST=10000
 HISTCONTROL=ignoreboth
-
-bindkey -v
 
 # -----------------------------------------------------------------------------
 # Oh-my-zsh config
@@ -33,9 +31,15 @@ ZSH_THEME="robbyrussell"
 plugins=(
   git
   zsh-autosuggestions
+  vi-mode
 )
 
 source $ZSH/oh-my-zsh.sh
+
+# VI-Mode
+VI_MODE_SET_CURSOR=true
+VI_MODE_CURSOR_NORMAL=4
+VI_MODE_CURSOR_INSERT=2
 
 # -----------------------------------------------------------------------------
 # Zsh scripts
@@ -57,5 +61,11 @@ function zshrc_load_hook() {
 }
 precmd_functions+=(zshrc_load_hook)
 
-source $HOME/.shellrc
-source $HOME/.alias
+# Enable vi mode in zsh
+bindkey -v
+
+[[ -n $INCOGNITO ]] && unset HISTFILE && PROMPT="[Incognito] %~ "
+
+source $HOME/.config/shell/shellrc
+source $HOME/.config/shell/alias
+source $HOME/.config/shell/teleport

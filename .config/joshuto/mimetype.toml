@@ -26,15 +26,11 @@ image_default = [
 ]
 
 video_default = [
+  { command = "mpv", fork = true, silent = true },
   { command = "mpv", args = [
-    "--",
+    "--playlist=.",
   ], fork = true, silent = true },
   { command = "mediainfo", pager = true },
-  { command = "mpv", args = [
-    "--mute",
-    "on",
-    "--",
-  ], fork = true, silent = true },
 ]
 
 text_default = [

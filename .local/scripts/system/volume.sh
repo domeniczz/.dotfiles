@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# ----------------------------------------------------------------------------
+# Adjust the system volume
+# Disaply wob progress bar while changing volume
+# ----------------------------------------------------------------------------
+
 ACTION=""
 VALUE=5
 
@@ -7,7 +12,7 @@ VALUE=5
 # Aruguments parsing
 # -----------------------------------------------------------------------------
 
-while [[ $# -gt 0 ]]; do
+while (($# > 0)); do
   case $1 in
     --action)
       if [[ $2 =~ ^(up|down|mute|micmute)$ ]]; then
@@ -31,12 +36,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$ACTION" ]]; then
-  echo "Error: --action is required"
-  echo "Usage: $0 --action <up|down|mute|micmute> [--val <percentage>]"
-  exit 1
-fi
-
 # -----------------------------------------------------------------------------
 # Functions
 # -----------------------------------------------------------------------------
@@ -49,60 +48,42 @@ get_mute_status() {
   pactl get-sink-mute @DEFAULT_SINK@ | awk '{print $2}'
 }
 
-show_sway_statusbar() {
-  local pid_file="/tmp/sway_bar_show_timer.pid"
-  
-  swaymsg bar hidden_state show
-  
-  if [ -f "$pid_file" ]; then
-    kill $(cat "$pid_file") 2>/dev/null
-  else
-    # Send signal to statusbar.sh to update sleep duration between while loop to update info quicker
-    echo "0.1" > /tmp/sway_refresh_interval
-    pkill -SIGUSR1 -f "statusbar.sh"
-  fi
-  
-  {
-    sleep 1.5
-    swaymsg bar hidden_state hide
-    rm -f "$pid_file"
-    echo "1" > /tmp/sway_refresh_interval
-    pkill -SIGUSR1 -f "statusbar.sh"
-  } &
-  echo $! > "$pid_file"
+toggle_wob_progress_bar() {
+  echo "$1" > /tmp/volume-wob-pipe
 }
 
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
 
+current_vol=$(get_current_volume)
+
 case $ACTION in
   up)
     if [[ "$(get_mute_status)" == "yes" ]]; then
       pactl set-sink-mute @DEFAULT_SINK@ 0
     fi
-    current_vol=$(get_current_volume)
-    new_vol=$((current_vol + $VALUE))
+    new_vol=$((current_vol + VALUE))
     if [[ $new_vol -gt 100 ]]; then
       pactl set-sink-volume @DEFAULT_SINK@ 100%
+      toggle_wob_progress_bar 100
     else
       pactl set-sink-volume @DEFAULT_SINK@ +${VALUE}%
+      toggle_wob_progress_bar "$new_vol"
     fi
-    show_sway_statusbar
     ;;
   down)
     if [[ "$(get_mute_status)" == "yes" ]]; then
       pactl set-sink-mute @DEFAULT_SINK@ 0
     fi
     pactl set-sink-volume @DEFAULT_SINK@ -${VALUE}%
-    show_sway_statusbar
+    toggle_wob_progress_bar $((current_vol > VALUE ? current_vol - VALUE : 0))
     ;;
   mute)
     pactl set-sink-mute @DEFAULT_SINK@ toggle
-    show_sway_statusbar
+    toggle_wob_progress_bar 0
     ;;
   micmute)
     pactl set-source-mute @DEFAULT_SOURCE@ toggle
-    show_sway_statusbar
     ;;
 esac

@@ -1,5 +1,5 @@
 # GNU Stow ignore file doc:
-# https://www.gnu.org/software/stow/manual/stow.html#Ignore-Lists 
+# https://www.gnu.org/software/stow/manual/stow.html#Ignore-Lists
 
 # Syntax for .stow-local-ignore:
 # - Regex with '/' matches against full path (with leading '/') relative to package root
@@ -29,9 +29,12 @@ _darcs
 ^/etc
 ^/.mozilla
 
+^/[^/]+\.sh$
+
 \.DS_Store
 
 ^/README.*
 ^/LICENSE.*
 ^/COPYING
-^/GUIDES.md
+^/GUIDES.*
+^/VIM.*

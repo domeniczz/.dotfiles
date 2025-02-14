@@ -1,0 +1,4 @@
+set editor="nvim"
+
+set my_name="Domenic Zhang"
+set imap_check_subscribed

@@ -79,6 +79,32 @@ If installing `pulseaudio-bluetooth` for the first time, make sure to restart it
    - Default image size is set in `/sys/power/image_size`, you can change the value inside of it.
    - Set desired image size value in `/etc/tmpfiles.d/hibernation_image_size.conf` to make the change persistent.
 
+
+# Pacman
+
+Upgrade all packages: `sudo pacman -Syu`, [S]ync and refresh local copy of package database [y] and then [u]pgrade all outdated packages.
+
+Upgrade all AUR packages: `yay -Sua`, [u]pgrade all packages installed from [a]rch user repository.
+
+Install package: `sudo pacman -S <pkg>` to install from remote repository. `sudo pacman -U <pkg>` to install from the local package file.
+
+Remove package: `sudo pacman -Rns <pkg>`, [R]emove package and it's dependencies recur[s]ively, and delete residual files [n].
+
+List installed packages: `pacman -Qe`, list out all packages user installed [e]xplicitly.
+
+Get orphan packages: `pacman -Qdtq`, [Q]uery for packages neither required nor optionally required by any currently installed package [d][t], and do not print package version info. We can run `sudo pacman -Rns $(pacman -Qdtq)` to remove all unneeded packages.
+
+Remove unneeded package cache: `paccache -rk2` only keep 2 previous version of the package in the cache. `paccache -ruk0` remove all cache of the packages that are already removed.
+
+Check package info: `pacman -Si <pkg>`, [S]ync action for getting package [i]nformation.
+
+Get package dependence tree: `pactree -rd1 <pkg>`, [r]everse search for packages dependent on the pkg with [d]epth equals to 1.
+
+List packages installed from official repository: `pacman -Qne`
+
+List packages installed from AUR: `pacman -Qm`
+
+
 # Shell startup hierarchy
 
 **Bash startup sequence**:
@@ -104,6 +130,7 @@ If installing `pulseaudio-bluetooth` for the first time, make sure to restart it
 - ~/.zlogin (user-specific, login shells)
 - /etc/zlogout (system-wide, login shells at exit)
 - ~/.zlogout (user-specific, login shells at exit)
+
 
 # Neovim
 

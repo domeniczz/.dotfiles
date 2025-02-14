@@ -4,8 +4,8 @@
 # Bluetooth devices menu
 # -----------------------------------------------------------------------------
 
-declare -ga device_names=()
-declare -gA device_map=()
+declare -a device_names=()
+declare -A device_map=()
 
 get_saved_devices() {
   while read -r _ mac name; do
@@ -36,7 +36,7 @@ selected_device=$(printf '%s\n' "${device_names[@]}" | bemenu \
   --single-instance \
   --no-overlap \
   --prompt "Connect bluetooth device:" \
-  --list 2 \
+  --list ${#device_names[@]} \
   --prefix "" \
   --ignorecase \
   --fork \

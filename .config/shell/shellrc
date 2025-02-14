@@ -1,13 +1,12 @@
-export EDITOR='nvim'
 # Set default systemd editor
 # AND `sudo visudo` then add: Defaults env_keep += "SYSTEMD_EDITOR"
 export SYSTEMD_EDITOR='nvim'
 
-export TMUX_CONF_PATH="$HOME/.config/tmux"
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
 
 condainit() {
   local CONDA_BASE="$HOME/Programs"
-  
+
   if [[ -f "$CONDA_BASE/miniconda3/bin/activate" ]]; then
     source "$CONDA_BASE/miniconda3/bin/activate"
     return 0
@@ -26,25 +25,36 @@ nvminit() {
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 }
 
-if command -v tmux &> /dev/null; then
-  if [ -z "$TMUX" ]; then
-    tmux new-session -A -s general
-  fi
-else
-  echo "tmux is not installed"
-fi
+# Change the current working directory when exiting Yazi
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	yazi "$@" --cwd-file="$tmp"
+	if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+		builtin cd -- "$cwd"
+	fi
+	rm -f -- "$tmp"
+}
+
+# if command -v tmux &> /dev/null; then
+#   if [ -z "$TMUX" ]; then
+#     tmux new-session -A -s general
+#   fi
+# else
+#   echo "tmux is not installed"
+# fi
 
 # Setup fzf keybinding and fuzzy completion
 eval "$(fzf --$(ps -p $$ -o comm=))"
 if command -v rg >/dev/null 2>&1; then
-  export FZF_DEFAULT_COMMAND='rg --files --hidden --no-require-git'
+  export FZF_DEFAULT_COMMAND="rg --files --hidden --no-require-git --smart-case --follow"
 elif command -v fd >/dev/null 2>&1; then
-  export FZF_DEFAULT_COMMAND='fd --type file --hidden --exclude .git'
-  export FZF_ALT_C_COMMAND='fd --type directory --hidden'
+  export FZF_DEFAULT_COMMAND="fd --type file --hidden --exclude .git"
+  export FZF_ALT_C_COMMAND="fd --type directory --hidden"
 fi
-export FZF_DEFAULT_OPTS='-m --height 60% --border'
+export FZF_BINDING="--bind='ctrl-j:preview-down,ctrl-k:preview-up'"
+export FZF_DEFAULT_OPTS="$FZF_BINDING --multi --cycle --height 60% --preview-window 'right:60%' --border"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_CTRL_T_OPTS="--preview 'bat -n --color=always --line-range :500 {}'"
+export FZF_CTRL_T_OPTS="--preview 'bat --number --color=always --line-range :500 {}'"
 export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} | head -200'"
 # Advanced customization
 # - The first argument to the function is the name of the command.
@@ -56,7 +66,7 @@ _fzf_comprun() {
     cd)           fzf --preview 'eza --tree --level=2 --color=always {} | head -200' "$@" ;;
     export|unset) fzf --preview "eval 'echo $'{}"         "$@" ;;
     ssh)          fzf --preview 'dig {}'                   "$@" ;;
-    *)            fzf --preview "bat -n --color=always --line-range :500 {}" "$@" ;;
+    *)            fzf --preview "bat --number --color=always --line-range :500 {}" "$@" ;;
   esac
 }
 # Searching Git objects

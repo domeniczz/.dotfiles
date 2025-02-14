@@ -1,93 +1,125 @@
 return {
+  -- lsp progress messages
   {
-    'williamboman/mason.nvim',
-    lazy = false,
-    opts = {},
-  },
-
-  -- Autocompletion
-  {
-    'hrsh7th/nvim-cmp',
-    lazy = false,
-    event = 'InsertEnter',
+    "j-hui/fidget.nvim",
+    enabled = true,
+    event = "LspAttach",
     config = function()
-      local cmp = require('cmp')
-
-      cmp.setup({
-        sources = {
-          {name = 'nvim_lsp'},
-        },
-        mapping = cmp.mapping.preset.insert({
-          ['<C-Space>'] = cmp.mapping.complete(),
-          ['<C-u>'] = cmp.mapping.scroll_docs(-4),
-          ['<C-d>'] = cmp.mapping.scroll_docs(4),
-        }),
-        snippet = {
-          expand = function(args)
-            vim.snippet.expand(args.body)
-          end,
-        },
-      })
-    end
-  },
-
-  -- LSP
-  {
-    'neovim/nvim-lspconfig',
-    lazy = false,
-    cmd = {'LspInfo', 'LspInstall', 'LspStart'},
-    event = {'BufReadPre', 'BufNewFile'},
-    dependencies = {
-      {'hrsh7th/cmp-nvim-lsp'},
-      {'williamboman/mason.nvim'},
-      {'williamboman/mason-lspconfig.nvim'},
-    },
-    init = function()
-      -- Reserve a space in the gutter
-      -- This will avoid an annoying layout shift in the screen
-      vim.opt.signcolumn = 'yes'
+      require("fidget").setup({})
     end,
+  },
+
+  {
+    "neovim/nvim-lspconfig",
+    enabled = true,
+    -- event = {"BufReadPre", "BufNewFile"},
+    ft = { "lua", "python", "rust" },
+    dependencies = {
+      "saghen/blink.cmp",
+      -- "hrsh7th/cmp-nvim-lsp",
+    },
+    -- init = function()
+    --   local max_filesize = 5120 * 1024
+    --   if is_current_large_file(max_filesize, string.format("LSP disabled - file larger than %sKB", max_filesize / 1024)) then
+    --     vim.b.lsp_enabled = false
+    --     return
+    --   end
+    -- end,
     config = function()
-      local lsp_defaults = require('lspconfig').util.default_config
+      local capabilities = require("blink.cmp").get_lsp_capabilities()
+      -- local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
-      -- Add cmp_nvim_lsp capabilities settings to lspconfig
-      -- This should be executed before you configure any language server
-      lsp_defaults.capabilities = vim.tbl_deep_extend(
-        'force',
-        lsp_defaults.capabilities,
-        require('cmp_nvim_lsp').default_capabilities()
-      )
-
-      -- LspAttach is where you enable features that only work
-      -- if there is a language server active in the file
-      vim.api.nvim_create_autocmd('LspAttach', {
-        desc = 'LSP actions',
+      vim.api.nvim_create_autocmd("LspAttach", {
         callback = function(event)
-          local opts = {buffer = event.buf}
-
-          vim.keymap.set('n', 'K', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
-          vim.keymap.set('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
-          vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
-          vim.keymap.set('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
-          vim.keymap.set('n', 'go', '<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
-          vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>', opts)
-          vim.keymap.set('n', 'gs', '<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
-          vim.keymap.set('n', '<F2>', '<cmd>lua vim.lsp.buf.rename()<cr>', opts)
-          vim.keymap.set({'n', 'x'}, '<F3>', '<cmd>lua vim.lsp.buf.format({async = true})<cr>', opts)
-          vim.keymap.set('n', '<F4>', '<cmd>lua vim.lsp.buf.code_action()<cr>', opts)
+          local opts = { buffer = event.buf }
+          local map = vim.keymap.set
+          map("n", "K", "<CMD>lua vim.lsp.buf.hover()<cr>", opts)
+          map("n", "gd", "<CMD>lua vim.lsp.buf.definition()<cr>", opts)
+          map("n", "gD", "<CMD>lua vim.lsp.buf.declaration()<cr>", opts)
+          map("n", "gi", "<CMD>lua vim.lsp.buf.implementation()<cr>", opts)
+          map("n", "go", "<CMD>lua vim.lsp.buf.type_definition()<cr>", opts)
+          map("n", "gr", "<CMD>lua vim.lsp.buf.references()<cr>", opts)
+          map("n", "gs", "<CMD>lua vim.lsp.buf.signature_help()<cr>", opts)
+          map("n", "<F2>", "<CMD>lua vim.lsp.buf.rename()<cr>", opts)
+          map({ "n", "x" }, "<F3>", "<CMD>lua vim.lsp.buf.format({async = true})<cr>", opts)
+          map("n", "<F4>", "<CMD>lua vim.lsp.buf.code_action()<cr>", opts)
         end,
       })
 
-      require('mason-lspconfig').setup({
-        ensure_installed = {},
-        handlers = {
-          -- this first function is the "default handler"
-          -- it applies to every language server without a "custom handler"
-          function(server_name)
-            require('lspconfig')[server_name].setup({})
-          end,
-        }
+      vim.api.nvim_create_autocmd("LspAttach", {
+        desc = "LSP format on write",
+        callback = function(args)
+          local client = vim.lsp.get_client_by_id(args.data.client_id)
+          if not client then return end
+          if client.supports_method("textDocument/formatting") then
+            vim.api.nvim_create_autocmd("BufWritePre", {
+              buffer = args.buf,
+              callback = function()
+                vim.lsp.buf.format({
+                  async = false,
+                  timeout_ms = 500,
+                  bufnr = args.buf,
+                  id = client.id,
+                })
+              end
+            })
+          end
+        end
       })
-    end
-  }
+
+      vim.diagnostic.config({
+        virtual_text = true,
+        signs = true,
+        underline = true,
+        update_in_insert = false,
+        severity_sort = true,
+        float = {
+          focusable = false,
+          style = "minimal",
+          border = "rounded",
+          source = "always",
+          header = "",
+          prefix = "",
+        },
+      })
+
+      vim.lsp.set_log_level("ERROR")
+
+      local lspconfig = require("lspconfig")
+
+      lspconfig.lua_ls.setup({
+        autostart = false,
+        capabilities = capabilities,
+        settings = {
+          Lua = {
+            runtime = {
+              version = "LuaJIT",
+            },
+            diagnostics = {
+              globals = { "vim", "bit", "it", "describe", "before_each", "after_each" },
+              disable = { "undefined-field", "undefined-global", "duplicate-set-field" },
+            },
+            workspace = {
+              library = vim.api.nvim_get_runtime_file("", true),
+              checkThirdParty = false,
+            },
+            telemetry = {
+              enable = false,
+            },
+          },
+        },
+      })
+
+      lspconfig.pyright.setup({
+        autostart = false,
+        capabilities = capabilities,
+      })
+
+
+      lspconfig.rust_analyzer.setup({
+        autostart = false,
+        capabilities = capabilities,
+      })
+    end,
+  },
 }

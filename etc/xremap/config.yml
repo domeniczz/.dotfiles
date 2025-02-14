@@ -6,4 +6,4 @@ modmap:
       KEY_CAPSLOCK:
         held: Ctrl_L
         alone: ESC
-        alone_timeout_millis: 120
+        alone_timeout_millis: 80

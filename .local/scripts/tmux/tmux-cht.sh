@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+TMUX_CONF_PATH="$HOME/.config/tmux"
+
 selected=`cat $TMUX_CONF_PATH/.tmux-cht-languages $TMUX_CONF_PATH/.tmux-cht-command | fzf`
 
 if [[ -z $selected ]]; then

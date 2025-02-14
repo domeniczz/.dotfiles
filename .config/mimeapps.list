@@ -20,6 +20,11 @@ application/pdf=org.pwmt.zathura.desktop;org.kde.okular.desktop;
 application/json=nvim.desktop;
 application/xml=nvim.desktop;
 
+application/xhtml+xml=org.qutebrowser.qutebrowser.desktop;firefox.desktop
+x-scheme-handler/http=org.qutebrowser.qutebrowser.desktop;firefox.desktop
+x-scheme-handler/https=org.qutebrowser.qutebrowser.desktop;firefox.desktop
+x-scheme-handler/ftp=org.qutebrowser.qutebrowser.desktop;firefox.desktop
+
 # Default editor for text file
 text/plain=nvim.desktop;
 text/markdown=nvim.desktop;

@@ -1,9 +1,10 @@
 return {
   "ThePrimeagen/harpoon",
+  enabled = true,
   branch = "harpoon2",
-  lazy = false,
+  event = "VeryLazy",
   dependencies = {
-  	"nvim-lua/plenary.nvim",
+    "nvim-lua/plenary.nvim",
     "nvim-telescope/telescope.nvim",
   },
   config = function()
@@ -27,18 +28,27 @@ return {
     --   }):find()
     -- end
 
+    local map = vim.keymap.set
+
     -- Open harpoon list menu
-    -- vim.keymap.set("n", "<A-e>", function() toggle_telescope(harpoon:list()) end, { desc = "Open harpoon menu" })
-    vim.keymap.set("n", "<A-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
+    map("n", "<A-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
     -- Add buffer to harpoon list
-    vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end, { desc = "Add buffer to harpoon" })
+    map("n", "<leader>a", function() harpoon:list():add() end, { desc = "Add buffer to harpoon" })
     -- Toggle specific buffer in list
-    vim.keymap.set("n", "<A-1>", function() harpoon:list():select(1) end, { desc = "Switch to buffer 1"})
-    vim.keymap.set("n", "<A-2>", function() harpoon:list():select(2) end, { desc = "Switch to buffer 2"})
-    vim.keymap.set("n", "<A-3>", function() harpoon:list():select(3) end, { desc = "Switch to buffer 3"})
-    vim.keymap.set("n", "<A-4>", function() harpoon:list():select(4) end, { desc = "Switch to buffer 4"})
+    map("n", "<C-h>", function() harpoon:list():select(1) end, { desc = "Switch to buffer 1" })
+    map("n", "<C-j>", function() harpoon:list():select(2) end, { desc = "Switch to buffer 2" })
+    map("n", "<C-k>", function() harpoon:list():select(3) end, { desc = "Switch to buffer 3" })
+    map("n", "<C-l>", function() harpoon:list():select(4) end, { desc = "Switch to buffer 4" })
+    map("n", "<leader><C-h>", function() harpoon:list():replace_at(1) end)
+    map("n", "<leader><C-t>", function() harpoon:list():replace_at(2) end)
+    map("n", "<leader><C-n>", function() harpoon:list():replace_at(3) end)
+    map("n", "<leader><C-s>", function() harpoon:list():replace_at(4) end)
     -- Toggle previous & next buffers stored within harpoon list
-    vim.keymap.set("n", "<A-P>", function() harpoon:list():prev() end, { desc = "Switch to prev buffer"})
-    vim.keymap.set("n", "<A-N>", function() harpoon:list():next() end, { desc = "Switch to next buffer"})
+    -- map("n", "<A-P>", function()
+    --   harpoon:list():prev()
+    -- end, { desc = "Switch to prev buffer" })
+    -- map("n", "<A-N>", function()
+    --   harpoon:list():next()
+    -- end, { desc = "Switch to next buffer" })
   end,
 }

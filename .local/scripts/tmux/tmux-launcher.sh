@@ -4,15 +4,16 @@
 # Launch programs within tmux
 #
 # Usage:
-#   <script-name> [--program PROGRAM] [--mode MODE] ... 
-# 
+#   <script-name> [--program PROGRAM] [--mode MODE] ...
+#
 # Options:
-#   --program PROGRAM  Program to launch
+#   --program PROGRAM  Program to launch, USER_INPUT to let user specify
 #   --mode MODE        Launch mode: split, or newwin (default: newwin)
 #   --sudo             Run program with sudo privileges
-#   --path PATH   Path to start program in
+#   --path PATH        Path to start program in
 #   --winname          Newly created tmux window name (default: <program-name>)
-# 
+#   --splitpct         Percentage space to taken for the new window
+#
 # Examples:
 #   ./<script-name> --mode split
 #   ./<script-name> --mode newwin --sudo
@@ -24,12 +25,13 @@ PROGRAM=""
 USE_SUDO=0
 WIN_NAME=""
 START_PATH=$(tmux display-message -p "#{pane_current_path}")
+SPLIT_PCT=0
 
 # -----------------------------------------------------------------------------
 # Aruguments parsing
 # -----------------------------------------------------------------------------
 
-while [[ $# -gt 0 ]]; do
+while (($# > 0)); do
   case $1 in
     --mode)
       if [[ $2 =~ ^(split|newwin)$ ]]; then
@@ -41,7 +43,11 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --program)
-      PROGRAM="$2"
+      if [[ "$2" == "USER_INPUT" ]]; then
+        PROGRAM=$(tmux command-prompt -p "Program to run:" "display-message -p '%%'")
+      else
+        PROGRAM="$2"
+      fi
       shift 2
       ;;
     --sudo)
@@ -54,6 +60,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --winname)
       WIN_NAME="$2"
+      shift 2
+      ;;
+    --splitpct)
+      SPLIT_PCT="$2"
       shift 2
       ;;
     *)
@@ -77,7 +87,7 @@ if [[ "$PROGRAM" == "lazygit" ]]; then
     local path="$1"
     local iterations=0
     local home_path=$(realpath $HOME)
-    
+
     while [ "$iterations" -lt "$max_iterations" ]; do
       # Check if we've reached or passed HOME directory
       if [[ "$(realpath "$path")" == "$home_path" || "$(realpath "$path")" == "/" ]]; then
@@ -97,7 +107,7 @@ if [[ "$PROGRAM" == "lazygit" ]]; then
       path="$(dirname "$path")"
       ((iterations++))
     done
-    
+
     return 1
   }
   # Call the function to get git root directory
@@ -119,7 +129,7 @@ if ! command -v $PROGRAM >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ "$USE_SUDO" -eq 1 ]; then
+if (($USE_SUDO == 1)); then
   # Preserve user's existing environment variables
   CMD="sudo -E $PROGRAM"
 else
@@ -135,25 +145,27 @@ if [[ "$LAUNCH_MODE" = "newwin" && -n "$START_PATH" ]]; then
 fi
 
 if [[ "$LAUNCH_MODE" = "split" && -n "$START_PATH" ]]; then
-  # Caluclate the optimal percentage taken by the new tmux pane (ideal pane_width 155)
-  # Percantage range is [40, 70]
-  current_pane_width=$(tmux display-message -p "#{pane_width}")
-  ideal_pct=$((155 * 100 / current_pane_width))
-  split_pct=$((ideal_pct < 40 ? 40 : ideal_pct > 70 ? 70 : ideal_pct))
-  tmux split-window -h -p "$split_pct" -c "$START_PATH" "$CMD"
+  if ((SPLIT_PCT == 0)) then
+    # Caluclate the optimal percentage taken by the new tmux pane (ideal pane_width 155)
+    # Percantage range is [40, 70]
+    current_pane_width=$(tmux display-message -p "#{pane_width}")
+    ideal_pct=$((155 * 100 / current_pane_width))
+    SPLIT_PCT=$((ideal_pct < 40 ? 40 : ideal_pct > 70 ? 70 : ideal_pct))
+  fi
+  tmux split-window -h -p "$SPLIT_PCT" -c "$START_PATH" "$CMD"
   exit
 fi
 
 # # Get the current pane's PID
 # pane_pid=$(tmux display-message -p '#{pane_pid}')
-# 
+#
 # # Check if vim/nvim is running in the process tree of current pane
 # if command -v rg >/dev/null 2>&1; then
 #   is_editor_running=$(ps -o comm= -p $(pstree -p $pane_pid | rg -o '\(\d+\)' | tr -d '()') | rg "^(vi|vim|nvim|nano|emacs|$PROGRAM)$")
 # else
 #   is_editor_running=$(ps -o comm= -p $(pstree -p $pane_pid | grep -o '([0-9]\+)' | tr -d '()') | grep -E "^(vi|vim|nvim|nano|emacs|$PROGRAM)$")
 # fi
-# 
+#
 # if [[ -n "$is_editor_running" ]]; then
 #   tmux new-window -n "$WIN_NAME" "$CMD"
 # else

@@ -1,24 +1,25 @@
-# https://alacritty.org/config-alacritty.html
-
 [env]
 TERM = "xterm-256color"
 
+# [terminal.shell]
+# program = "/bin/zsh"
+# args = [
+#   "-c",
+#   "if [[ -z \"$TMUX\" ]]; then tmux new-session -A -s general; else exec zsh; fi"
+# ]
+
 [window]
-# startup_mode = "Fullscreen"
-opacity = 0.8
+opacity = 0.82
 blur = false
-# padding.x = 5
 
 [font]
+size = 10
 normal.family = "Hack Nerd Font"
 bold.family = "Hack Nerd Font"
 italic.family = "Hack Nerd Font"
 bold_italic.family = "Hack Nerd Font"
-size = 10
-# offset.x = 1
 
 [colors]
-# KDE Konsole default color scheme (except primary.background)
 primary.foreground = "#fcfcfc"
 primary.background = "#020202"
 primary.dim_foreground = "#eff0f1"
@@ -57,5 +58,5 @@ hide_when_typing = true
 [keyboard]
 bindings= [
 {key = "F11", action = "ToggleFullscreen"},
-# {key = "F12", action = "ClearHistory"},  
+# {key = "F12", action = "ClearHistory"},
 ]

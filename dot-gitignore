@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# gitignore for fzf (with ripgrep/fd/...)
+# gitignore for fzf (with ripgrep / fd / ...)
 # -----------------------------------------------------------------------------
 
 .DS_Store
@@ -26,11 +26,34 @@
 
 !/Trash/
 
+.git/
 anaconda3/
 miniconda3/
-telemetry/
 .config/Cursor/
 .config/Code/
 .config/Spotify/
 .config/libreoffice/
 .config/goldendict/
+.config/google-chrome/
+.config/chromium/
+.config/thorium/
+
+crashpad/
+Crash Reports/
+telemetry/
+
+.cache/yay/
+.cache/pip/
+.cache/pip/
+.cache/go-build/
+.cache/yarn/
+.cache/paru/
+.npm/
+.node_modules/
+
+.vscode/
+.idea/
+.eclipse/
+.gradle/
+__pycache__/
+.pytest_cache/

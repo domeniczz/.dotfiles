@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+selection="${QUTE_SELECTED_TEXT#\{}"
+selection="${selection%\}}"
+echo "open -t https://translate.google.com/?sl=en&tl=zh-CN&text=$selection&op=translate" >> "$QUTE_FIFO"

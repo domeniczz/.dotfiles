@@ -361,9 +361,13 @@ user_pref("browser.safebrowsing.provider.mozilla.updateURL", "");
  */
 // user_pref("image.animation_mode", "once");
 
+user_pref("layout.css.devPixelsPerPx", 1.8);
+user_pref("browser.autofocus", false);
+
 user_pref("browser.startup.page", 3);
 user_pref("browser.tabs.closeWindowWithLastTab", false);
 user_pref("browser.quitShortcut.disabled", true);
+user_pref("general.smoothScroll", true);
 /*
  * 0: Dark
  * 1: Light
@@ -373,6 +377,7 @@ user_pref("browser.quitShortcut.disabled", true);
 user_pref("layout.css.prefers-color-scheme.content-override", 2); // [default] use Auto theme
 user_pref("widget.disable-swipe-tracker", true); // disable back/forward page navigation when scrolling sideways
 user_pref("browser.preferences.moreFromMozilla", false);
+user_pref("ui.prefersReducedMotion", 1); // 0 for full animation; 1 for reduced motion
 /*
  * Action:
  * 0: Nothing happens
@@ -407,7 +412,7 @@ user_pref("webgl.disabled", true);
 user_pref("browser.warnOnQuit", false);
 // user_pref("browser.tabs.firefox-view", false); // disable Firefox View [FF106+]
 // user_pref("browser.tabs.tabmanager.enabled", false); // disable Firefox list of all tabs (the down-arrow icon on the tab toolbar)
-user_pref("browser.backspace_action", 0);
+// user_pref("browser.backspace_action", 0);
 // remove the additional 3-dot menu on the URL bar suggestions
 user_pref("browser.urlbar.resultMenu.keyboardAccessible", false);
 // use Mozilla geolocation service instead of Google when geolocation is enabled

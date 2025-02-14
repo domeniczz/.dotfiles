@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+echo ":config-cycle colors.webpage.darkmode.enabled" >> "$QUTE_FIFO"
+# echo ":reload" >> "$QUTE_FIFO"

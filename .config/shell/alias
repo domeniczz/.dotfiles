@@ -1,0 +1,51 @@
+alias update="sudo pacman -Syu && yay"
+alias vi="nvim"
+alias grep="command grep --color=auto"
+alias rm="command rm -I"
+alias python="python3"
+alias tmuxa="tmux new-session -A -s general"
+alias ls="eza --group-directories-first --color=always --git --git-repos-no-status --long --no-filesize"
+alias cd="z"
+alias cat="bat --number --color=always"
+
+alias ..="z .."
+alias ...="z ../.."
+
+alias ga="git add"
+alias gac="git add . && git commit"
+alias gl="git log --graph --all --abbrev-commit"
+alias glf="git log --follow -p"
+
+alias du="command du --human-readable"
+alias dU="command du --human-readable --max-depth=1 | command sort --human-numeric-sort --reverse"
+alias df="command df --human-readable --exclude-type=tmpfs --exclude-type=efivarfs --exclude-type=devtmpfs"
+alias lsblk="command lsblk --output name,mountpoints,type,size"
+alias free="command free --human"
+
+alias suspend="systemctl suspend"
+alias hibernate="systemctl hibernate"
+alias shutdown="systemctl poweroff"
+alias poweroff="systemctl poweroff"
+alias reboot="systemctl reboot"
+
+alias myip="ip address | rg --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
+
+alias fvi="fzf --prompt='nvim open: ' --bind='enter:execute(nvim {+})' --preview 'bat --number --color=always --line-range :500 {}' --height 80%"
+alias ftr="realpath * | fzf --prompt='ftree: ' --preview 'command tree -L1 {}'"
+alias fgl="git log | rg '^commit ' | cut -d' ' -f2 | fzf --prompt='git commit: ' --preview 'git show {} | bat --number --color=always' --height 80%"
+alias fglf="fzf --prompt='git commit: ' --preview 'git log --follow -p {} | bat --number --color=always' --height 80%"
+alias fpi="pacman -Qq | fzf --prompt='package info: ' --preview 'pacman -Qi {}'"
+alias fpc="pacman -Qq | fzf --prompt='package cache: ' --preview 'command ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst'"
+
+fps() {
+  pacman -Ss "$1" | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='package search: ' --preview 'pacman -Si {}'
+}
+
+ramu() {
+  if [ $# -eq 0 ]; then
+    ps -axo rss | awk 'NR>1 {sum+=$1} END {printf "Total RAM usage: %d MB\n", sum/1024}'
+    return
+  fi
+  processes=$(printf "%s|" "$@" | sed 's/|$//')
+  ps -axo rss,command | command grep -iE "$processes" | command grep -v grep | awk 'NR>1 {sum+=$1} END {printf "Total RAM usage: %d MB\n", sum/1024}'
+}

@@ -4,12 +4,12 @@
 # Open files selected with Sway window manager
 #
 # Usage:
-#   <script-name> [--file FILEPATH] [--debug FLAG] 
-# 
+#   <script-name> [--file FILEPATH] [--debug FLAG]
+#
 # Options:
 #   --file FILEPATH  File to open
 #   --debug FLAG     Flag of enabling debug
-# 
+#
 # Examples:
 #   ./<script-name> --file <file-path>
 #   ./<script-name> --file <file-path> --debug true
@@ -19,7 +19,7 @@ menu_cmd="rg --files --hidden --no-require-git | bemenu \
   --single-instance \
   --no-overlap \
   --prompt "" \
-  --list 15 \
+  --list 20 \
   --prefix "" \
   --ignorecase \
   --fork \
@@ -28,7 +28,7 @@ menu_cmd="rg --files --hidden --no-require-git | bemenu \
   --scrollbar "none" \
   --ch 20 \
   --cw 2 \
-  --width-factor 0.40 \
+  --width-factor 0.60 \
   --border 1 \
   --border-radius 6 \
   --line-height 30 \
@@ -98,7 +98,7 @@ get_terminal() {
 # Aruguments parsing
 # -----------------------------------------------------------------------------
 
-while [[ $# -gt 0 ]]; do
+while (($# > 0)); do
   case $1 in
     --file)
       if [[ -n "$2" ]]; then
@@ -111,9 +111,9 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --debug)
-      if [[ "$2" = "true" ]]; then
+      if [[ "$2" == "true" ]]; then
         DEBUG=true
-      elif [[ "$2" = "false" ]]; then
+      elif [[ "$2" == "false" ]]; then
         DEBUG=false
       else
         echo "Error: --debug requires 'true' or 'false'"
@@ -175,21 +175,21 @@ case "$mime_type" in
     launch_detached "$(get_terminal) -e nvim \"$file\""
     ;;
 
-  application/pdf)
+  application/pdf|application/epub+zip)
     debug_log "Opening PDF with zathura"
     swaymsg exec "zathura \"$file\""
     ;;
-  
+
   image/*)
     debug_log "Opening image with imv"
     swaymsg exec "imv \"$file\""
     ;;
-  
+
   video/*)
     debug_log "Opening video with mpv"
     swaymsg exec "mpv \"$file\""
     ;;
-  
+
   audio/*)
     debug_log "Opening audio with mpv"
     swaymsg exec "mpv \"$file\""
@@ -204,14 +204,14 @@ case "$mime_type" in
       notify "Error" "File is binary and not executable"
     fi
     ;;
-  
+
   *)
     debug_log "Unknown file type, showing menu"
     action=$(echo -e "Open with editor\nExecute\nCancel" | bemenu \
       --prompt "How to open?" \
       --list 3 \
       --center)
-    
+
     debug_log "User selected: $action"
     case "$action" in
       "Open with editor")

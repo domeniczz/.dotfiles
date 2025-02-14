@@ -4,7 +4,7 @@
 # Clipboard history menu
 # -----------------------------------------------------------------------------
 
-selected_clip=$(cliphist list | cut -f2- | bemenu \
+selected_clip=$(cliphist list  | bemenu \
   --single-instance \
   --no-overlap \
   --prompt "" \

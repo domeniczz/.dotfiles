@@ -1,0 +1,8 @@
+--no-require-git
+--smart-case
+--hidden
+
+--glob=!{.git,.svn,node_modules,build,dist,.idea,.next,.vscode}
+--glob=!*.{lock}
+--glob=!{package-lock.json,tsconfig.tsbuildinfo,yarn-error.log}
+--glob=!{.DS_Store,.hg}

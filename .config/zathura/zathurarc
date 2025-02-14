@@ -15,8 +15,6 @@ set selection-clipboard clipboard
 # enable incremental search
 set incremental-search true
 
-set pages-per-row 2
-
 set smooth-scroll "true"
 
 # Recolor (dark mode)
@@ -24,8 +22,10 @@ set recolor-darkcolor "#FFFFFF"
 set recolor-lightcolor "#000000"
 map <C-r> recolor
 
-# Additional required settings for proper functionality
 set adjust-open "best-fit"
+# View odd pages on the left side
+set first-page-column "1:1"
+set pages-per-row 2
 set recolor false
 
 # Synctex (Ctrl + leftclick on pdf to go to relative place in latex source code in neovim)

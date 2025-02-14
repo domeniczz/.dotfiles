@@ -2,8 +2,23 @@
 # ENVIRONMENT VARIABLE
 # -----------------------------------------------------------------------------
 
+export VISUAL=nvim
+export EDITOR=nvim
+export PAGER=less
+export TERMINAL=ghostty
+
 export XDG_SESSION_TYPE=wayland
 export QT_WAYLAND_FORCE_DPI=physical
+export QT_ENABLE_HIGHDPI_SCALING=1
+export QT_QPA_PLATFORM=wayland
+
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+
+if [ "$XDG_SESSION_TYPE" == "wayland" ]; then
+  export MOZ_ENABLE_WAYLAND=1
+fi
 
 # -----------------------------------------------------------------------------
 # PATH
@@ -22,3 +37,8 @@ if [ -d "$HOME/.local/scripts" ]; then
     PATH="$PATH${script_paths}"
   fi
 fi
+
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) PATH="$HOME/.local/bin:$PATH" ;;
+esac

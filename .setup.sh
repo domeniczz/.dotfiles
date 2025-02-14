@@ -6,6 +6,7 @@
 sudo pacman -S --noconfirm --disable-download-timeout adobe-source-han-sans-cn-fonts
 # Other fonts
 sudo pacman -S --noconfirm --disable-download-timeout nerd-fonts
+# sudo pacman -S --noconfirm --disable-download-timeout noto-fonts
 
 
 ############################################################
@@ -106,8 +107,8 @@ sudo pacman -S --noconfirm --disable-download-timeout zsh
 chsh -l
 chsh -s /usr/bin/zsh
 
-sudo pacman -S --nocomfirm --disable-download-timeout cronie 
-sudo pacman -S --nocomfirm --disable-download-timeout bemenu-wayland 
+sudo pacman -S --nocomfirm --disable-download-timeout cronie
+sudo pacman -S --nocomfirm --disable-download-timeout bemenu-wayland
 sudo pacman -S --nocomfirm --disable-download-timeout neovim
 sudo pacman -S --nocomfirm --disable-download-timeout joshuto
 sudo pacman -S --nocomfirm --disable-download-timeout fd
@@ -117,7 +118,7 @@ sudo pacman -S --nocomfirm --disable-download-timeout btop
 sudo pacman -S --nocomfirm --disable-download-timeout bat
 sudo pacman -S --nocomfirm --disable-download-timeout eza
 sudo pacman -S --nocomfirm --disable-download-timeout zoxide
-sudo pacman -S --nocomfirm --disable-download-timeout man
+sudo pacman -S --nocomfirm --disable-download-timeout man-db
 sudo pacman -S --nocomfirm --disable-download-timeout tldr
 sudo pacman -S --nocomfirm --disable-download-timeout tree-sitter
 sudo pacman -S --nocomfirm --disable-download-timeout alacritty
@@ -228,6 +229,9 @@ sudo pacman -S --noconfirm --disable-download-timeout firefox
 
 sudo pacman -S --noconfirm --disable-download-timeout qutebrowser
 sudo pacman -S --noconfirm --disable-download-timeout qt6-wayland
+sudo pacman -S --noconfirm --disable-download-timeout python-adblock
+
+ln -s /usr/share/qutebrowser/scripts/open_url_in_instance.sh /home/domenic/.local/bin/qutebrowser
 
 
 #######################
@@ -256,14 +260,14 @@ yay -Sy visual-studio-code-bin
 ####################
 
 # pacman -S --nocomfirm --disable-download-timeout libxau libxi libxss libxtst libxcursor libxcomposite libxdamage libxfixes libxrandr libxrender mesa-libgl alsa-lib libglvnd
-# 
+#
 # is_anaconda_version_valid() {
 #   if [ -z "$1" ]; then
 #     return 1
 #   fi
 #   return 0
 # }
-# 
+#
 # while true; do
 #   echo -e "View a full list of Anaconda Distribution installers at https://repo.anaconda.com/archive/\nInput the anacoonda version (Anaconda3-<INSTALLER_VERSION>-Linux-x86_64.sh): "
 #   read anaconda_installer_version
@@ -273,12 +277,12 @@ yay -Sy visual-studio-code-bin
 #     echo "Invalid installer version"
 #   fi
 # done
-# 
+#
 # anaconda_installer_url="https://repo.anaconda.com/archive/Anaconda3-${anaconda_installer_version}-Linux-x86_64.sh"
 # echo "Downloading anaconda installer from: $anaconda_installer_url"
-# 
+#
 # curl -o "$anaconda_installer_url"
-# 
+#
 # bash Anaconda3-2024.10-1-Linux-x86_64.sh
 
 

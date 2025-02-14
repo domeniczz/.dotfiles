@@ -1,4 +1,3 @@
--- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
@@ -15,25 +14,52 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Make sure to setup `mapleader` and `maplocalleader` before
--- loading lazy.nvim so that mappings are correct.
--- This is also a good place to setup other settings (vim.opt)
--- vim.g.mapleader = " "
--- vim.g.maplocalleader = "\\"
-
--- Setup lazy.nvim
 require("lazy").setup({
   spec = {
-    -- import plugins
     { import = "config.plugins" },
   },
-  -- Configure any other settings here. See the documentation for more details.
-  -- colorscheme that will be used when installing plugins.
-  install = { colorscheme = { "habamax" } },
-  -- automatically check for plugin updates
+  defaults = {
+    lazy = false,
+  },
+  change_detection = {
+    notify = false,
+  },
   checker = {
-    enabled = true,  -- automatically check for plugin updates
-    notify = false,  -- get a notification when new updates are found
-    frequency = 7200, -- check for updates interval (seconds)
+    enabled = true,
+    notify = false,
+    frequency = 86400,
+  },
+  performance = {
+    cache = {
+      enabled = true,
+    },
+    reset_packpath = true,
+    rtp = {
+      reset = true,
+      disabled_plugins = {
+        -- "editorconfig",
+        "gzip",
+        "tarPlugin",
+        "zipPlugin",
+        "man",
+        -- "matchit",
+        -- "matchparen",
+        -- "osc52",
+        -- "shada",
+        "netrwPlugin",
+        "rplugin",
+        "spellfile",
+        "tohtml",
+        "tutor",
+      },
+    },
+  },
+  -- Only enable profiling when debugging lazy.nvim
+  profiling = {
+    -- Enables extra stats on the debug tab related to the loader cache.
+    -- Additionally gathers stats about all package.loaders
+    loader = false,
+    -- Track each new require in the Lazy profiling tab
+    require = false,
   },
 })

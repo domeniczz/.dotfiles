@@ -7,4 +7,4 @@
 --ignore="README.*"
 --ignore="LICENSE"
 --ignore=".stow-local-ignore"
---ignore=".setup.sh"
+--ignore="fcitx5"
