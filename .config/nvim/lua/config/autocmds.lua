@@ -84,7 +84,7 @@ autocmd("BufWritePre", {
 autocmd("BufReadPre", {
   group = augroup("largefile_performance_tweak"),
   callback = function()
-    if is_current_large_file(5120 * 1024) then
+    if require('config.utils').is_current_large_file(5120 * 1024) then
       local opt_local = vim.opt_local
       opt_local.spell = false
       opt_local.undofile = false

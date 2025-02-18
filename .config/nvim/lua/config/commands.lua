@@ -12,3 +12,7 @@ end, { desc = "clear all registers" })
 usercmd("Ypwd", function()
   vim.fn.setreg("+", vim.fn.expand("%:p"))
 end, { desc = "yank absolute path of current buffer" })
+
+usercmd("W", function()
+  require("config.utils").sudo_write()
+end, {bang = true})

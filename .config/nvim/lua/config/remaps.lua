@@ -67,8 +67,6 @@ map("v", "<leader>s", [[:s///gIc<Left><Left><Left><Left><Left>]])
 -- Make current file executable
 map("n", "<leader>x", "<CMD>!chmod +x %<CR>", { silent = true })
 
-map("n", "Q", _G.kill_buffer_or_close_window, { silent = true })
-
 -- Yank the whole file
 map({ "n", "v" }, "<leader>[", "<CMD>%y+<CR>")
 
@@ -91,3 +89,5 @@ map("n", "<leader>`", function()
   vim.api.nvim_win_set_height(0, terminal_height)
   vim.cmd("startinsert")
 end, { desc = "Open a small terminal at bottom" })
+
+map("n", "Q", require('config.utils').kill_buffer_or_close_window, { silent = true })

@@ -34,7 +34,7 @@ return {
             if disabled_languages[lang] then return true end
             -- Disable for large files
             local max_filesize = 200 * 1024
-            return is_current_large_file(
+            return require('config.utils').is_current_large_file(
               max_filesize,
               string.format("Treesitter disabled - file larger than %sKB", max_filesize / 1024)
             )

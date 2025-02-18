@@ -1,3 +1,11 @@
+-- ----------------------------------------------------------------------------
+-- Grep string under current working directory, and able to filter on files
+-- Example:
+--   `string  *.lua` to grep for "string" in only .lua files
+--
+-- Credit: Tj Devries
+-- ----------------------------------------------------------------------------
+
 local conf = require("telescope.config").values
 local finders = require("telescope.finders")
 local make_entry = require("telescope.make_entry")

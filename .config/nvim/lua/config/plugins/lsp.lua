@@ -20,7 +20,7 @@ return {
     },
     -- init = function()
     --   local max_filesize = 5120 * 1024
-    --   if is_current_large_file(max_filesize, string.format("LSP disabled - file larger than %sKB", max_filesize / 1024)) then
+    --   if require('config.utils').is_current_large_file(max_filesize, string.format("LSP disabled - file larger than %sKB", max_filesize / 1024)) then
     --     vim.b.lsp_enabled = false
     --     return
     --   end

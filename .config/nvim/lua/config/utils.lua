@@ -1,4 +1,6 @@
-function _G.get_current_file_size()
+local M = {}
+
+function M.get_current_file_size()
   local filepath = vim.fn.expand("%:p")
   if filepath == "" then return 0, false end
   local ok, stats = pcall(vim.loop.fs_stat, vim.fn.expand("%"))
@@ -6,7 +8,7 @@ function _G.get_current_file_size()
   return 0, false
 end
 
-function _G.is_current_large_file(max_filesize, prompt)
+function M.is_current_large_file(max_filesize, prompt)
   local filepath = vim.fn.expand("%:p")
   if filepath == "" then return false end
   local ok, stats = pcall(vim.loop.fs_stat, vim.fn.expand("%"))
@@ -21,7 +23,7 @@ function _G.is_current_large_file(max_filesize, prompt)
   return false
 end
 
-function _G.kill_buffer_or_close_window()
+function M.kill_buffer_or_close_window()
   if vim.fn.getcmdwintype() ~= "" then return vim.cmd("quit") end
 
   local current_win = vim.api.nvim_get_current_win()
@@ -51,16 +53,24 @@ function _G.kill_buffer_or_close_window()
   local should_quit = not has_valid_buffer
 
   local buf_to_close_directly = {
-    undotree = true,
-    fugitive = true,
-    netrw = true,
+    fugitive = { force = false },
+    netrw = { force = false },
+    harpoon = { force = true },
   }
   local buf_ft = vim.bo[current_buf].filetype
   if buf_to_close_directly[buf_ft] then
-    vim.api.nvim_buf_delete(current_buf, { force = false })
+    vim.api.nvim_buf_delete(current_buf, { force = buf_to_close_directly[buf_ft].force })
     return
-  elseif buf_ft == "harpoon" then
-    vim.api.nvim_buf_delete(current_buf, { force = true })
+  elseif buf_ft == "undotree" then
+    vim.cmd("UndotreeHide")
+    return
+  elseif buf_ft == "oil" then
+    if vim.bo[current_buf].modified then
+      vim.cmd("write")
+    else
+      vim.api.nvim_buf_delete(current_buf, { force = false })
+    end
+    if should_quit then vim.cmd("quit") end
     return
   end
 
@@ -89,3 +99,67 @@ function _G.kill_buffer_or_close_window()
 
   if should_quit then vim.cmd("quit") end
 end
+
+local function fast_event_aware_notify(msg, level, opts)
+  if vim.in_fast_event() then
+    vim.schedule(function()
+      vim.notify(msg, level, opts)
+    end)
+  else
+    vim.notify(msg, level, opts)
+  end
+end
+
+local function info(msg)
+  fast_event_aware_notify(msg, vim.log.levels.INFO, {})
+end
+
+local function warn(msg)
+  fast_event_aware_notify(msg, vim.log.levels.WARN, {})
+end
+
+local function err(msg)
+  fast_event_aware_notify(msg, vim.log.levels.ERROR, {})
+end
+
+local function sudo_exec(cmd, print_output)
+  vim.fn.inputsave()
+  local password = vim.fn.inputsecret("Password: ")
+  vim.fn.inputrestore()
+  if not password or #password == 0 then
+    warn("Invalid password, sudo aborted!")
+    return false
+  end
+  local out = vim.fn.system(string.format("sudo -p '' -S %s", cmd), password)
+  if vim.v.shell_error ~= 0 then
+    print("\r\n")
+    err(out)
+    return false
+  end
+  if print_output then print("\r\n", out) end
+  return true
+end
+
+-- Credit: ibhagwan
+function M.sudo_write(tmpfile, filepath)
+  if not tmpfile then tmpfile = vim.fn.tempname() end
+  if not filepath then filepath = vim.fn.expand("%") end
+  if not filepath or #filepath == 0 then
+    err("E32: No file name")
+    return
+  end
+  -- `bs=1048576` is equivalent to `bs=1M` for GNU dd or `bs=1m` for BSD dd
+  -- Both `bs=1M` and `bs=1m` are non-POSIX
+  local cmd = string.format("dd if=%s of=%s bs=1048576", vim.fn.shellescape(tmpfile), vim.fn.shellescape(filepath))
+  -- no need to check error as this fails the entire function
+  vim.api.nvim_exec2(string.format("write! %s", tmpfile), { output = true })
+  if sudo_exec(cmd) then
+    -- refreshes the buffer and prints the "written" message
+    vim.cmd.checktime()
+    -- exit command mode
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+  end
+  vim.fn.delete(tmpfile)
+end
+
+return M

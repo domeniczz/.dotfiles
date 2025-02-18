@@ -54,7 +54,7 @@ return {
     -- map("n", "<leader>ff", function() builtin.current_buffer_fuzzy_find({}) end, { desc = "find in current buffer" })
 
     map("n", "<leader>gd", function()
-      require("config.plugins.customs.multigrep")(themes.get_ivy({ layout_config = { height = 0.8 } }))
+      require("config.plugins.telescope.multigrep")(themes.get_ivy({ layout_config = { height = 0.8 } }))
     end, { desc = "grep content within cwd" })
     -- map("n", "<leader>gd", function() builtin.live_grep() end)
 
