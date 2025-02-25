@@ -130,7 +130,7 @@ c.completion.min_chars = 1
 ##   - bookmarks
 ##   - history
 ##   - filesystem
-c.completion.open_categories = ['searchengines', 'bookmarks', 'quickmarks', 'history', 'filesystem']
+c.completion.open_categories = ['bookmarks', 'quickmarks', 'history', 'searchengines', 'filesystem']
 
 ## Move on to the next part when there's only one possible completion
 ## left.
@@ -841,12 +841,12 @@ c.url.searchengines = {
     'DEFAULT': 'https://www.google.com/search?q={}',
 
     'g': 'https://www.google.com/search?q={}',
-    'bing': 'https://www.bing.com/search?q={}',
-    'brave': 'https://search.brave.com/search?q={}',
-    'ddg': 'https://duckduckgo.com/?q={}',
-    'sp': 'https://www.startpage.com/sp/search?query={}',
-    'disroot': 'https://search.disroot.org/?q={}',
-    'mojeek': 'https://www.mojeek.com/search?q={}&theme=light&t=40&arc=us&newtab=1&hp=minimal&date=1&cdate=1&qsba=1&tn=0&qss=Bing,Google,Yandex',
+    # 'bing': 'https://www.bing.com/search?q={}',
+    # 'brave': 'https://search.brave.com/search?q={}',
+    # 'ddg': 'https://duckduckgo.com/?q={}',
+    # 'sp': 'https://www.startpage.com/sp/search?query={}',
+    # 'disroot': 'https://search.disroot.org/?q={}',
+    # 'mojeek': 'https://www.mojeek.com/search?q={}&theme=light&t=40&arc=us&newtab=1&hp=minimal&date=1&cdate=1&qsba=1&tn=0&qss=Bing,Google,Yandex',
 
     'img': 'https://www.google.com/search?tbm=isch&q={}',
     'yt': 'http://www.youtube.com/results?search_query={}',
@@ -985,7 +985,7 @@ c.tabs.favicons.show = 'always'
 
 ## Maximum stack size to remember for tab switches (-1 for no maximum).
 ## Type: Int
-c.tabs.focus_stack_size = 5
+c.tabs.focus_stack_size = 1
 
 ## Padding (in pixels) for tab indicators.
 ## Type: Padding
@@ -1087,7 +1087,7 @@ c.tabs.position = 'top'
 ##   - prev: Select the tab which came before the closed one (left in horizontal, above in vertical).
 ##   - next: Select the tab which came after the closed one (right in horizontal, below in vertical).
 ##   - last-used: Select the previously selected tab.
-c.tabs.select_on_remove = 'next'
+c.tabs.select_on_remove = 'last-used'
 
 ## When to show the tab bar.
 ## Type: String
@@ -1985,6 +1985,7 @@ config.bind('<Escape>', 'mode-leave ;; jseval -q document.activeElement.blur()',
 config.bind('<Shift-Escape>', 'fake-key <Escape>', mode='insert')
 config.bind('<Shift-Ins>', 'insert-text -- {primary}', mode='insert')
 config.bind('<Ctrl-W>', 'tab-close', mode='insert')
+config.bind('<F5>', 'reload', mode='insert')
 
 ## Bindings for passthrough mode
 config.bind('<Shift-Escape>', 'mode-leave', mode='passthrough')
@@ -2650,9 +2651,6 @@ c.fonts.default_size = '10pt'
 # -----------------------------------------------------------------------------
 # Site specific settings
 # -----------------------------------------------------------------------------
-
-with config.pattern('*://freedium.cfd/*') as p:
-    p.content.headers.user_agent = 'Mozilla/5.0 ({os_info}) AppleWebKit/{webkit_version} (KHTML, like Gecko) {qt_key}/{qt_version} {upstream_browser_key}/{upstream_browser_version} Safari/{webkit_version}vi'
 
 with config.pattern('*://challenges.cloudflare.com/*') as p:
     p.content.headers.user_agent = 'Mozilla/5.0 ({os_info}) AppleWebKit/{webkit_version} (KHTML, like Gecko) {qt_key}/{qt_version} {upstream_browser_key}/{upstream_browser_version} Safari/{webkit_version}vi'

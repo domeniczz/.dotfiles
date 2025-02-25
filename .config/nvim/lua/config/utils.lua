@@ -52,14 +52,14 @@ function M.kill_buffer_or_close_window()
   end
   local should_quit = not has_valid_buffer
 
-  local buf_to_close_directly = {
+  local special_buf = {
     fugitive = { force = false },
     netrw = { force = false },
     harpoon = { force = true },
   }
   local buf_ft = vim.bo[current_buf].filetype
-  if buf_to_close_directly[buf_ft] then
-    vim.api.nvim_buf_delete(current_buf, { force = buf_to_close_directly[buf_ft].force })
+  if special_buf[buf_ft] then
+    vim.api.nvim_buf_delete(current_buf, { force = special_buf[buf_ft].force })
     return
   elseif buf_ft == "undotree" then
     vim.cmd("UndotreeHide")

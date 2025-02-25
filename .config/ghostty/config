@@ -72,3 +72,6 @@ theme = custom
 cursor-color = #FCFCFC
 cursor-text = #020202
 bold-is-bright = false
+
+keybind = f11=toggle_fullscreen
+keybind = ctrl+shift+comma=reload_config

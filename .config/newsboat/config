@@ -1,0 +1,6 @@
+auto-reload yes
+
+bind-key j next
+bind-key J next-feed
+bind-key k prev
+bind-key K prev-feed

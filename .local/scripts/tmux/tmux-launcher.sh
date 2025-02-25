@@ -7,7 +7,7 @@
 #   <script-name> [--program PROGRAM] [--mode MODE] ...
 #
 # Options:
-#   --program PROGRAM  Program to launch, USER_INPUT to let user specify
+#   --program PROGRAM  Program to launch, USER_INPUT, FZF_SEARCH
 #   --mode MODE        Launch mode: split, or newwin (default: newwin)
 #   --sudo             Run program with sudo privileges
 #   --path PATH        Path to start program in
@@ -45,6 +45,8 @@ while (($# > 0)); do
     --program)
       if [[ "$2" == "USER_INPUT" ]]; then
         PROGRAM=$(tmux command-prompt -p "Program to run:" "display-message -p '%%'")
+      elif [[ "$2" == "FZF_SEARCH" ]]; then
+        PROGRAM=$(find /usr/bin -type f -printf "%f\n" | fzf --prompt="launch: ")
       else
         PROGRAM="$2"
       fi

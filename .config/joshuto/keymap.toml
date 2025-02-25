@@ -104,6 +104,7 @@ keymap = [
   { keys = [";"], commands = [":"] },
 
   { keys = ["'"], commands = [":shell "] },
+  { keys = ["!"], commands = [":shell "] },
   { keys = ["ctrl+s"], commands = ["shell zsh"] },
   { keys = ["ctrl+g"], commands = ["shell lazygit"] },
   { keys = ["m", "k"], commands = [":mkdir "] },
@@ -113,7 +114,7 @@ keymap = [
   { keys = ["|"], commands = [":search_inc "] },
   { keys = ["\\"], commands = [":search_glob "] },
   { keys = ["F"], commands = ["search_fzf"] },
-  { keys = ["alt+F"], commands = ["subdir_fzf"] },
+  { keys = ["alt+f"], commands = ["subdir_fzf"] },
 
   { keys = ["n"], commands = ["search_next"] },
   { keys = ["N"], commands = ["search_prev"] },

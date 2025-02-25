@@ -3,6 +3,7 @@
 export SYSTEMD_EDITOR='nvim'
 
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
+export FZF_DEFAULT_OPTS_FILE="$HOME/.config/fzf/fzfrc"
 
 condainit() {
   local CONDA_BASE="$HOME/Programs"
@@ -51,10 +52,9 @@ elif command -v fd >/dev/null 2>&1; then
   export FZF_DEFAULT_COMMAND="fd --type file --hidden --exclude .git"
   export FZF_ALT_C_COMMAND="fd --type directory --hidden"
 fi
-export FZF_BINDING="--bind='ctrl-j:preview-down,ctrl-k:preview-up'"
-export FZF_DEFAULT_OPTS="$FZF_BINDING --multi --cycle --height 60% --preview-window 'right:60%' --border"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_CTRL_T_OPTS="--preview 'bat --number --color=always --line-range :500 {}'"
+export FZF_CTRL_T_OPTS="--preview 'bat --line-range :500 {}' --walker-skip .git,node_modules"
+export FZF_CTRL_R_OPTS="--layout=reverse --height 25% --border=top --scroll-off=0 --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'"
 export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} | head -200'"
 # Advanced customization
 # - The first argument to the function is the name of the command.
@@ -66,7 +66,7 @@ _fzf_comprun() {
     cd)           fzf --preview 'eza --tree --level=2 --color=always {} | head -200' "$@" ;;
     export|unset) fzf --preview "eval 'echo $'{}"         "$@" ;;
     ssh)          fzf --preview 'dig {}'                   "$@" ;;
-    *)            fzf --preview "bat --number --color=always --line-range :500 {}" "$@" ;;
+    *)            fzf --preview "bat -line-range :500 {}" "$@" ;;
   esac
 }
 # Searching Git objects
@@ -88,4 +88,4 @@ fi
 # eval $(thefuck --alias fk)
 eval "$(zoxide init $(ps -p $$ -o comm=))"
 
-export BAT_THEME=tokyonight_night
+# eval "$(starship init $(ps -p $$ -o comm=))"

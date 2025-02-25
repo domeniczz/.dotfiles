@@ -35,6 +35,7 @@ _darcs
 
 ^/README.*
 ^/LICENSE.*
-^/COPYING
+^/COPYING.*
 ^/GUIDES.*
 ^/VIM.*
+^/BASH.*

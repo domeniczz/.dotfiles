@@ -3,7 +3,7 @@
 
 HISTFILE=$HOME/.zsh_history
 HISTSIZE=1000
-SAVEHIST=10000
+SAVEHIST=50000
 HISTCONTROL=ignoreboth
 
 # -----------------------------------------------------------------------------
@@ -29,7 +29,7 @@ ZSH_THEME="robbyrussell"
 # DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 plugins=(
-  git
+  # git
   zsh-autosuggestions
   vi-mode
 )
@@ -64,7 +64,7 @@ precmd_functions+=(zshrc_load_hook)
 # Enable vi mode in zsh
 bindkey -v
 
-[[ -n $INCOGNITO ]] && unset HISTFILE && PROMPT="[Incognito] %~ "
+[[ -n $INCOGNITO ]] && SAVEHIST=0 && PROMPT="%F{blue}[Incognito]%f %~ %F{green}x%f "
 
 source $HOME/.config/shell/shellrc
 source $HOME/.config/shell/alias

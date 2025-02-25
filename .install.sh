@@ -67,8 +67,15 @@ declare -a PACMAN_PKGS=(
   "zathura-pdf-mupdf"
   # "libreoffice-still"
 
+  "linuxqq"
+  "wechat-bin"
+  "dingtalk-bin"
+  "discord_arch_electron"
+
   "v2ray"
   "v2raya"
+
+  # "localsend"
 
   "texlive-latex"
   "texlive-latexextra"
@@ -90,9 +97,16 @@ declare -a PACMAN_PKGS=(
   "udisk2"
   "udiskie"
 
+  "wine"
+  "winetricks"
+  "wine-mono"
+  "wine-gecko"
+  "lib32-pipewire"
+  "lib32-libpulse"
+
   "rclone"
 
-  "timeshift-autosnap"
+  "yt-dlp"
 
   "lua-language-server"
   "pyright"
@@ -100,8 +114,10 @@ declare -a PACMAN_PKGS=(
 )
 
 declare -a YAY_PKGS=(
+  "smem"
   # "visual-studio-code-bin"
   "spotify"
+  "spotify-player-full"
 )
 
 log_message() {

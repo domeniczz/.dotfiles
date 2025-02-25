@@ -1,4 +1,4 @@
-alias update="sudo pacman -Syu && yay"
+alias update="sudo pacman -Sy --needed archlinux-keyring archlinuxcn-keyring && sudo pacman -Syu && yay -Sua"
 alias vi="nvim"
 alias grep="command grep --color=auto"
 alias rm="command rm -I"
@@ -30,6 +30,8 @@ alias reboot="systemctl reboot"
 
 alias myip="ip address | rg --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
 
+alias spp="pgrep spotify_player || spotify_player --daemon"
+
 alias fvi="fzf --prompt='nvim open: ' --bind='enter:execute(nvim {+})' --preview 'bat --number --color=always --line-range :500 {}' --height 80%"
 alias ftr="realpath * | fzf --prompt='ftree: ' --preview 'command tree -L1 {}'"
 alias fgl="git log | rg '^commit ' | cut -d' ' -f2 | fzf --prompt='git commit: ' --preview 'git show {} | bat --number --color=always' --height 80%"
@@ -38,7 +40,11 @@ alias fpi="pacman -Qq | fzf --prompt='package info: ' --preview 'pacman -Qi {}'"
 alias fpc="pacman -Qq | fzf --prompt='package cache: ' --preview 'command ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst'"
 
 fps() {
-  pacman -Ss "$1" | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='package search: ' --preview 'pacman -Si {}'
+  pacman -Ss $1 | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='package search: ' --preview 'pacman -Si {}'
+}
+
+yfps() {
+  yay -Ss $1 | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='aur package search: ' --preview 'yay -Si {}'
 }
 
 ramu() {

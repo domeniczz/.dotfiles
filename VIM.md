@@ -32,8 +32,8 @@
 `-` - move up one line and position cursor at first non-blank char  
 `+` - move down one line and position cursor at first non-blank char
 
-`g;` - jump to the last editing place  
-`g,` - jump to the previous editing place
+`g;` - jump to the older position in change list  
+`g,` - jump to the newer position in change list 
 
 `H` `L` `M` - move the cursor to the top / bottom / middle of the viewport
 
@@ -53,8 +53,6 @@
 `'<lowercase-letter>` - jump to the mark with the lowercase letter  
 `m<upper-letter>` - mark position under cursor with the upper letter (scope is current vim session)  
 `'<upper-letter>` - jump to the mark with the upper letter, even the mark is at a different buffer
-
----
 
 # Insert
 
@@ -80,8 +78,6 @@
 {INSERT}`Ctrl-x Ctrl-l` - complete current line by searching backwards for lines starting with same text  
 {INSERT}`Ctrl-x Ctrl-f` - complete the file name
 
----
-
 # Visual
 
 `o` - switch selection direction
@@ -92,8 +88,6 @@
 `va<surround>` - select within and including the surrounding  
 `vib` - select within ()  
 `viB` - select within {}
-
----
 
 # Change
 
@@ -112,7 +106,9 @@
 `D` - Delete from cursor to eol  
 `dt<char>` - delete till the character
 
----
+# Repeat
+
+`.` - repeat the last command
 
 # Fold
 
@@ -127,8 +123,6 @@
 `zM` - close all folds  
 `zR` - open all folds
 
----
-
 # Miscellaneous
 
 `gf` - open file  
@@ -142,8 +136,6 @@
 
 `Ctrl-z` - put vim into background so we could return to terminal without quitting vim, and restore with command `fg` in terminal
 
----
-
 # Cmdline
 
 `:find<filename>` - find for files under cwd, you could use *, e.g. `:find *.md` search for filenames start or end with ".md"
@@ -154,15 +146,11 @@
 `:mksession <filename>` - save current vim session as "filename" file  
 `source <filename>` - restore the saved session
 
----
-
-# Neovim specific
+# Neovim
 
 `gcc` - toggle comment on current line  
 `gc`{motion} - toggle comment on lines covered by motion  
 {VISUAL}`gc` - toggle comment on selection
-
----
 
 # Reference
 

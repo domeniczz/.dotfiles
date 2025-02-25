@@ -515,6 +515,7 @@ user_pref("dom.enable_web_task_scheduling", true);
 user_pref("layout.css.has-selector.enabled", true);
 user_pref("dom.security.sanitizer.enabled", true);
 
+user_pref("gfx.webrender.compositor.force-enabled", true);
 
 // user_pref("layers.acceleration.force-enabled", true);
 // user_pref("layers.async-video.enabled", true);

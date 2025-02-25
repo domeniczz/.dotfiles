@@ -44,7 +44,7 @@ menu_cmd="rg --files --hidden --no-require-git | bemenu \
   --af \"#ffffff\" \
   --nf \"#ffffff\""
 
-DEBUG=false
+DEBUG=0
 FILE=""
 
 # -----------------------------------------------------------------------------
@@ -52,7 +52,7 @@ FILE=""
 # -----------------------------------------------------------------------------
 
 debug_log() {
-  if [[ -n "$DEBUG" ]]; then
+  if (( $DEBUG == 1 )); then
     echo "$(date): $1" | tee -a "/tmp/openfile.log"
   fi
 }
@@ -65,7 +65,6 @@ notify() {
   fi
 }
 
-# Launch application and detach
 launch_detached() {
   local cmd="$1"
   debug_log "Launching detached: $cmd"
@@ -84,12 +83,11 @@ Options:\n\
 
 
 get_terminal() {
-  if command -v alacritty >/dev/null 2>&1; then
-    echo "alacritty"
-  elif command -v foot >/dev/null 2>&1; then
-    echo "foot"
+  if [[ -n $TERMINAL ]]; then
+    echo "$TERMINAL"
+    return
   else
-    notify "Error" "No terminal emulator found"
+    notify "Error" "No terminal emulator specified"
     exit 1
   fi
 }
@@ -112,9 +110,9 @@ while (($# > 0)); do
       ;;
     --debug)
       if [[ "$2" == "true" ]]; then
-        DEBUG=true
+        DEBUG=1
       elif [[ "$2" == "false" ]]; then
-        DEBUG=false
+        DEBUG=0
       else
         echo "Error: --debug requires 'true' or 'false'"
         show_usage_help
@@ -132,7 +130,6 @@ done
 # Initializations and validations
 # -----------------------------------------------------------------------------
 
-# Get file path
 if [[ -z "$FILE" ]]; then
   FILE=$(eval $menu_cmd)
   if [[ -z "$FILE" ]]; then
@@ -141,8 +138,7 @@ if [[ -z "$FILE" ]]; then
   fi
 fi
 
-# Setup debug logging if enabled
-if [[ -n "$DEBUG" ]]; then
+if (( $DEBUG == 1 )); then
   exec 1> >(tee -a "/tmp/openfile.log")
   exec 2>&1
   debug_log "Script started with file: $FILE"
@@ -209,8 +205,7 @@ case "$mime_type" in
     debug_log "Unknown file type, showing menu"
     action=$(echo -e "Open with editor\nExecute\nCancel" | bemenu \
       --prompt "How to open?" \
-      --list 3 \
-      --center)
+      --list 3)
 
     debug_log "User selected: $action"
     case "$action" in

@@ -4,7 +4,5 @@
 --target=$HOME
 --dir=$HOME/.dotfiles
 --ignore=".git"
---ignore="README.*"
---ignore="LICENSE"
 --ignore=".stow-local-ignore"
 --ignore="fcitx5"

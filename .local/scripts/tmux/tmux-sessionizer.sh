@@ -5,9 +5,9 @@ if (($# > 1)); then
 else
   places="$HOME/Work $HOME/Personal $HOME/Personal/repository $HOME/Clones"
   if command -v fd >/dev/null 2>&1; then
-    selected=$(fd . $places --min-depth 1 --max-depth 1 --type d | fzf)
+    selected=$(fd . $places --min-depth 1 --max-depth 1 --type d | fzf --prompt="sessionizer: ")
   else
-    selected=$(find $places -mindepth 1 -maxdepth 1 -type d | fzf)
+    selected=$(find $places -mindepth 1 -maxdepth 1 -type d | fzf --prompt="sessionizer: ")
   fi
 fi
 
