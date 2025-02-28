@@ -39,9 +39,15 @@ get_all_network_interfaces
 
 monitor_active_interfaces() {
   while true; do
+    if ((${#NETWORK_INTERFACES[@]} == 0)); then
+      echo "" > $NETWORK_INTERFACE_FILE
+      sleep 5
+      get_all_network_interfaces
+      continue
+    fi
     for iface in "${NETWORK_INTERFACES[@]}"; do
       if [[ -f "/sys/class/net/${iface}/operstate" ]]; then
-        state=$(<"/sys/class/net/${iface}/operstate")
+        state=$(timeout 0.2s cat "/sys/class/net/${iface}/operstate")
         if [[ "$state" == "up" ]]; then
           echo "${iface}" > $NETWORK_INTERFACE_FILE
         else
@@ -61,13 +67,10 @@ monitor_active_interfaces &
 
 get_bluetooth() {
   local bluetooth_device icon
-  BLUETOOTH_COUNT=$(bluetoothctl devices Connected | wc -l)
-  if ((BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT)); then
-    playerctl pause
-  fi
-  BLUETOOTH_PREV_COUNT=$BLUETOOTH_COUNT
+  BLUETOOTH_COUNT=$(timeout 0.2s bluetoothctl devices Connected | wc -l || echo "-1")
+  ((BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT)) && timeout 0.2s playerctl pause
   if ((BLUETOOTH_COUNT > 0)); then
-    bluetooth_device=$(bluetoothctl devices Connected | cut -d' ' -f3-)
+    bluetooth_device=$(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "Error")
     icon=${bluetooth_icons[1]}
   else
     icon=${bluetooth_icons[0]}
@@ -81,10 +84,10 @@ get_internet_speed() {
   local time_diff=$((current_time - PREV_SPEED_TIME))
   ((time_diff < 1)) && return
   local active_interface
-  [[ -f "$NETWORK_INTERFACE_FILE" ]] && active_interface=$(<"$NETWORK_INTERFACE_FILE")
+  [[ -f "$NETWORK_INTERFACE_FILE" ]] && active_interface=$(timeout 0.2s cat "$NETWORK_INTERFACE_FILE" || echo "Error")
   if [[ -n "$active_interface" ]]; then
-    local rx_bytes=$(< "/sys/class/net/$active_interface/statistics/rx_bytes")
-    local tx_bytes=$(< "/sys/class/net/$active_interface/statistics/tx_bytes")
+    local rx_bytes=$(timeout 0.2s cat "/sys/class/net/$active_interface/statistics/rx_bytes" || echo "0")
+    local tx_bytes=$(timeout 0.2s cat "/sys/class/net/$active_interface/statistics/tx_bytes" || echo "0")
     if ((PREV_RX_BYTES > 0)); then
       local rx_speed=$(((rx_bytes - PREV_RX_BYTES) / time_diff))
       local tx_speed=$(((tx_bytes - PREV_TX_BYTES) / time_diff))
@@ -127,7 +130,8 @@ format_network_speed() {
 i3status | while :
 do
   read line
-  get_internet_speed
-  get_bluetooth
+  for func in get_internet_speed get_bluetooth; do
+    $func || true
+  done
   echo "$line" | sed 's|{\"name|'"${FUNC_OUTPUTS[internet_speed]}${FUNC_OUTPUTS[bluetooth]}"'{\"name|' || exit 1
 done
