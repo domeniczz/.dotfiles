@@ -1,71 +1,81 @@
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
+PROMPT="%K{#3a4055}%F{#f0f0f0} %n %K{#4c566a} %3~ %f%k ❯ "
+
 HISTFILE=$HOME/.zsh_history
-HISTSIZE=1000
-SAVEHIST=50000
+HISTSIZE=2000
+SAVEHIST=100000
 HISTCONTROL=ignoreboth
+KEYTIMEOUT=5
 
-# -----------------------------------------------------------------------------
-# Oh-my-zsh config
-# -----------------------------------------------------------------------------
+((INCOGNITO == 1)) && SAVEHIST=0 && PROMPT="%K{#1b527e}%F{#f0f0f0} incognito %f%k$PROMPT"
 
-export ZSH="$HOME/.oh-my-zsh"
+setopt append_history inc_append_history share_history extended_history
+setopt hist_ignore_space hist_reduce_blanks hist_verify
+setopt autocd
 
-ZSH_THEME="robbyrussell"
+bindkey -v
 
-# Case-sensitive completion.
-# CASE_SENSITIVE="true"
-
-# Hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
-
-# Command auto-correction.
-# ENABLE_CORRECTION="true"
-
-# Disable marking untracked files under VCS as dirty.
-# This makes repository status check for large repositories much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-plugins=(
-  # git
-  zsh-autosuggestions
-  vi-mode
-)
-
-source $ZSH/oh-my-zsh.sh
-
-# VI-Mode
-VI_MODE_SET_CURSOR=true
-VI_MODE_CURSOR_NORMAL=4
-VI_MODE_CURSOR_INSERT=2
-
-# -----------------------------------------------------------------------------
-# Zsh scripts
-# -----------------------------------------------------------------------------
-
-zstyle ':completion:*' menu select completer _expand _complete _ignored _approximate
+zstyle ":completion:*" menu select completer _expand _complete _ignored _approximate
 zstyle :compinstall filename "$HOME/.zshrc"
 autoload -Uz compinit; compinit
 
-# Reliably re-bind Shift+Tab for zsh-autosuggestion acceptance
-# Executes only once at initial prompt and self-terminates, minimal runtime overhead
-# Can maintaining binding persistence against potential conflicts from oh-my-zsh
-function zshrc_load_hook() {
-  [[ -n "${precmd_functions[(r)zshrc_load_hook]}" ]] && {
-    bindkey -r '^[[Z'
-    bindkey '^[[Z' autosuggest-accept
-    precmd_functions[(r)zshrc_load_hook]=()
-  }
+source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# Create a zkbd compatible hash for terminfo key mapping
+typeset -g -A key
+
+key[Home]="${terminfo[khome]}"
+key[End]="${terminfo[kend]}"
+key[Insert]="${terminfo[kich1]}"
+key[Backspace]="${terminfo[kbs]}"
+key[Delete]="${terminfo[kdch1]}"
+key[Up]="${terminfo[kcuu1]}"
+key[Down]="${terminfo[kcud1]}"
+key[Left]="${terminfo[kcub1]}"
+key[Right]="${terminfo[kcuf1]}"
+key[PageUp]="${terminfo[kpp]}"
+key[PageDown]="${terminfo[knp]}"
+key[Shift-Tab]="${terminfo[kcbt]}"
+
+# Set key bindings by using string capabilities from terminfo
+[[ -n "${key[Home]}"      ]] && bindkey -- "${key[Home]}"       beginning-of-line
+[[ -n "${key[End]}"       ]] && bindkey -- "${key[End]}"        end-of-line
+[[ -n "${key[Insert]}"    ]] && bindkey -- "${key[Insert]}"     overwrite-mode
+[[ -n "${key[Backspace]}" ]] && bindkey -- "${key[Backspace]}"  backward-delete-char
+[[ -n "${key[Delete]}"    ]] && bindkey -- "${key[Delete]}"     delete-char
+[[ -n "${key[Up]}"        ]] && bindkey -- "${key[Up]}"         up-line-or-history
+[[ -n "${key[Down]}"      ]] && bindkey -- "${key[Down]}"       down-line-or-history
+[[ -n "${key[Left]}"      ]] && bindkey -- "${key[Left]}"       backward-char
+[[ -n "${key[Right]}"     ]] && bindkey -- "${key[Right]}"      forward-char
+[[ -n "${key[PageUp]}"    ]] && bindkey -- "${key[PageUp]}"     beginning-of-buffer-or-history
+[[ -n "${key[PageDown]}"  ]] && bindkey -- "${key[PageDown]}"   end-of-buffer-or-history
+[[ -n "${key[Shift-Tab]}" ]] && bindkey -- "${key[Shift-Tab]}"  autosuggest-accept
+
+# Fallback binding, will be overridden by the terminfo bindings if available
+bindkey "^?" backward-delete-char
+bindkey "^[[3~" delete-char
+bindkey "^[[Z" autosuggest-accept
+
+function zle-line-init {
+  echo -ne '\e[2 q'
 }
-precmd_functions+=(zshrc_load_hook)
+zle -N zle-line-init
 
-# Enable vi mode in zsh
-bindkey -v
+function zle-keymap-select {
+  case $KEYMAP in
+    vicmd)
+      echo -ne '\e[4 q'
+      ;;
+    viins|main)
+      echo -ne '\e[2 q'
+      ;;
+  esac
+}
+zle -N zle-keymap-select
 
-[[ -n $INCOGNITO ]] && SAVEHIST=0 && PROMPT="%F{blue}[Incognito]%f %~ %F{green}x%f "
-
-source $HOME/.config/shell/shellrc
-source $HOME/.config/shell/alias
-source $HOME/.config/shell/teleport
+source $XDG_CONFIG_HOME/shell/shellrc
+source $XDG_CONFIG_HOME/shell/alias
+source $XDG_CONFIG_HOME/shell/teleport

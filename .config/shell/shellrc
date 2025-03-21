@@ -7,7 +7,6 @@ export FZF_DEFAULT_OPTS_FILE="$HOME/.config/fzf/fzfrc"
 
 condainit() {
   local CONDA_BASE="$HOME/Programs"
-
   if [[ -f "$CONDA_BASE/miniconda3/bin/activate" ]]; then
     source "$CONDA_BASE/miniconda3/bin/activate"
     return 0
@@ -28,12 +27,12 @@ nvminit() {
 
 # Change the current working directory when exiting Yazi
 function y() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-	yazi "$@" --cwd-file="$tmp"
-	if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-		builtin cd -- "$cwd"
-	fi
-	rm -f -- "$tmp"
+  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+  yazi "$@" --cwd-file="$tmp"
+  if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+    builtin cd -- "$cwd"
+  fi
+  rm -f -- "$tmp"
 }
 
 # if command -v tmux &> /dev/null; then
@@ -46,16 +45,17 @@ function y() {
 
 # Setup fzf keybinding and fuzzy completion
 eval "$(fzf --$(ps -p $$ -o comm=))"
-if command -v rg >/dev/null 2>&1; then
-  export FZF_DEFAULT_COMMAND="rg --files --hidden --no-require-git --smart-case --follow"
-elif command -v fd >/dev/null 2>&1; then
+if command -v fd >/dev/null 2>&1; then
   export FZF_DEFAULT_COMMAND="fd --type file --hidden --exclude .git"
   export FZF_ALT_C_COMMAND="fd --type directory --hidden"
+elif command -v find >/dev/null 2>&1; then
+  export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/.git/*' -not -name '.git'"
+  export FZF_ALT_C_COMMAND="find . -type d"
 fi
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_CTRL_T_OPTS="--preview 'bat --line-range :500 {}' --walker-skip .git,node_modules"
+export FZF_CTRL_T_OPTS="--border --height=60% --preview 'bat --line-range :500 {}' --walker-skip .git,node_modules"
 export FZF_CTRL_R_OPTS="--layout=reverse --height 25% --border=top --scroll-off=0 --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'"
-export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} | head -200'"
+export FZF_ALT_C_OPTS="--border --height=60% --preview 'eza --tree --color=always {} | head -200'"
 # Advanced customization
 # - The first argument to the function is the name of the command.
 # - You should make sure to pass the rest of the arguments to fzf.
@@ -80,12 +80,9 @@ _fzf_comprun() {
 # - CTRL-G-L for reflogs
 # - CTRL-G-W for Worktrees
 # - CTRL-G-E for Each ref (git for-each-ref)
-if [ -f $HOME/clone/fzf-git.sh/fzf-git.sh ]; then
-  source $HOME/clone/fzf-git.sh/fzf-git.sh
-fi
+# [[ -f $HOME/Clones/fzf-git.sh/fzf-git.sh ]] && source $HOME/Clones/fzf-git.sh/fzf-git.sh
 
 # eval $(thefuck --alias)
 # eval $(thefuck --alias fk)
 eval "$(zoxide init $(ps -p $$ -o comm=))"
-
 # eval "$(starship init $(ps -p $$ -o comm=))"

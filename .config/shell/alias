@@ -1,16 +1,17 @@
 alias update="sudo pacman -Sy --needed archlinux-keyring archlinuxcn-keyring && sudo pacman -Syu && yay -Sua"
-alias vi="nvim"
+alias vi="$EDITOR"
 alias grep="command grep --color=auto"
 alias rm="command rm -I"
 alias python="python3"
 alias tmuxa="tmux new-session -A -s general"
-alias ls="eza --group-directories-first --color=always --git --git-repos-no-status --long --no-filesize"
+alias ls="eza --group-directories-first --color=always --git --git-repos-no-status --long"
 alias cd="z"
-alias cat="bat --number --color=always"
+alias cat="bat --plain --paging=never --wrap=never --color=auto"
 
-alias ..="z .."
-alias ...="z ../.."
+alias ..="cd .."
+alias ...="cd ../.."
 
+alias gs="git status"
 alias ga="git add"
 alias gac="git add . && git commit"
 alias gl="git log --graph --all --abbrev-commit"
@@ -30,21 +31,20 @@ alias reboot="systemctl reboot"
 
 alias myip="ip address | rg --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
 
-alias spp="pgrep spotify_player || spotify_player --daemon"
-
-alias fvi="fzf --prompt='nvim open: ' --bind='enter:execute(nvim {+})' --preview 'bat --number --color=always --line-range :500 {}' --height 80%"
-alias ftr="realpath * | fzf --prompt='ftree: ' --preview 'command tree -L1 {}'"
-alias fgl="git log | rg '^commit ' | cut -d' ' -f2 | fzf --prompt='git commit: ' --preview 'git show {} | bat --number --color=always' --height 80%"
-alias fglf="fzf --prompt='git commit: ' --preview 'git log --follow -p {} | bat --number --color=always' --height 80%"
-alias fpi="pacman -Qq | fzf --prompt='package info: ' --preview 'pacman -Qi {}'"
-alias fpc="pacman -Qq | fzf --prompt='package cache: ' --preview 'command ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst'"
+alias fman='man -k . | fzf --bind="enter:become(awk '\''{print \$1}'\'' <<< {} | xargs -r man)"'
+alias fvi="fzf --prompt='$EDITOR open > ' --bind='enter:execute($EDITOR {+})' --preview 'bat --number --color=always --line-range :500 {}' --height 80%"
+alias ftr="realpath * | fzf --prompt='ftree > ' --preview 'command tree -L1 {}'"
+alias fgl="git log | rg '^commit ' | cut -d' ' -f2 | fzf --prompt='git commit > ' --preview 'git show {} | bat --number --color=always --language=diff --theme=base16' --height 80%"
+alias fglf="fzf --prompt='git file hist > ' --preview 'git log --follow -p {} | bat --number --color=always --language=diff --theme=base16' --height 80%"
+alias fpi="pacman -Qq | fzf --prompt='package info > ' --preview 'pacman -Qi {}'"
+alias fpc="pacman -Qq | fzf --prompt='package cache > ' --preview 'command ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst'"
 
 fps() {
-  pacman -Ss $1 | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='package search: ' --preview 'pacman -Si {}'
+  pacman -Ss $1 | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='package search > ' --preview 'pacman -Si {}'
 }
 
 yfps() {
-  yay -Ss $1 | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='aur package search: ' --preview 'yay -Si {}'
+  yay -Ss $1 | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='aur package search > ' --preview 'yay -Si {}'
 }
 
 ramu() {
@@ -55,3 +55,6 @@ ramu() {
   processes=$(printf "%s|" "$@" | sed 's/|$//')
   ps -axo rss,command | command grep -iE "$processes" | command grep -v grep | awk 'NR>1 {sum+=$1} END {printf "Total RAM usage: %d MB\n", sum/1024}'
 }
+
+alias rmpkgcache="sudo paccache -vruk0 && sudo paccache -vrk2"
+alias rmorphan="pacman -Qdtq | xargs --no-run-if-empty sudo pacman -Rns"
