@@ -4,7 +4,5 @@
 --smart-case
 --multi
 --min-height=10+
---height 60%
 --preview-window 'right:60%'
---border
 --highlight-line

@@ -1,5 +1,8 @@
+let g:netrw_home = $XDG_DATA_HOME."/vim"
+
 syntax on
-set number relativenumber
+set number
+set relativenumber
 " set wildmenu
 " set wildmode=longest:list,full
 " set autoindent " Minimal automatic indenting for any filetype.
@@ -24,6 +27,8 @@ endif
 
 set undodir=$HOME/.vim/undodir
 set undofile
+
+set viminfofile=$XDG_DATA_HOME/vim/viminfo
 
 " set statusline=%f\ %m%=%l:%c\ %P
 

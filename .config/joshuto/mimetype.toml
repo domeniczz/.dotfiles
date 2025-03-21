@@ -2,16 +2,16 @@
 audio_default = [
   { command = "mpv", args = [
     "--",
-  ] },
+  ], fork = true, silent = true },
   { command = "mediainfo", pager = true },
 ]
 
 image_default = [
-  { command = "swayimg", args = [
-    "--",
-  ], fork = true, silent = true },
   { command = "imv", args = [
     "--",
+  ], fork = true, silent = true },
+  { command = "swayimg", args = [
+      "--",
   ], fork = true, silent = true },
   { command = "qimgv", args = [
     "--",
