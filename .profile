@@ -6,6 +6,8 @@ export VISUAL=nvim
 export EDITOR=nvim
 export PAGER=less
 export TERMINAL=ghostty
+export SYSTOP=btop
+export FILEMANAGER=vifm
 
 export XDG_SESSION_TYPE=wayland
 export QT_WAYLAND_FORCE_DPI=physical
