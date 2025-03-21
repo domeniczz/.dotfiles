@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-# -----------------------------------------------------------------------------
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
 # Launch programs within tmux
 #
 # Usage:
@@ -18,7 +20,7 @@
 #   ./<script-name> --mode split
 #   ./<script-name> --mode newwin --sudo
 #   ./<script-name> --program htop --sudo
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 LAUNCH_MODE="newwin"
 PROGRAM=""
@@ -27,11 +29,11 @@ WIN_NAME=""
 START_PATH=$(tmux display-message -p "#{pane_current_path}")
 SPLIT_PCT=0
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Aruguments parsing
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-while (($# > 0)); do
+while (( $# > 0 )); do
   case $1 in
     --mode)
       if [[ $2 =~ ^(split|newwin)$ ]]; then
@@ -46,7 +48,7 @@ while (($# > 0)); do
       if [[ "$2" == "USER_INPUT" ]]; then
         PROGRAM=$(tmux command-prompt -p "Program to run:" "display-message -p '%%'")
       elif [[ "$2" == "FZF_SEARCH" ]]; then
-        PROGRAM=$(find /usr/bin -type f -printf "%f\n" | fzf --prompt="launch: ")
+        PROGRAM=$(fd . /usr/bin --type f --color=never --format="{/}" | fzf-tmux -p "40%,60%" --prompt="launch: ") || exit 0
       else
         PROGRAM="$2"
       fi
@@ -77,9 +79,9 @@ done
 # Default window name to program name if empty
 WIN_NAME=${WIN_NAME:-$PROGRAM}
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Additional handling
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # If the program to launch is lazygit, get the git root path (launch in the root path of the git repo)
 # If can not find a git root path, then display a message
@@ -89,7 +91,6 @@ if [[ "$PROGRAM" == "lazygit" ]]; then
     local path="$1"
     local iterations=0
     local home_path=$(realpath $HOME)
-
     while [ "$iterations" -lt "$max_iterations" ]; do
       # Check if we've reached or passed HOME directory
       if [[ "$(realpath "$path")" == "$home_path" || "$(realpath "$path")" == "/" ]]; then
@@ -107,33 +108,27 @@ if [[ "$PROGRAM" == "lazygit" ]]; then
       fi
       # Move to parent directory
       path="$(dirname "$path")"
-      ((iterations++))
+      (( iterations++ ))
     done
-
     return 1
   }
-  # Call the function to get git root directory
-  START_PATH=$(find_git_root "$START_PATH")
-  # If not found, then exit
-  res=$?
-  if [[ $res -ne 0 || -z "$START_PATH" ]]; then
+  START_PATH=$(find_git_root "$START_PATH") || {
     tmux display-message -d 1000 "No git repository found"
-    exit
-  fi
+    exit 0
+  }
 fi
 
-# ------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Launch logic
-# ------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 if ! command -v $PROGRAM >/dev/null 2>&1; then
   echo "'$PROGRAM' is not installed!"
   exit 1
 fi
 
-if (($USE_SUDO == 1)); then
-  # Preserve user's existing environment variables
-  CMD="sudo -E $PROGRAM"
+if (( $USE_SUDO == 1 )); then
+  CMD="sudo --preserve-env $PROGRAM"
 else
   CMD="$PROGRAM"
 fi
@@ -147,29 +142,13 @@ if [[ "$LAUNCH_MODE" = "newwin" && -n "$START_PATH" ]]; then
 fi
 
 if [[ "$LAUNCH_MODE" = "split" && -n "$START_PATH" ]]; then
-  if ((SPLIT_PCT == 0)) then
+  if (( SPLIT_PCT == 0 )) then
     # Caluclate the optimal percentage taken by the new tmux pane (ideal pane_width 155)
     # Percantage range is [40, 70]
     current_pane_width=$(tmux display-message -p "#{pane_width}")
-    ideal_pct=$((155 * 100 / current_pane_width))
-    SPLIT_PCT=$((ideal_pct < 40 ? 40 : ideal_pct > 70 ? 70 : ideal_pct))
+    ideal_pct=$(( 155 * 100 / current_pane_width ))
+    SPLIT_PCT=$(( ideal_pct < 40 ? 40 : ideal_pct > 70 ? 70 : ideal_pct ))
   fi
   tmux split-window -h -p "$SPLIT_PCT" -c "$START_PATH" "$CMD"
   exit
 fi
-
-# # Get the current pane's PID
-# pane_pid=$(tmux display-message -p '#{pane_pid}')
-#
-# # Check if vim/nvim is running in the process tree of current pane
-# if command -v rg >/dev/null 2>&1; then
-#   is_editor_running=$(ps -o comm= -p $(pstree -p $pane_pid | rg -o '\(\d+\)' | tr -d '()') | rg "^(vi|vim|nvim|nano|emacs|$PROGRAM)$")
-# else
-#   is_editor_running=$(ps -o comm= -p $(pstree -p $pane_pid | grep -o '([0-9]\+)' | tr -d '()') | grep -E "^(vi|vim|nvim|nano|emacs|$PROGRAM)$")
-# fi
-#
-# if [[ -n "$is_editor_running" ]]; then
-#   tmux new-window -n "$WIN_NAME" "$CMD"
-# else
-#   tmux send-keys "$CMD" C-m
-# fi

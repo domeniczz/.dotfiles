@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-# -----------------------------------------------------------------------------
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
 # Open files selected with Sway window manager
 #
 # Usage:
@@ -13,7 +15,7 @@
 # Examples:
 #   ./<script-name> --file <file-path>
 #   ./<script-name> --file <file-path> --debug true
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 menu_cmd="rg --files --hidden --no-require-git | bemenu \
   --single-instance \
@@ -96,7 +98,7 @@ get_terminal() {
 # Aruguments parsing
 # -----------------------------------------------------------------------------
 
-while (($# > 0)); do
+while (( $# > 0 )); do
   case $1 in
     --file)
       if [[ -n "$2" ]]; then

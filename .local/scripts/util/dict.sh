@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
+# Get definition of selected word and display as a notification
+#
+# Thanks @BreadOnPenguins
+# ------------------------------------------------------------------------------
+
 word=$(wl-paste --primary)
 
 query=$(curl -s "https://api.dictionaryapi.dev/api/v2/entries/en_US/$word")

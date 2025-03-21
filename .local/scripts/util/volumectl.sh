@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 
-# ----------------------------------------------------------------------------
+set -euo pipefail
+
+# -----------------------------------------------------------------------------
 # Adjust the system volume
 # Disaply wob progress bar while changing volume
-# ----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 ACTION=""
 VALUE=5
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Aruguments parsing
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-while (($# > 0)); do
+while (( $# > 0 )); do
   case $1 in
     --action)
       if [[ $2 =~ ^(up|down|mute|micmute)$ ]]; then
@@ -36,9 +38,9 @@ while (($# > 0)); do
   esac
 done
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Functions
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 get_current_volume() {
   pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]\+%' | head -1 | tr -d '%'
@@ -52,9 +54,9 @@ toggle_wob_progress_bar() {
   echo "$1" > /tmp/volume-wob-pipe
 }
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Main
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 current_vol=$(get_current_volume)
 
@@ -63,7 +65,7 @@ case $ACTION in
     if [[ "$(get_mute_status)" == "yes" ]]; then
       pactl set-sink-mute @DEFAULT_SINK@ 0
     fi
-    new_vol=$((current_vol + VALUE))
+    new_vol=$(( current_vol + VALUE ))
     if [[ $new_vol -gt 100 ]]; then
       pactl set-sink-volume @DEFAULT_SINK@ 100%
       toggle_wob_progress_bar 100
@@ -77,7 +79,7 @@ case $ACTION in
       pactl set-sink-mute @DEFAULT_SINK@ 0
     fi
     pactl set-sink-volume @DEFAULT_SINK@ -${VALUE}%
-    toggle_wob_progress_bar $((current_vol > VALUE ? current_vol - VALUE : 0))
+    toggle_wob_progress_bar $(( current_vol > VALUE ? current_vol - VALUE : 0 ))
     ;;
   mute)
     pactl set-sink-mute @DEFAULT_SINK@ toggle

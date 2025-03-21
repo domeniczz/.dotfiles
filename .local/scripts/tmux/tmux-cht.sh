@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 
-TMUX_CONF_PATH="$HOME/.config/tmux"
+set -euo pipefail
 
-selected=`cat $TMUX_CONF_PATH/.tmux-cht-languages $TMUX_CONF_PATH/.tmux-cht-command | fzf`
+# ------------------------------------------------------------------------------
+# Get cheat sheet of specific thing of specific language with chubin/cheat.sh
+# ------------------------------------------------------------------------------
+
+TMUX_CONF_PATH="$XDG_CONFIG_HOME/tmux"
+
+selected=`cat $TMUX_CONF_PATH/.tmux-cht-languages $TMUX_CONF_PATH/.tmux-cht-command | sort --reverse | fzf`
 
 if [[ -z $selected ]]; then
   exit 0

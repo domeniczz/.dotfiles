@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-# -----------------------------------------------------------------------------
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
 # Power buttons menu
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 options=" Suspend\n⏼ Hibernate\n Reboot\n Shutdown"
 
@@ -23,15 +25,15 @@ selected=$(echo -e $options | bemenu \
   --line-height 30 \
   --fn "hack nerd font 10" \
   --tb "#1e1e2e" \
-  --tf "#cdd6f4" \
-  --nb "#1e1e2e" \
-  --nf "#cdd6f4" \
-  --hb "#89b4fa" \
-  --hf "#1e1e2e" \
   --fb "#1e1e2e" \
-  --ff "#cdd6f4" \
   --ab "#1e1e2e" \
-  --af "#cdd6f4")
+  --nb "#1e1e2e" \
+  --hb "#89b4fa" \
+  --tf "#cdd6f4" \
+  --ff "#cdd6f4" \
+  --hf "#1e1e2e" \
+  --af "#cdd6f4" \
+  --nf "#cdd6f4")
 
 case $selected in
   *"Suspend"*)

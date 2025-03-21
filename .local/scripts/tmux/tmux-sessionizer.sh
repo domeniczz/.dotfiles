@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 
-if (($# > 1)); then
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
+# Select a directory and create a tmux session for that directory
+#
+# Thanks @ThePrimeTimeagen
+# ------------------------------------------------------------------------------
+
+if (( $# > 1 )); then
   selected=$1
 else
   places="$HOME/Work $HOME/Personal $HOME/Personal/repository $HOME/Clones"
   if command -v fd >/dev/null 2>&1; then
-    selected=$(fd . $places --min-depth 1 --max-depth 1 --type d | fzf --prompt="sessionizer: ")
+    selected=$(fd . $places --min-depth 1 --max-depth 1 --type d | sort --reverse | fzf --prompt="sessionizer: ")
   else
-    selected=$(find $places -mindepth 1 -maxdepth 1 -type d | fzf --prompt="sessionizer: ")
+    selected=$(find $places -mindepth 1 -maxdepth 1 -type d | sort --reverse | fzf --prompt="sessionizer: ")
   fi
 fi
 

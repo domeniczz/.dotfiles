@@ -480,8 +480,6 @@
 // @match        *://www.pronto.com/web?*
 // @match        *://anoox.com/find.php?*
 
-// @match        *://kagi.com/search*
-
 // @grant        none
 // @run-at       document-end
 // @license      GPL-2.0-only

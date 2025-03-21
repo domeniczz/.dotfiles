@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-encoded_text=$(echo -n "$QUTE_SELECTED_TEXT" | sed -z 's/\n/%0A/g; s/\r/%0D/g' | sed -E 's/(%0A|%0D)*$//')
+encoded_text=$(echo -n "$QUTE_SELECTED_TEXT" | sed -z -E 's/\n/%0A/g; s/\r/%0D/g; s/(%0A|%0D)*$//')
 
 echo "open -t https://translate.google.com/?sl=en&tl=zh-CN&text=$encoded_text&op=translate" >> "$QUTE_FIFO"

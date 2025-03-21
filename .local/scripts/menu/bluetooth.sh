@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-# -----------------------------------------------------------------------------
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
 # Bluetooth devices menu
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 declare -a device_names=()
 declare -A device_map=()
@@ -12,7 +14,7 @@ get_saved_devices() {
     device_names+=("$name")
     device_map["$name"]="$mac"
   done < <(bluetoothctl devices)
-  
+
   if [[ ${#device_names[@]} -eq 0 ]]; then
     echo "No Bluetooth devices found" >&2
     exit 1
@@ -22,7 +24,7 @@ get_saved_devices() {
 connect_device() {
   local device_name="$1"
   local mac="${device_map[$device_name]}"
-  
+
   if [[ -n "$mac" ]]; then
     bluetoothctl connect "$mac"
   else
