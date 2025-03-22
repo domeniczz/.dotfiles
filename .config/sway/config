@@ -40,8 +40,6 @@ exec mkfifo /tmp/volume-wob-pipe && tail -f /tmp/volume-wob-pipe | wob
 exec swaymsg 'workspace 2; exec $term'
 exec mihomo-party
 
-exec monitor-power-manager.sh
-
 bar {
     position top
     mode hide
@@ -77,8 +75,8 @@ output $external {
     allow_tearing no
 }
 
-bindswitch --reload --locked lid:on output $laptop disable
-bindswitch --reload --locked lid:off output $laptop enable
+bindswitch --reload --locked lid:on exec laptop-display-handler.sh close
+bindswitch --reload --locked lid:off exec laptop-display-handler.sh open
 
 for_window [all] allow_tearing no
 
