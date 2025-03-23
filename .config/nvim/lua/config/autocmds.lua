@@ -1,5 +1,5 @@
 local function augroup(name)
-  return vim.api.nvim_create_augroup("nvim_ac_" .. name, { clear = true })
+  return vim.api.nvim_create_augroup("nvim_user_ac" .. name, { clear = true })
 end
 
 local autocmd = vim.api.nvim_create_autocmd
@@ -42,16 +42,15 @@ autocmd({ "WinLeave", "FocusLost" }, {
   end,
 })
 
-autocmd("VimEnter", {
+autocmd({ "BufEnter", "FileType" }, {
   group = augroup("filetype_specific_settings"),
   callback = function()
     local ft = vim.bo.filetype
-    if ft == "lua" or ft == "sh" then
+    if ft == "lua" or ft == "sh" or ft == "vim" then
       vim.opt_local.tabstop = 2
       vim.opt_local.softtabstop = 2
       vim.opt_local.shiftwidth = 2
-    end
-    if ft == "markdown" then
+    elseif ft == "markdown" then
       vim.opt_local.list = true
       vim.opt_local.listchars:append({ eol = "↲" })
     end
