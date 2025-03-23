@@ -44,18 +44,19 @@ return {
     local map = vim.keymap.set
 
     map("n", "<leader>fd", function()
-      builtin.find_files({ find_command = { "rg", "--files", "--no-require-git", "--smart-case", "--follow" } })
-    end, { desc = "search file in cwd" })
-    map("n", "<C-p>", function() builtin.git_files({ use_git_root = true, show_untracked = true }) end, { desc = "search git files" })
-    map("n", "<leader>fr", function() builtin.oldfiles({ only_cwd = false }) end, { desc = "search recent files" })
+      builtin.find_files({ find_command = { "fd", "--hidden", "--no-require-git", "--follow", "--type", "file" } })
+      -- builtin.find_files({ find_command = { "rg", "--files", "--hidden", "--no-require-git", "--smart-case", "--follow" } })
+    end, { desc = "Search file in cwd" })
+    map("n", "<C-p>", function() builtin.git_files({ use_git_root = true, show_untracked = true }) end, { desc = "Search git files" })
+    map("n", "<leader>fr", function() builtin.oldfiles({ only_cwd = false }) end, { desc = "Search recent files" })
     map("n", "<leader>fo", function()
       builtin.buffers({ only_cwd = false, ignore_current_buffer = false, sort_mru = true })
-    end, { desc = "search opened buffers" })
-    -- map("n", "<leader>ff", function() builtin.current_buffer_fuzzy_find({}) end, { desc = "find in current buffer" })
+    end, { desc = "Search opened buffers" })
+    -- map("n", "<leader>ff", function() builtin.current_buffer_fuzzy_find({}) end, { desc = "Find in current buffer" })
 
     map("n", "<leader>gd", function()
       require("config.plugins.telescope.multigrep")(themes.get_ivy({ layout_config = { height = 0.8 } }))
-    end, { desc = "grep content within cwd" })
+    end, { desc = "Grep content within cwd" })
     -- map("n", "<leader>gd", function() builtin.live_grep() end)
 
     map("n", "<leader>ws", function()
@@ -69,10 +70,14 @@ return {
 
     map("n", "<leader>en", function()
       builtin.find_files({ cwd = vim.fn.stdpath("config"):gsub("(/home/[^/]+)", "%1/.dotfiles") })
-    end, { desc = "search within nvim config" })
+    end, { desc = "Search within nvim config" })
     map("n", "<leader>ep", function()
       builtin.find_files({ cwd = vim.fs.joinpath(vim.fn.stdpath("data"), "lazy") })
-    end, { desc = "search within lazy packages" })
+    end, { desc = "Search within lazy packages" })
     map("n", "<leader>vh", builtin.help_tags, {})
+
+    map("n", "<leader>fA", function()
+      telescope.extensions.aerial.aerial()
+    end, { desc = "Search outline symbols with aerial" })
   end,
 }

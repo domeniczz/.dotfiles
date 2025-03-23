@@ -43,7 +43,7 @@ return {
       delete_to_trash = false,
       cleanup_delay_ms = 0,
     }
-    vim.keymap.set("n", "<leader>-", "<CMD>Oil<CR>", { desc = "open current directory" })
-    -- vim.keymap.set("n", "<leader>=", oil.toggle_float, { desc = "open current directory in float window" })
+    vim.keymap.set("n", "<leader>-", "<CMD>Oil<CR>", { desc = "Open current directory" })
+    -- vim.keymap.set("n", "<leader>=", oil.toggle_float, { desc = "Open current directory in float window" })
   end,
 }

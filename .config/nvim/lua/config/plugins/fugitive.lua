@@ -4,9 +4,10 @@ return {
   -- event = "VeryLazy",
   lazy = true,
   keys = {
-    { "<leader>gs", "<CMD>Git<CR>", desc = "fugitive: toggle git view" },
+    { "<leader>gs", "<CMD>Git<CR>", desc = "Fugitive: toggle git view" },
   },
   cmd = {
+    "Git",
     "Gdiffsplit",
     "Gvdiffsplit",
   },

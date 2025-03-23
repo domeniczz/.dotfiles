@@ -3,8 +3,8 @@ return {
   enabled = true,
   lazy = true,
   keys = {
-    { "<leader>lc", "<CMD>VimtexCompile<CR>", desc = "vimtex: compile" },
-    { "<leader>lr", "<CMD>VimtexView<CR>", desc = "vimtex: view pdf" },
+    { "<leader>lc", "<CMD>VimtexCompile<CR>", desc = "Vimtex: compile" },
+    { "<leader>lr", "<CMD>VimtexView<CR>", desc = "Vimtex: view pdf" },
   },
   config = function()
     vim.api.nvim_create_autocmd({ "FileType" }, {

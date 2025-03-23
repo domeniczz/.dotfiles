@@ -4,11 +4,11 @@ return {
     enabled = true,
     -- event = "VeryLazy",
     keys = {
-      { "<leader>u", "<CMD>UndotreeToggle<CR>", desc = "undotree: toggle view" },
+      { "<leader>u", "<CMD>UndotreeToggle<CR>", desc = "Undotree: toggle view" },
     },
     config = function()
       vim.g.undotree_SetFocusWhenToggle = 1
-      vim.keymap.set("n", "<leader>u", "<CMD>UndotreeToggle<CR>", { desc = "undotree: toggle view" })
+      vim.keymap.set("n", "<leader>u", "<CMD>UndotreeToggle<CR>", { desc = "Undotree: toggle view" })
     end,
   },
   {
@@ -21,7 +21,7 @@ return {
       },
     },
     keys = {
-      { "<leader>U", "<CMD>Telescope undo<CR>", desc = "undo history" },
+      { "<leader>U", "<CMD>Telescope undo<CR>", desc = "Undo history" },
     },
     config = function()
       require("telescope").setup({

@@ -87,9 +87,14 @@ return {
       },
       cmdline = {
         keymap = {
-          preset = "default",
+          preset = "cmdline",
           ["<Up>"] = { "select_prev", "fallback" },
           ["<Down>"] = { "select_next", "fallback" },
+        },
+        completion = {
+          menu = {
+            auto_show = false,
+          },
         },
       },
     },
