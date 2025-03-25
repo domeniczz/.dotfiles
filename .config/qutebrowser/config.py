@@ -10,7 +10,7 @@
 
 ## This is here so configs done via the GUI are still loaded.
 ## Remove it to not load settings done via the GUI.
-config.load_autoconfig(True)
+config.load_autoconfig(False)
 
 ## Aliases for commands. The keys of the given dictionary are the
 ## aliases, while the values are the commands they map to.
@@ -183,8 +183,8 @@ c.completion.web_history.exclude = [
     '*://*/*__cf_chl_tk*',
 ]
 
-## Number of URLs to show in the web history. 0: no history / -1:
-## unlimited
+## Number of URLs to show in the web history completion.
+## 0: no history / -1: unlimited
 ## Type: Int
 c.completion.web_history.max_items = 10000
 
@@ -838,8 +838,9 @@ c.url.open_base_url = True
 ## qutebrowser`.
 ## Type: Dict
 c.url.searchengines = {
-    'DEFAULT': 'https://www.google.com/search?q={}',
+    'DEFAULT': 'https://kagi.com/search?q={}',
 
+    'k': 'https://kagi.com/search?q={}',
     'g': 'https://www.google.com/search?q={}',
     # 'bing': 'https://www.bing.com/search?q={}',
     # 'brave': 'https://search.brave.com/search?q={}',
@@ -1787,7 +1788,8 @@ config.bind('W', 'cmd-set-text -s :open -w')
 config.bind('P', 'open -t -- {clipboard}')
 config.bind('R', 'reload -f')
 config.bind('Sb', 'bookmark-list --jump')
-config.bind('Sh', 'history')
+# config.bind('Sh', 'history')
+config.bind('Sh', 'open -t qute://history/')
 config.bind('Sq', 'bookmark-list')
 config.bind('Ss', 'set')
 config.bind('T', 'cmd-set-text -sr :tab-focus')
@@ -1986,11 +1988,13 @@ config.bind('<Shift-Escape>', 'fake-key <Escape>', mode='insert')
 config.bind('<Shift-Ins>', 'insert-text -- {primary}', mode='insert')
 config.bind('<Ctrl-W>', 'tab-close', mode='insert')
 config.bind('<F5>', 'reload', mode='insert')
+config.bind('<F11>', 'fullscreen', mode='insert')
 
 ## Bindings for passthrough mode
 config.bind('<Shift-Escape>', 'mode-leave', mode='passthrough')
 # config.bind('<Escape>', 'mode-leave', mode='passthrough')
 config.bind('<Ctrl-W>', 'tab-close', mode='passthrough')
+config.bind('<F11>', 'fullscreen', mode='passthrough')
 
 ## Bindings for prompt mode
 config.bind('<Alt-B>', 'rl-backward-word', mode='prompt')
@@ -2036,6 +2040,7 @@ config.bind('y', 'prompt-accept yes', mode='yesno')
 config.bind('<Alt-Shift-D>', 'spawn --userscript darkmode-toggle')
 
 config.bind('<Alt-T>', 'spawn --userscript translate-selection')
+config.bind('<Alt-T>', 'spawn --userscript translate-selection', mode='caret')
 
 # -----------------------------------------------------------------------------
 # Colors
@@ -2360,7 +2365,7 @@ config.bind('<Alt-T>', 'spawn --userscript translate-selection')
 ## Background color of unselected even tabs.
 ## Type: QtColor
 # c.colors.tabs.even.bg = 'darkgrey'
-c.colors.tabs.even.bg = '#494848'
+c.colors.tabs.even.bg = '#444444'
 
 ## Foreground color of unselected even tabs.
 ## Type: QtColor
@@ -2390,7 +2395,7 @@ c.colors.tabs.even.fg = 'white'
 ## Background color of unselected odd tabs.
 ## Type: QtColor
 # c.colors.tabs.odd.bg = 'grey'
-c.colors.tabs.odd.bg = '#615f5f'
+c.colors.tabs.odd.bg = '#5e5e5e'
 
 ## Foreground color of unselected odd tabs.
 ## Type: QtColor

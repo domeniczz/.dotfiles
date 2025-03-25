@@ -1,0 +1,6 @@
+gui:
+  language: en
+  scrollPastBottom: false
+  mouseEvents: true
+
+notARepository: skip

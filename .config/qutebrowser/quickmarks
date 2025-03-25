@@ -1,8 +1,10 @@
 gg https://www.google.com
 sp https://www.startpage.com
 gh https://github.com
-ggm https://mail.google.com/mail/u/0/#inbox
 aw https://wiki.archlinux.org/title/Main_page
+
+keep https://keep.google.com/u/0/#home
+ggm https://mail.google.com/mail/u/0/#inbox
 
 yt https://www.youtube.com
 ytm https://music.youtube.com

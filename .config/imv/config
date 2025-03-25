@@ -1,20 +1,11 @@
 [options]
-
-# Suppress built-in key bindings, and specify them explicitly in this
-# config file.
 suppress_default_binds = true
 
-[aliases]
-# Define aliases here. Any arguments passed to an alias are appended to the
-# command.
-# alias = command to run
-
 [binds]
-# Define some key bindings
 q = quit
 y = exec echo working!
 
-# Image navigation
+# Gallery navigation
 <Left> = prev
 <bracketleft> = prev
 <Right> = next
@@ -39,7 +30,6 @@ o = zoom -1
 # Rotate Clockwise by 90 degrees
 <Ctrl+r> = rotate by 90
 
-# Other commands
 x = close
 f = fullscreen
 d = overlay

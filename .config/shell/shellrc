@@ -5,7 +5,7 @@ export SYSTEMD_EDITOR='nvim'
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
 export FZF_DEFAULT_OPTS_FILE="$HOME/.config/fzf/fzfrc"
 
-condainit() {
+function condainit() {
   local CONDA_BASE="$HOME/Programs"
   if [[ -f "$CONDA_BASE/miniconda3/bin/activate" ]]; then
     source "$CONDA_BASE/miniconda3/bin/activate"
@@ -19,24 +19,34 @@ condainit() {
   fi
 }
 
-nvminit() {
+function nvminit() {
   export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  [[ -s "$NVM_DIR/nvm.sh" ]] && \. "$NVM_DIR/nvm.sh"
+  [[ -s "$NVM_DIR/bash_completion" ]] && \. "$NVM_DIR/bash_completion"
 }
 
-# Change the current working directory when exiting Yazi
-function y() {
+# Change current working directory when exiting Yazi
+function yazicd() {
   local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
   yazi "$@" --cwd-file="$tmp"
-  if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+  if cwd="$(command cat -- "$tmp")" && [[ -n "$cwd" ]] && [[ "$cwd" != "$PWD" ]]; then
     builtin cd -- "$cwd"
   fi
   rm -f -- "$tmp"
 }
 
+# Change current working directory when exiting Vifm
+function vifmcd() {
+  local dst="$(command vifm --choose-dir - "$@")"
+  if [[ -z "$dst" ]]; then
+    echo 'Directory picking cancelled/failed'
+    return 1
+  fi
+  cd "$dst"
+}
+
 # if command -v tmux &> /dev/null; then
-#   if [ -z "$TMUX" ]; then
+#   if [[ -z "$TMUX" ]]; then
 #     tmux new-session -A -s general
 #   fi
 # else
