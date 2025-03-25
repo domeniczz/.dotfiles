@@ -1,6 +1,6 @@
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- Constants
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 
 local icons = vim.g.have_nerd_font and {
   git = {
@@ -32,7 +32,7 @@ local icons = vim.g.have_nerd_font and {
       default = "󰈮",
     },
   },
-  plugin_updates = "󰚰",
+  plugin_updates = " ",
   buffers = "",
 } or {
   git = {
@@ -60,9 +60,9 @@ local lsp_configured_lang = {
   rust = true,
 }
 
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- Git status
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 
 local git_file_status_cache = {}
 
@@ -82,16 +82,16 @@ local git_file_status = {
   ["AM"] = "added modified",
   ["MM"] = "added modified",
   ["MD"] = "modified deleted",
-  ["DD"] = "both deleted",
   ["AA"] = "both added",
   ["UU"] = "both modified",
+  ["DD"] = "both deleted",
   ["AU"] = "added by us",
   ["UA"] = "added by them",
-  ["UD"] = "deleted by them",
   ["DU"] = "deleted by us",
+  ["UD"] = "deleted by them",
 }
 
-function get_git_root(file_path)
+local function get_git_root(file_path)
   local git_cmd = { "git", "-C", vim.fn.fnamemodify(file_path, ":h"), "rev-parse", "--show-toplevel" }
   local git_root = vim.fn.systemlist(git_cmd)[1]
   return vim.v.shell_error == 0 and git_root or nil
@@ -101,13 +101,13 @@ function _G.update_git_file_status_cache()
   local bufnr = vim.api.nvim_get_current_buf()
   local bufname = vim.api.nvim_buf_get_name(bufnr)
   if bufname == "" or vim.bo.buftype ~= "" then
-    git_file_status_cache[bufname] = ""
+    git_file_status_cache[bufnr] = ""
     return ""
   end
   local resolved_file_path = vim.fn.resolve(bufname)
   local git_root = get_git_root(resolved_file_path)
   if not git_root then
-    git_file_status_cache[bufname] = ""
+    git_file_status_cache[bufnr] = ""
     return ""
   end
   local abs_git_root_path = vim.fn.fnamemodify(git_root, ":p"):gsub("/$", "")
@@ -130,7 +130,7 @@ function _G.update_git_file_status_cache()
     status_text = git_file_status[status_code] or "unknown"
   end
   local status = "[" .. icon .. " " .. status_text .. "]"
-  git_file_status_cache[bufname] = status
+  git_file_status_cache[bufnr] = status
   return status
 end
 
@@ -146,7 +146,7 @@ vim.api.nvim_create_autocmd("VimEnter", {
   end,
 })
 
-vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "FocusGained" }, {
+vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile", "BufWritePost", "FileChangedShellPost" }, {
   callback = function()
     if nvim_startup_done and should_show_git_status() then
       update_git_file_status_cache()
@@ -158,24 +158,24 @@ function _G.git_status()
   if not should_show_git_status() then
     return ""
   end
-  local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
-  return git_file_status_cache[bufname] or update_git_file_status_cache()
+  return git_file_status_cache[vim.api.nvim_get_current_buf()] or update_git_file_status_cache()
 end
 
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- LSP diagnostic
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 
-local lsp_diagnostic_cache = ""
+local lsp_diagnostic_cache = {}
 
 local function update_lsp_diagnostic_cache()
-  if #vim.diagnostic.count(0) == 0 then
-    lsp_diagnostic_cache = ""
+  local bufnr = vim.api.nvim_get_current_buf()
+  if #vim.diagnostic.get(bufnr) == 0 then
+    lsp_diagnostic_cache[bufnr] = ""
     return
   end
-  local errors = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.ERROR })
-  local warnings = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.WARN })
-  local infos = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.INFO })
+  local errors = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.ERROR })
+  local warnings = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.WARN })
+  local infos = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.INFO })
   -- local hints = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.HINT })
   local parts = {}
   local icon = icons.lsp_diagnostic
@@ -191,7 +191,7 @@ local function update_lsp_diagnostic_cache()
   -- if hints > 0 then
   --   table.insert(parts, "%#StatusLineDiagnosticInfo#" .. icons.hint .. " " .. hints)
   -- end
-  lsp_diagnostic_cache = "%*[" .. table.concat(parts, " ") .. "%*]"
+  lsp_diagnostic_cache[bufnr] = "%*[" .. table.concat(parts, " ") .. "%*]"
 end
 
 vim.api.nvim_create_autocmd({ "DiagnosticChanged", "LSPAttach", "BufEnter" }, {
@@ -224,12 +224,12 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 
 function _G.lsp_diagnostic()
-  return lsp_diagnostic_cache
+  return lsp_diagnostic_cache[vim.api.nvim_get_current_buf()] or ""
 end
 
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- LSP status
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 
 local lsp_status_cache = {}
 
@@ -249,11 +249,10 @@ local function update_lsp_status_cache()
   return status
 end
 
-vim.api.nvim_create_autocmd({ "LspAttach", "LspDetach", "BufEnter" }, {
+vim.api.nvim_create_autocmd({ "LspAttach", "LspDetach", "FileType" }, {
   callback = function()
     if vim.bo.buftype == "" and lsp_configured_lang[vim.bo.filetype] then
       update_lsp_status_cache()
-      vim.cmd("redrawstatus")
     end
   end,
 })
@@ -272,11 +271,11 @@ function _G.lsp_status()
   return lsp_status_cache[vim.bo.filetype] or ""
 end
 
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- Buffers
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 
-function _G.buf_info()
+function _G.buffer_index()
   local bufs = vim.fn.getbufinfo({ buflisted = 1 })
   local total = #bufs
   local cur_buf = vim.fn.bufnr()
@@ -290,26 +289,39 @@ function _G.buf_info()
   return index and string.format("[%s %d/%d]", icons.buffers, index, total) or ""
 end
 
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- Available plugin updates
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 
-local lazy_plugin_updates_count = 0
+local available_plugin_update_count = ""
 
-function _G.lazy_plugin_updates()
-  return lazy_plugin_updates_count > 0 and string.format("[%s %d]", icons.plugin_updates, lazy_plugin_updates_count) or ""
-end
-
-vim.api.nvim_create_autocmd("VimEnter", {
+vim.api.nvim_create_autocmd("User", {
+  pattern = "LazyCheck",
   callback = function()
-    local updates = require("lazy.status").updates()
-    lazy_plugin_updates_count = updates and tonumber(updates) or 0
+    available_plugin_update_count = require("lazy.status").updates() or ""
+    vim.cmd("redrawstatus")
   end,
 })
 
--- ----------------------------------------------------------------------------
+function _G.available_plugin_updates()
+  return available_plugin_update_count ~= "" and string.format("[%s]", available_plugin_update_count) or ""
+end
+
+-- -----------------------------------------------------------------------------
+-- Buffer delete cleanup
+-- -----------------------------------------------------------------------------
+
+vim.api.nvim_create_autocmd("BufDelete", {
+  callback = function(args)
+    local bufnr = args.buf
+    git_file_status_cache[bufnr] = nil
+    lsp_diagnostic_cache[bufnr] = nil
+  end,
+})
+
+-- -----------------------------------------------------------------------------
 -- StatusLine
--- ----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 
 local statusline_components = {
   "%<",                                         -- Truncation point
@@ -320,11 +332,11 @@ local statusline_components = {
   "%{%v:lua.lsp_status()%}",                    -- LSP status
   "%{%v:lua.lsp_diagnostic()%}",                -- LSP diagnostics
   "%=",                                         -- Left/right separator
-  "%{%v:lua.lazy_plugin_updates()%}",           -- Number of plugins need update
-  " %{%v:lua.buf_info()%}",                     -- Buffer count
+  "%{%v:lua.available_plugin_updates()%}",      -- Number of available updates
+  " %{%v:lua.buffer_index()%}",                 -- Buffer index
   " [%{&fileencoding?&fileencoding:&encoding}", -- File encoding
   " %{&fileformat}]",                           -- File format
-  " %l:%c",                                     -- Line and column
+  " %-7(%l:%c%)",                                     -- Line and column
   " %P",                                        -- Percentage through file
 }
 
