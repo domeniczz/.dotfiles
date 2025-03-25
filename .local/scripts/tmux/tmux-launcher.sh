@@ -79,51 +79,12 @@ done
 # Default window name to program name if empty
 WIN_NAME=${WIN_NAME:-$PROGRAM}
 
-# ------------------------------------------------------------------------------
-# Additional handling
-# ------------------------------------------------------------------------------
-
-# If the program to launch is lazygit, get the git root path (launch in the root path of the git repo)
-# If can not find a git root path, then display a message
-if [[ "$PROGRAM" == "lazygit" ]]; then
-  find_git_root() {
-    local max_iterations=10
-    local path="$1"
-    local iterations=0
-    local home_path=$(realpath $HOME)
-    while [ "$iterations" -lt "$max_iterations" ]; do
-      # Check if we've reached or passed HOME directory
-      if [[ "$(realpath "$path")" == "$home_path" || "$(realpath "$path")" == "/" ]]; then
-        if [ -d "${path}/.git" ]; then
-          echo "$path"
-          return 0
-        else
-          return 1
-        fi
-      fi
-      # Check if .git exists in current directory
-      if [ -d "${path}/.git" ]; then
-        echo "$path"
-        return 0
-      fi
-      # Move to parent directory
-      path="$(dirname "$path")"
-      (( iterations++ ))
-    done
-    return 1
-  }
-  START_PATH=$(find_git_root "$START_PATH") || {
-    tmux display-message -d 1000 "No git repository found"
-    exit 0
-  }
-fi
-
 # -------------------------------------------------------------------------------
 # Launch logic
 # -------------------------------------------------------------------------------
 
-if ! command -v $PROGRAM >/dev/null 2>&1; then
-  echo "'$PROGRAM' is not installed!"
+if ! command -v "$PROGRAM" >/dev/null 2>&1; then
+  tmux display-message -d 1000 "Program \"$PROGRAM\" does not exist!"
   exit 1
 fi
 
