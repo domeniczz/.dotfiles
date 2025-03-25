@@ -11,17 +11,19 @@ set syscalls
 "set syncregs=main
 set trash
 set trashdir=%r/.vifm-Trash,$XDG_DATA_HOME/Trash/files
-set vifminfo=state,chistory,shistory,phistory,fhistory,dirstack,registers,bookmarks,bmarks
+set vifminfo=chistory,shistory,phistory,fhistory,dirstack,registers,bookmarks,bmarks,tabs
+set sessionoptions=tui,state,tabs,savedirs,dhistory
 set history=100
 set undolevels=100
 set autochpos
 set nofollowlinks
+set dotfiles
 set sortnumbers
 set norunexec
 set autocd
 set vimhelp
 set notitle
-set timeoutlen=800
+set timeoutlen=1000
 set mintimeoutlen=150
 set mouse=a
 set confirm-=delete
@@ -29,8 +31,6 @@ set dotdirs=treeleafsparent
 set dirsize=nitems
 set shortmess=Tp
 set tabscope=global
-set navoptions=open:dirs
-set cpoptions=st
 
 " For non-Windows systems
 if !has('win')
@@ -39,8 +39,12 @@ endif
 
 set millerview
 set milleroptions=lsize:1,csize:3,rsize:4,rpreview:all
+
 set previewoptions=maxtreedepth:1
+set suggestoptions=delay:400,normal,visual,view,otherpane,keys,marks,registers
 set tuioptions=p
+set navoptions=open:dirs
+set cpoptions=st
 
 set ignorecase
 set smartcase
@@ -53,10 +57,6 @@ set scrolloff=4
 set nowrap
 set wildmenu
 set wildstyle=popup
-
-" Display suggestions in normal, visual and view modes for keys, marks and
-" registers (at most 5 files).  In other view, when available.
-set suggestoptions=delay:400,normal,visual,view,otherpane,keys,marks,registers
 
 set grepprg="rg --hidden --color=never %i %a %s"
 set findprg="fd --hidden --color=never %p %s"
@@ -72,18 +72,6 @@ set sizefmt=units:iec,space,precision:2
 set rulerformat="%l/%S"
 set viewcolumns=-{name},8{size},18{mtime}
 set statusline="%2*%[%{g:root_prefix}  %]%0*%A  %u:%-g %d  %E  %1*%[-> %T%]%0* %= [%a / %c]    %P"
-
-colorscheme gruvbox nord palenight Default Default-256
-highlight Win ctermbg=none
-highlight AuxWin ctermbg=none
-highlight OtherWin ctermbg=none
-highlight LineNr ctermbg=none ctermfg=250
-highlight TopLine ctermbg=none ctermfg=246
-highlight TopLineSel ctermbg=none cterm=bold
-highlight TabLine ctermbg=none
-highlight TabLineSel ctermbg=none
-highlight User1 ctermfg=cyan
-highlight User2 ctermfg=red
 
 " ------------------------------------------------------------------------------
 " Commands
@@ -113,7 +101,7 @@ command! run !! ./%f
 command! make !!make %a
 command! mkcd :mkdir %a | cd %a
 command! vgrep vim "+grep %a"
-command! reload :write | restart full
+command! reload :write | restart
 command! bak :clone %c.bak
 
 " ------------------------------------------------------------------------------
@@ -133,7 +121,10 @@ nnoremap <silent> q :q<CR>
 nnoremap <silent> Q :q<CR>
 
 " Select item
-nnoremap <Space> tj
+nnoremap <silent> <Space> tj
+
+nnoremap <silent> J 5j
+nnoremap <silent> K 5k
 
 nnoremap <silent> mk :mkdir<Space>
 nnoremap <silent> ft :touch<Space>
@@ -171,7 +162,6 @@ nnoremap <silent> I cw<C-a>
 nnoremap <silent> cc cw<C-u>
 nnoremap <silent> A cw
 nnoremap <silent> i cw
-nnoremap <silent> ga cW
 nnoremap <silent> gi :%rename<CR>
 
 " Toggle wrap setting on ,w key
@@ -180,6 +170,8 @@ nnoremap <silent> ,w :set wrap!<CR>
 " Resize pane
 nnoremap <silent> > :wincmd ><CR>
 nnoremap <silent> < :wincmd <<CR>
+nnoremap <silent> _ :5 wincmd <<CR>
+nnoremap <silent> + :5 wincmd ><CR>
 
 " Prev/Next location
 nnoremap <silent> <C-o> :histprev<CR>
@@ -228,12 +220,15 @@ nnoremap <silent> yf :!echo -n %c:p | wl-copy %i && echo -n %c:p | wl-copy -p %i
 let g:millerview_preview_flag = 1
 nnoremap <silent> gp :
       \| if g:millerview_preview_flag == 1
-      \| set milleroptions=lsize:1,csize:7,rsize:0
+      \| set milleroptions=lsize:1,csize:7
       \| let g:millerview_preview_flag = 0
       \| else
       \| set milleroptions=lsize:1,csize:3,rsize:4,rpreview:all
       \| let g:millerview_preview_flag = 1
       \| endif<CR>
+
+" Use e to quit view mode
+qnoremap e q
 
 " ------------------------------------------------------------------------------
 " Autocommands
@@ -261,16 +256,20 @@ mark w $HOME/Work/
 mark c $XDG_CONFIG_HOME/
 
 " ------------------------------------------------------------------------------
-" File types association
+" File type associations
 " ------------------------------------------------------------------------------
 
 " Text
-filetype <text/*,application/x-sh,application/x-shellscript> nvim %f, vim %f, vi %f
-fileviewer <text/*,application/x-sh,application/x-shellscript> bat --color=always --style=plain --pager=never --line-range=:500 %c
+filetype <text/*,application/x-sh,application/x-shellscript,application/toml,application/json,application/xml,application/yaml> nvim %f, vim %f, nano %f
+fileviewer <text/*,application/x-sh,application/x-shellscript,application/toml,application/json,application/xml,application/yaml> bat --color=always --style=plain --pager=never --line-range=:500 %c
+
+" Empty file
+filetype <inode/x-empty,application/x-empty,application/x-zerosize> nvim %f, vim %f, nano %f
+fileviewer <inode/x-empty,application/x-empty,application/x-zerosize> file --dereference --brief %c
 
 " Video
 filextype <video/*> mpv %f %i, ffplay -fs -hide_banner -autoexit %f
-fileviewer <video/*> ffprobe -hide_banner -pretty %c 2>&1
+fileviewer <video/*> #ueberzug#video %px %py %pw %ph %pc #ueberzug#clear, ffprobe -hide_banner -pretty %c 2>&1
 
 " Audio
 filetype <audio/*> mpv --no-video %f %i %s, ffplay -nodisp -hide_banner -autoexit %c
@@ -278,25 +277,28 @@ fileviewer <audio/*> ffprobe -hide_banner -pretty %c 2>&1
 
 " Images
 filetype <image/*> imv %f %i, swayimg %f %i
-fileviewer <image/*> file --dereference --brief --raw %c, identify %c
+fileviewer <image/gif> #ueberzug#image_no_cache %px %py %pw %ph %pc #ueberzug#clear
+fileviewer <image/*> #ueberzug#image %px %py %pw %ph %pc #ueberzug#clear, identify %c
 
 " Web
-filextype <text/html> qutebrowser %f %i, firefox %f %i &
-filetype <text/html> nvim %f, vim %f
+filextype {*.htm,*.html},<text/html> qutebrowser %f %i, firefox %f %i
+filetype {*.htm,*.html},<text/html> nvim %f, vim %f
+fileviewer {*.htm,*.html},<text/html> w3m %f
 
 " Pdf
 filextype <application/pdf> zathura %f %i
-fileviewer <application/pdf> pdftotext -nopgbrk %c -
+fileviewer <application/pdf> #ueberzug#pdf %px %py %pw %ph %pc #ueberzug#clear, pdftotext -nopgbrk %c -
 
 " Epub
 filextype {*.ebup},<application/epub+zip> zathura %c %i
+fileviewer {*.ebup},<application/epub+zip> #ueberzug#epub %px %py %pw %ph %pc #ueberzug#clear
 
 " Office
 filetype {*.odt,*.odp,*.doc,*.docx,*.xls,*.xlsx,*.pptx,*.ppt},<application/vnd.openxmlformats-officedocument.*,application/msword,application/vnd.ms-excel>
       \ libreoffice %f %i &
 fileviewer {*.doc},<application/msword> catdoc %c
 fileviewer {*.docx},<application/vnd.openxmlformats-officedocument.wordprocessingml.document>
-            \ docx2txt.pl %c -
+      \ docx2txt.pl %c -
 
 " Zip
 filetype <application/zip,application/java-archive>
@@ -363,22 +365,32 @@ filetype *.sha512 sha512sum -c %f %S
 " GPG signature
 filetype {*.asc},<application/pgp-signature> !!gpg --verify %c
 
-" Directories
+" Directory
 filextype {*/},{.*/} Thunar %f %i &, nautilus %f %i &, dolphin %f %i &, pcmanfm %f %i &, nemo %f %i &
 fileviewer {*/},{.*/} tree -C -L 1 --dirsfirst --noreport -a -q %c
 
 " Fallback
-" *nix:
-filetype * xdg-open %i &
-" OS X:
-" filetype * open
-" Windows:
-" filetype * start, explorer
-fileviewer * command bat --color=always --style=plain --pager=never --line-range=:500 %c || command cat %c || command tree -C --noreport -q %c
+filetype * xdg-open %f %i
+fileviewer * file --mime-type %c | grep -q "text/" && bat --color=always --style=plain --pager=never --line-range=:500 %c || file --dereference --brief %c
 
 " ------------------------------------------------------------------------------
-" Ranger devicons for ViFM
-" https://github.com/cirala/vifm_devicons
+" Color scheme
+" ------------------------------------------------------------------------------
+
+colorscheme gruvbox nord palenight Default Default-256
+highlight Win ctermbg=none
+highlight AuxWin ctermbg=none
+highlight OtherWin ctermbg=none
+highlight LineNr ctermbg=none ctermfg=250
+highlight TopLine ctermbg=none ctermfg=246
+highlight TopLineSel ctermbg=none cterm=bold
+highlight TabLine ctermbg=none
+highlight TabLineSel ctermbg=none
+highlight User1 ctermfg=cyan
+highlight User2 ctermfg=red
+
+" ------------------------------------------------------------------------------
+" Devicons for ViFM (https://github.com/cirala/vifm_devicons)
 " ------------------------------------------------------------------------------
 
 " Filetypes/directories
