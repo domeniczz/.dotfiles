@@ -40,6 +40,11 @@ exec mkfifo /tmp/volume-wob-pipe && tail -f /tmp/volume-wob-pipe | wob
 exec swaymsg 'workspace 2; exec $term'
 exec mihomo-party
 
+# exec swayidle -w \
+#   timeout 1200 'brightnessctl set 5% -s' resume 'brightnessctl -r' \
+#   timeout 2700 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
+#   before-sleep ''
+
 bar {
     position top
     mode hide
@@ -96,13 +101,14 @@ input type:pointer {
 
 input type:keyboard {
     repeat_delay 400
+    xkb_options caps:escape
 }
 
 # Applications
 bindsym $mod+Return exec $term
 bindsym $mod+f exec $filemanager
 bindsym $mod+g exec $filesearcher
-bindsym $mod+b exec $browser
+bindsym $mod+b exec 'if pgrep --exact "$(basename $browser)" > /dev/null; then swaymsg "[app_id=\".*$(basename $browser).*\"] focus"; else $browser; fi'
 
 bindsym $mod+Shift+q kill
 bindsym $mod+Ctrl+shift+q [workspace=__focused__] kill
