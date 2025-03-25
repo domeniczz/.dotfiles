@@ -1,0 +1,7 @@
+set $popup floating enable; border pixel 2; sticky enable
+set $float floating enable; border pixel 2
+set $video inhibit_idle fullscreen; border none; max_render_time off
+
+for_window [all] allow_tearing no
+for_window [app_id="pavucontrol"] $float
+for_window [app_id="firefox" title="^Picture-in-Picture$"] $popup

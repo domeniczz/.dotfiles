@@ -1,0 +1,21 @@
+set $laptop eDP-1
+set $external HDMI-A-1
+
+output * bg $HOME/Pictures/wallpapers/wallpaper.jpg fill
+
+output $laptop {
+    scale 1.5 mode 2160x1440 position 0,0
+    max_render_time off
+    adaptive_sync on
+    allow_tearing no
+}
+
+output $external {
+    scale 1.5 mode 3840x2160 position 1440,0
+    max_render_time off
+    adaptive_sync on
+    allow_tearing no
+}
+
+bindswitch --reload --locked lid:on exec laptop-display-handler.sh close
+bindswitch --reload --locked lid:off exec laptop-display-handler.sh open

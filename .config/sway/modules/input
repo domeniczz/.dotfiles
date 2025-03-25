@@ -1,0 +1,17 @@
+input type:touchpad {
+    # events disabled
+    dwt enable
+    tap enable
+    natural_scroll enable
+    middle_emulation enable
+}
+
+input type:pointer {
+    accel_profile "flat"
+    pointer_accel -0.2
+}
+
+input type:keyboard {
+    repeat_delay 400
+    xkb_options caps:escape
+}

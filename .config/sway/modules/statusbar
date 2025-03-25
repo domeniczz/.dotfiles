@@ -1,0 +1,19 @@
+bar {
+    position top
+    mode hide
+    hidden_state hide
+    wrap_scroll no
+    workspace_buttons yes
+    separator_symbol "|"
+    font pango:Hack Nerd Font 9
+    status_command statusbar.sh
+    # status_command i3status.sh
+    colors {
+        statusline #ffffff
+        background #363636
+        focused_workspace #23658a #23658a #ffffff
+        active_workspace #dc6000 #dc6000 #ffffff
+        inactive_workspace #202020 #202020 #7c7e7f
+        urgent_workspace #d5302a #d5302a #ffffff
+    }
+}

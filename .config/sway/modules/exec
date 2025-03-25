@@ -1,0 +1,16 @@
+exec amixer sset Master 0%
+exec brightnessctl set 100%
+
+exec udiskie &
+exec mako &
+exec wl-paste --watch cliphist store
+exec fcitx5 -d
+exec mkfifo /tmp/volume-wob-pipe && tail --follow /tmp/volume-wob-pipe | wob
+exec mihomo-party
+
+exec swaymsg 'workspace 2; exec $terminal'
+
+# exec swayidle -w \
+#   timeout 1200 'brightnessctl set 5% -s' resume 'brightnessctl -r' \
+#   timeout 2700 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
+#   before-sleep ''
