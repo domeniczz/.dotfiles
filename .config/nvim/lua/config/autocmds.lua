@@ -46,7 +46,7 @@ autocmd({ "BufEnter", "FileType" }, {
   group = augroup("filetype_specific_settings"),
   callback = function()
     local ft = vim.bo.filetype
-    if ft == "lua" or ft == "sh" or ft == "vim" then
+    if ft == "lua" or ft == "sh" or ft == "yaml" or ft == "vim" then
       vim.opt_local.tabstop = 2
       vim.opt_local.softtabstop = 2
       vim.opt_local.shiftwidth = 2

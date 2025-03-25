@@ -22,6 +22,8 @@ opt.expandtab = true
 opt.smarttab = true
 opt.breakindent = true
 
+opt.textwidth = 0
+
 opt.relativenumber = true
 opt.number = true
 opt.numberwidth = 2
@@ -45,12 +47,12 @@ opt.whichwrap = "<,>,[,]"
 -- opt.clipboard = 'unnamedplus'
 
 opt.mouse = "a"
+opt.mousescroll = "ver:3,hor:6"
 
 opt.showmode = true
 
 opt.synmaxcol = 300
 
--- Line wrapping
 opt.wrap = true
 opt.linebreak = true
 
