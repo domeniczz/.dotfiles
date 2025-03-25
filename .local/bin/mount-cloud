@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
+# Mount/Unmount cloud drive
+# ------------------------------------------------------------------------------
+
+function usage() {
+  echo "Usage: mountcloud [--unmount|-u] [<cloud-path>]"
+  echo "Examples:"
+  echo "  mountcloud \"pikpak:D\"            # Mount cloud path"
+  echo "  mountcloud --unmount \"pikpak:D\"  # Unmount specific cloud path"
+  echo "  mountcloud --unmount             # Unmount all cloud paths"
+  exit 1
+}
+
+function mount_cloud_path() {
+  local CLOUD_PATH="$1"
+  local MOUNT_POINT="$HOME/Mount/$CLOUD_PATH"
+
+  if [[ ! -d "$MOUNT_POINT" ]]; then
+    mkdir -p -- "$MOUNT_POINT" || { echo "Error: Failed to create $MOUNT_POINT"; return 1; }
+  fi
+
+  if mountpoint -q -- "$MOUNT_POINT" 2>/dev/null; then
+    echo "$MOUNT_POINT already mounted"
+    return 0
+  fi
+
+  echo "Mounting $CLOUD_PATH..."
+  nohup rclone mount "$CLOUD_PATH" "$MOUNT_POINT" \
+    --vfs-cache-mode writes --dir-cache-time 24h --vfs-read-chunk-size 16M \
+    --poll-interval 0 --rc --rc-addr 127.0.0.1:5572 \
+    > ~/rclone.log 2>&1 &
+  local RCLONE_PID=$!
+  sleep 2
+
+  if mountpoint -q -- "$MOUNT_POINT" 2>/dev/null; then
+    echo "Successfully mounted $CLOUD_PATH"
+    return 0
+  else
+    ps -p $RCLONE_PID > /dev/null 2>&1 && kill $RCLONE_PID
+    echo "Failed to mount $CLOUD_PATH (check ~/rclone.log)"
+    return 1
+  fi
+}
+
+function unmount_cloud_path() {
+  local CLOUD_PATH="$1"
+  local MOUNT_POINT="$HOME/Mount/$CLOUD_PATH"
+
+  [[ ! -d "$MOUNT_POINT" ]] && { echo "$MOUNT_POINT does not exist"; return 0; }
+
+  if ! mountpoint -q -- "$MOUNT_POINT" 2>/dev/null; then
+    echo "$MOUNT_POINT is not mounted"
+    rmdir -- "$MOUNT_POINT" 2>/dev/null || rm -rf -- "$MOUNT_POINT"
+    return 0
+  fi
+
+  echo "Unmounting $CLOUD_PATH..."
+  pgrep -f "rclone mount $CLOUD_PATH" | xargs --no-run-if-empty kill
+  sleep 2
+
+  if ! mountpoint -q -- "$MOUNT_POINT" 2>/dev/null; then
+    rmdir -- "$MOUNT_POINT" 2>/dev/null || rm -rf -- "$MOUNT_POINT"
+    echo "Successfully unmounted $CLOUD_PATH"
+    return 0
+  else
+    echo "Failed to unmount $CLOUD_PATH"
+    return 1
+  fi
+}
+
+function unmount_all_cloud_paths() {
+  local MOUNT_BASE="$HOME/Mount"
+
+  [[ ! -d "$MOUNT_BASE" ]] && { echo "Mount directory does not exist"; return 0; }
+
+  local MOUNTED_DIRS=()
+  while IFS= read -r dir; do
+    mountpoint -q -- "$dir" 2>/dev/null && MOUNTED_DIRS+=("$dir")
+  done < <(find "$MOUNT_BASE" -mindepth 1 -maxdepth 1 -type d 2>/dev/null || true)
+
+  [[ ${#MOUNTED_DIRS[@]} -eq 0 ]] && { echo "No mounted directories found"; return 0; }
+
+  echo "Unmounting all cloud paths..."
+  pgrep -f "rclone mount" | xargs --no-run-if-empty kill
+  sleep 2
+
+  for dir in "${MOUNTED_DIRS[@]}"; do
+    if ! mountpoint -q -- "$dir" 2>/dev/null; then
+      rmdir -- "$dir" 2>/dev/null || rm -rf -- "$dir"
+      echo "Unmounted: $dir"
+    else
+      echo "Failed to unmount: $dir"
+    fi
+  done
+}
+
+if [[ $# -ge 1 && ("$1" == "--unmount" || "$1" == "-u") ]]; then
+  shift
+  if [[ $# -eq 0 ]]; then
+    unmount_all_cloud_paths
+  elif [[ $# -eq 1 ]]; then
+    unmount_cloud_path "$1"
+  else
+    usage
+  fi
+elif [[ $# -eq 1 ]]; then
+  mount_cloud_path "$1"
+else
+  usage
+fi
