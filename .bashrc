@@ -29,27 +29,17 @@ HISTCONTROL=ignoreboth
 
 set -o vi
 
-shopt -s autocd
 shopt -s histappend
 shopt -s histverify
 shopt -s cmdhist
 shopt -s lithist
+shopt -s autocd
+shopt -s globstar
+shopt -s checkwinsize
+shopt -s checkjobs
+shopt -s direxpand
 
-bind '"\e[A": history-search-backward'
-bind '"\e[B": history-search-forward'
-
-bind "set completion-ignore-case on"
-bind "set show-all-if-ambiguous on"
-bind "set colored-stats on"
-bind "set mark-symlinked-directories on"
-bind "set show-all-if-unmodified on"
-bind "set completion-map-case on"
-bind "set menu-complete-display-prefix on"
-bind 'set keyseq-timeout 5'
-
-bind 'set show-mode-in-prompt on'
-bind 'set vi-ins-mode-string "\1\e[2 q\2"'
-bind 'set vi-cmd-mode-string "\1\e[4 q\2"'
+source /usr/share/bash-completion/bash_completion
 
 source $XDG_CONFIG_HOME/shell/shellrc
 source $XDG_CONFIG_HOME/shell/alias
