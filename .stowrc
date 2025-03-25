@@ -3,6 +3,5 @@
 --verbose 2
 --target=$HOME
 --dir=$HOME/.dotfiles
---ignore=".git"
 --ignore=".stow-local-ignore"
 --ignore="fcitx5"

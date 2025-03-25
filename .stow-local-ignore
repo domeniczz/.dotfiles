@@ -13,25 +13,25 @@ RCS
 
 CVS
 \.\#.+       # CVS conflict files / emacs lock files
-\.cvsignore
+^\.cvsignore$
 
-\.svn
-_darcs
-\.hg
+^\.svn$
+^_darcs$
+^\.hg$
 
-\.git
-\.gitmodules
-/.+/\.gitignore
+^\.git$
+^\.gitmodules$
+^/.+/\.gitignore$
 
 .+~          # emacs backup files
 \#.*\#       # emacs autosave files
 
-^/etc
-^/.mozilla
+^/etc$
+^/.mozilla$
 
 ^/[^/]+\.sh$
 
-\.DS_Store
+^\.DS_Store$
 
 ^/README.*
 ^/LICENSE.*
