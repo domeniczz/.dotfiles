@@ -20,15 +20,17 @@ any_display_active() {
   [[ -n "$active_displays" ]]
 }
 
-if [[ "$ACTION" = "close" ]]; then
+if [[ "$ACTION" == "close" ]]; then
   if has_external_display; then
     swaymsg "output $LAPTOP disable"
+    swaymsg "output $LAPTOP dpms off"
   else
     swaymsg "output $LAPTOP dpms off"
   fi
-elif [[ "$ACTION" = "open" ]]; then
+elif [[ "$ACTION" == "open" ]]; then
   if has_external_display || ! any_display_active; then
     swaymsg "output $LAPTOP enable"
+    swaymsg "output $LAPTOP dpms on"
   else
     swaymsg "output $LAPTOP dpms on"
   fi

@@ -37,12 +37,12 @@ selected=$(echo -e $options | bemenu \
 
 case $selected in
   *"Suspend"*)
-    playerctl --all-players stop
+    playerctl --all-players stop || true
     systemctl suspend
     ;;
   *"Hibernate"*)
     brightnessctl set 100%
-    playerctl --all-players stop
+    playerctl --all-players stop || true
     systemctl hibernate
     ;;
   *"Reboot"*)

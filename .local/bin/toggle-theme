@@ -57,6 +57,7 @@ function switch_theme() {
     echo "$f"
     "$f"
   done
+  notify-send "Switched to $THEME theme"
 }
 
 setup

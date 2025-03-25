@@ -8,18 +8,20 @@ set -euo pipefail
 
 TMUX_CONF_PATH="$XDG_CONFIG_HOME/tmux"
 
-selected=`cat $TMUX_CONF_PATH/.tmux-cht-languages $TMUX_CONF_PATH/.tmux-cht-command | sort --reverse | fzf`
+selected=$(cat $TMUX_CONF_PATH/.tmux-cht-languages $TMUX_CONF_PATH/.tmux-cht-command | sort --reverse | fzf --prompt='cheat sheet > ')
 
-if [[ -z $selected ]]; then
-  exit 0
-fi
+[[ -z $selected ]] && exit 0
 
-read -p "Enter Query: " query
+tput cup $(($(tput lines)-1)) 0
+tput el
+read -p "search query: " query
 
-query=`echo $query | tr ' ' '+'`
+query=$(echo $query | tr ' ' '+')
 
-if grep -qs "$selected" $TMUX_CONF_PATH/.tmux-cht-languages; then
-  tmux new-window -n "ctsh" bash -c "echo \"curl cht.sh/$selected/$query/\" & curl cht.sh/$selected/$query & while [ : ]; do sleep 1; done"
+LESS_CMD="less --use-color --wordwrap --RAW-CONTROL-CHARS --incsearch --ignore-case --mouse"
+
+if grep -qs "$selected" "$TMUX_CONF_PATH/.tmux-cht-languages"; then
+  tmux new-window -n "ctsh" bash -c "curl -s cht.sh/$selected/$query | $LESS_CMD"
 else
-  tmux new-window -n "ctsh" bash -c "curl -s cht.sh/$selected~$query | less"
+  tmux new-window -n "ctsh" bash -c "curl -s cht.sh/$selected~$query | $LESS_CMD"
 fi
