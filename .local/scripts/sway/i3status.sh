@@ -32,7 +32,7 @@ done
 declare -a NETWORK_INTERFACES
 declare -g NETWORK_INTERFACE_FILE="/tmp/network_interface"
 
-get_all_network_interfaces() {
+function get_all_network_interfaces() {
   for iface in /sys/class/net/*; do
     name=$(basename "$iface")
     if [[ "$name" != "lo" ]]; then
@@ -43,7 +43,7 @@ get_all_network_interfaces() {
 
 get_all_network_interfaces
 
-monitor_active_interfaces() {
+function monitor_active_interfaces() {
   while true; do
     if (( ${#NETWORK_INTERFACES[@]} == 0 )); then
       echo "" > $NETWORK_INTERFACE_FILE
@@ -71,21 +71,26 @@ monitor_active_interfaces &
 # Get status
 # ------------------------------------------------------------------------------
 
-get_bluetooth() {
+function get_bluetooth() {
   local bluetooth_device icon
+  local bluetooth_device_text=""
   BLUETOOTH_COUNT=$(timeout 0.2s bluetoothctl devices Connected | wc -l || echo "-1")
   (( BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT )) && timeout 0.2s playerctl pause
+  BLUETOOTH_PREV_COUNT=$BLUETOOTH_COUNT
   if (( BLUETOOTH_COUNT > 0 )); then
-    bluetooth_device=$(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "Error")
     icon=${bluetooth_icons[1]}
+    while IFS= read -r device; do
+      [[ -n "$bluetooth_device_text" ]] && bluetooth_device_text+=" "
+      bluetooth_device_text+="$icon $device"
+    done < <(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "Error")
   else
-    bluetooth_device=""
     icon=${bluetooth_icons[0]}
+    bluetooth_device_text="$icon "
   fi
-  FUNC_OUTPUTS[bluetooth]="{\"name\":\"bluetooth\",\"full_text\":\"$icon $bluetooth_device\"},"
+  FUNC_OUTPUTS[bluetooth]="{\"name\":\"bluetooth\",\"full_text\":\"$bluetooth_device_text\"},"
 }
 
-get_internet_speed() {
+function get_internet_speed() {
   local speed_text
   local current_time=$SECONDS
   local time_diff=$(( current_time - PREV_SPEED_TIME ))
@@ -117,7 +122,7 @@ get_internet_speed() {
 # Utils
 # -----------------------------------------------------------------------------
 
-format_network_speed() {
+function format_network_speed() {
   local bytes=$1
   if (( bytes >= 1073741824 )); then
     printf "%.1f GB/s" "$(( bytes * 10 / 1073741824 ))e-1"

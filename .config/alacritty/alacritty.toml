@@ -47,7 +47,7 @@ dim.blue = "#1b668f"
 dim.magenta = "#614a73"
 dim.cyan = "#186c60"
 dim.white = "#63686d"
-transparent_background_colors = true
+# transparent_background_colors = true
 
 [selection]
 save_to_clipboard = true

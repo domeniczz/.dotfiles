@@ -57,7 +57,7 @@ declare -g WIFI_NAME_FILE="/tmp/wifi_name"
 declare -a NETWORK_INTERFACES
 declare -g NETWORK_INTERFACE_FILE="/tmp/network_interface"
 
-get_all_network_interfaces() {
+function get_all_network_interfaces() {
   for iface in /sys/class/net/*; do
     name=$(basename "$iface")
     [[ "$name" == "lo" ]] && continue
@@ -67,7 +67,7 @@ get_all_network_interfaces() {
 
 get_all_network_interfaces
 
-monitor_active_interfaces() {
+function monitor_active_interfaces() {
   local prev_iface=""
   while true; do
     if (( ${#NETWORK_INTERFACES[@]} == 0 )); then
@@ -103,7 +103,7 @@ monitor_active_interfaces &
 # Get status
 # ------------------------------------------------------------------------------
 
-send_battery_alert() {
+function send_battery_alert() {
   timeout 0.2s notify-send \
     --urgency=critical \
     --app-name="Battery Monitor" \
@@ -112,7 +112,7 @@ send_battery_alert() {
     "Battery level is below ${BATTERY_CRITICAL_THRESHOLD}%\nPlease charge immediately!"
 }
 
-get_battery() {
+function get_battery() {
   local battery_pct battery_color ac_state icon
   local battery_color="#ffffff"
   battery_pct=$(timeout 0.2s cat "$BAT_PATH" 2>/dev/null || echo "0")
@@ -134,7 +134,7 @@ get_battery() {
   FUNC_OUTPUTS[battery]="{\"name\":\"battery\",\"full_text\":\"$icon $battery_pct%\",\"color\":\"$battery_color\"},"
 }
 
-get_volume() {
+function get_volume() {
   local volume_info volume_pct icon icon_index
   volume_pct=$(timeout 0.2s pactl get-sink-volume @DEFAULT_SINK@ | awk '{print $5}' | sed 's/%//' || echo "0")
   volume_is_mute=$(timeout 0.2s pactl get-sink-mute @DEFAULT_SINK@ | awk '{print $2}' || echo "yes")
@@ -147,7 +147,7 @@ get_volume() {
   FUNC_OUTPUTS[volume]="{\"name\":\"volume\",\"full_text\":\"$icon $volume_pct%\"},"
 }
 
-get_brightness() {
+function get_brightness() {
   local brightness_pct icon
   current_brightness=$(timeout 0.2s cat "$BACKLIGHT_PATH" || echo "0")
   max_brightness=$(timeout 0.2s cat "$BACKLIGHT_MAX_PATH" || echo "0")
@@ -156,7 +156,7 @@ get_brightness() {
   FUNC_OUTPUTS[brightness]="{\"name\":\"brightness\",\"full_text\":\"$icon $brightness_pct%\"},"
 }
 
-get_wifi() {
+function get_wifi() {
   local wifi_name
   [[ -f "$WIFI_NAME_FILE" ]] && wifi_name=$(timeout 0.2s cat "$WIFI_NAME_FILE" || echo "Error")
   if [[ -z "$wifi_name" || "$wifi_name" == "lo" ]]; then
@@ -167,22 +167,26 @@ get_wifi() {
   FUNC_OUTPUTS[wifi]="{\"name\":\"wifi\",\"full_text\":\"$icon $wifi_name\"},"
 }
 
-get_bluetooth() {
+function get_bluetooth() {
   local bluetooth_device icon
+  local bluetooth_device_text=""
   BLUETOOTH_COUNT=$(timeout 0.2s bluetoothctl devices Connected | wc -l || echo "-1")
   (( BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT )) && timeout 0.2s playerctl pause
   BLUETOOTH_PREV_COUNT=$BLUETOOTH_COUNT
   if (( BLUETOOTH_COUNT > 0 )); then
-    bluetooth_device=$(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "Error")
     icon=${bluetooth_icons[1]}
+    while IFS= read -r device; do
+      [[ -n "$bluetooth_device_text" ]] && bluetooth_device_text+=" "
+      bluetooth_device_text+="$icon $device"
+    done < <(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "Error")
   else
-    bluetooth_device=""
     icon=${bluetooth_icons[0]}
+    bluetooth_device_text="$icon "
   fi
-  FUNC_OUTPUTS[bluetooth]="{\"name\":\"bluetooth\",\"full_text\":\"$icon $bluetooth_device\"},"
+  FUNC_OUTPUTS[bluetooth]="{\"name\":\"bluetooth\",\"full_text\":\"$bluetooth_device_text\"},"
 }
 
-get_internet_speed() {
+function get_internet_speed() {
   local speed_text
   local current_time=$SECONDS
   local time_diff=$(( current_time - PREV_SPEED_TIME ))
@@ -210,7 +214,7 @@ get_internet_speed() {
   FUNC_OUTPUTS[internet_speed]="{\"name\":\"internet_speed\",\"full_text\":\"$speed_text\"},"
 }
 
-get_cpu_usage() {
+function get_cpu_usage() {
   local cpu_stats current_stats
   local user_1 nice_1 system_1 idle_1 total_1
   local user_2 nice_2 system_2 idle_2 total_2
@@ -235,7 +239,7 @@ get_cpu_usage() {
   FUNC_OUTPUTS[cpu]="{\"name\":\"cpu\",\"full_text\":\"${cpu_usage_text}\"},"
 }
 
-get_date() {
+function get_date() {
   FUNC_OUTPUTS[date]="{\"name\":\"date\",\"full_text\":\"$(date "+%a %F %H:%M:%S")\"},"
 }
 
@@ -243,7 +247,7 @@ get_date() {
 # Utils
 # ------------------------------------------------------------------------------
 
-format_network_speed() {
+function format_network_speed() {
   local bytes=$1
   if (( bytes >= 1073741824 )); then
     printf "%.1f GB/s" "$(( bytes * 10 / 1073741824 ))e-1"

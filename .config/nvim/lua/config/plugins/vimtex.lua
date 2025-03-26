@@ -56,7 +56,7 @@ return {
     end, { remap = false, silent = true })
 
     -- Open the pdf file without compile
-    vim.keymap.set("n", "<leader>lr", function()
+    vim.keymap.set("n", "<leader>lv", function()
       local pdf_file_path = vim.fn.expand("%"):gsub("%.tex$", ".pdf")
       if vim.fn.filereadable(pdf_file_path) == 0 then
         vim.notify("PDF file does not exist: " .. pdf_file_path, vim.log.levels.ERROR)
@@ -66,7 +66,7 @@ return {
     end, { remap = false, silent = true })
 
     -- Forward synctex: jump from source to relative position in pdf
-    vim.keymap.set("n", "<leader>lg", function()
+    vim.keymap.set("n", "<leader>ls", function()
       local line = vim.fn.line(".")
       local col = vim.fn.col(".")
       local tex_file_path = vim.fn.expand("%:p")

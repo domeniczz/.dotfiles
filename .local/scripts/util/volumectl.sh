@@ -42,15 +42,15 @@ done
 # Functions
 # ------------------------------------------------------------------------------
 
-get_current_volume() {
+function get_current_volume() {
   pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]\+%' | head -1 | tr -d '%'
 }
 
-get_mute_status() {
+function get_mute_status() {
   pactl get-sink-mute @DEFAULT_SINK@ | awk '{print $2}'
 }
 
-toggle_wob_progress_bar() {
+function toggle_wob_progress_bar() {
   echo "$1" > /tmp/volume-wob-pipe
 }
 

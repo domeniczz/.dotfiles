@@ -1,7 +1,6 @@
 return {
   "tpope/vim-fugitive",
   enabled = true,
-  -- event = "VeryLazy",
   lazy = true,
   keys = {
     { "<leader>gs", "<CMD>Git<CR>", desc = "Fugitive: toggle git view" },

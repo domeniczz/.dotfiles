@@ -1,6 +1,7 @@
 let g:netrw_home = $XDG_DATA_HOME."/vim"
 
 syntax on
+set autoread
 set number
 set relativenumber
 " set wildmenu

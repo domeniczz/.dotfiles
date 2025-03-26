@@ -53,13 +53,13 @@ FILE=""
 # Utility functions
 # -----------------------------------------------------------------------------
 
-debug_log() {
+function debug_log() {
   if (( $DEBUG == 1 )); then
     echo "$(date): $1" | tee -a "/tmp/openfile.log"
   fi
 }
 
-notify() {
+function notify() {
   if command -v notify-send >/dev/null 2>&1; then
     notify-send "$@" || echo "Failed to send notification: $*" >&2
   else
@@ -67,7 +67,7 @@ notify() {
   fi
 }
 
-launch_detached() {
+function launch_detached() {
   local cmd="$1"
   debug_log "Launching detached: $cmd"
   nohup sh -c "$cmd" >/dev/null 2>&1 &
@@ -75,7 +75,7 @@ launch_detached() {
 }
 
 
-show_usage_help() {
+function show_usage_help() {
   echo -e "Usage: $(basename "$0") --file <file-path> [--debug true|false]\n\
 Options:\n\
   --file <file-path>    Path to the file to open (required)\n\
@@ -84,7 +84,7 @@ Options:\n\
 }
 
 
-get_terminal() {
+function get_terminal() {
   if [[ -n $TERMINAL ]]; then
     echo "$TERMINAL"
     return

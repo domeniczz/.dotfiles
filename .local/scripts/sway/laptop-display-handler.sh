@@ -10,12 +10,12 @@ set -euo pipefail
 ACTION=$1
 LAPTOP="eDP-1"
 
-has_external_display() {
+function has_external_display() {
   external_displays=$(swaymsg -t get_outputs | jq -r '.[] | select(.name != "'$LAPTOP'" and .active == true) | .name')
   [[ -n "$external_displays" ]]
 }
 
-any_display_active() {
+function any_display_active() {
   active_displays=$(swaymsg -t get_outputs | jq -r '.[] | select(.active == true) | .name')
   [[ -n "$active_displays" ]]
 }

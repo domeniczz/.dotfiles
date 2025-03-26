@@ -83,7 +83,7 @@ opt.undofile = true
 
 opt.updatetime = 5000
 opt.ttimeoutlen = 20
-opt.timeoutlen = 400
+opt.timeoutlen = 500
 
 opt.signcolumn = "yes"
 

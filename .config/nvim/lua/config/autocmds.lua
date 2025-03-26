@@ -5,7 +5,7 @@ end
 local autocmd = vim.api.nvim_create_autocmd
 
 autocmd("TextYankPost", {
-  group = augroup("highlight_yank"),
+  group = augroup("highlight_yanked_text"),
   callback = function()
     vim.highlight.on_yank({
       higroup = "IncSearch",
@@ -14,7 +14,7 @@ autocmd("TextYankPost", {
   end,
 })
 
-local number_toggle = augroup("number_toggle")
+local number_toggle = augroup("relativenumber_toggle")
 autocmd({ "VimEnter", "FocusGained", "InsertLeave", "WinEnter" }, {
   group = number_toggle,
   callback = function()
@@ -58,7 +58,7 @@ autocmd({ "BufEnter", "FileType" }, {
 })
 
 autocmd("BufWritePre", {
-  group = augroup("trim_trailing_lines"),
+  group = augroup("trim_trailing_empty_lines"),
   callback = function()
     local max_lines = 10000
     if vim.api.nvim_buf_line_count(0) > max_lines then
@@ -81,7 +81,7 @@ autocmd("BufWritePre", {
 })
 
 autocmd("BufReadPre", {
-  group = augroup("largefile_performance_tweak"),
+  group = augroup("largefile_performance_tweaks"),
   callback = function()
     if require('config.utils').is_current_large_file(5120 * 1024) then
       local opt_local = vim.opt_local

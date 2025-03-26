@@ -9,7 +9,7 @@ set -euo pipefail
 declare -a device_names=()
 declare -A device_map=()
 
-get_saved_devices() {
+function get_saved_devices() {
   while read -r _ mac name; do
     device_names+=("$name")
     device_map["$name"]="$mac"
@@ -21,7 +21,7 @@ get_saved_devices() {
   fi
 }
 
-connect_device() {
+function connect_device() {
   local device_name="$1"
   local mac="${device_map[$device_name]}"
 

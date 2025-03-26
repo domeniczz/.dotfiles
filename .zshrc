@@ -8,12 +8,13 @@ HISTSIZE=2000
 SAVEHIST=100000
 HISTCONTROL=ignoreboth
 KEYTIMEOUT=5
+LISTMAX=200
 
 ((INCOGNITO == 1)) && SAVEHIST=0 && PROMPT="%K{#1b527e}%F{#f0f0f0} incognito %f%k$PROMPT"
 
 setopt append_history inc_append_history share_history extended_history
 setopt hist_ignore_space hist_reduce_blanks hist_verify
-setopt autocd
+setopt autocd check_jobs
 
 bindkey -v
 
@@ -21,8 +22,9 @@ zstyle ":completion:*" menu select completer _expand _complete _ignored _approxi
 zstyle :compinstall filename "$HOME/.zshrc"
 autoload -Uz compinit; compinit
 
-source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+ZSH_PLUGINS_DIR=/usr/share/zsh/plugins
+source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
+source "$ZSH_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 # Create a zkbd compatible hash for terminfo key mapping
 typeset -g -A key
@@ -39,6 +41,8 @@ key[Right]="${terminfo[kcuf1]}"
 key[PageUp]="${terminfo[kpp]}"
 key[PageDown]="${terminfo[knp]}"
 key[Shift-Tab]="${terminfo[kcbt]}"
+key[Control-P]="^P"
+key[Control-N]="^N"
 
 # Set key bindings by using string capabilities from terminfo
 [[ -n "${key[Home]}"      ]] && bindkey -- "${key[Home]}"       beginning-of-line
@@ -53,11 +57,15 @@ key[Shift-Tab]="${terminfo[kcbt]}"
 [[ -n "${key[PageUp]}"    ]] && bindkey -- "${key[PageUp]}"     beginning-of-buffer-or-history
 [[ -n "${key[PageDown]}"  ]] && bindkey -- "${key[PageDown]}"   end-of-buffer-or-history
 [[ -n "${key[Shift-Tab]}" ]] && bindkey -- "${key[Shift-Tab]}"  autosuggest-accept
+[[ -n "${key[Control-P]}" ]] && bindkey -- "${key[Control-P]}"  history-beginning-search-backward
+[[ -n "${key[Control-N]}" ]] && bindkey -- "${key[Control-N]}"  history-beginning-search-forward
 
 # Fallback binding, will be overridden by the terminfo bindings if available
 bindkey "^?" backward-delete-char
 bindkey "^[[3~" delete-char
 bindkey "^[[Z" autosuggest-accept
+bindkey "^P" history-beginning-search-backward
+bindkey "^N" history-beginning-search-forward
 
 function zle-line-init {
   echo -ne '\e[2 q'

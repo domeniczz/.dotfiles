@@ -143,10 +143,10 @@ curl -O https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/subl
 bat cache --build
 cd
 
-# Install oh-my-zsh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-# Install zsh-autosuggestions plugin
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+# # Install oh-my-zsh
+# sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+# # Install zsh-autosuggestions plugin
+# git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
 # Check if wayland protocol is used
 check_wayland() {

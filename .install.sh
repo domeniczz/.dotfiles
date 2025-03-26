@@ -27,10 +27,11 @@ declare -a PACMAN_PKGS=(
   "fcitx5-material-color"
 
   "zsh"
+  "zsh-autosuggestions"
+  "zsh-syntax-highlighting"
   "cronie"
   "bemenu-wayland"
   "neovim"
-  "joshuto"
   "fd"
   "ripgrep"
   "fzf"
@@ -44,8 +45,6 @@ declare -a PACMAN_PKGS=(
   "alacritty"
   "playerctl"
   "mako"
-  "zip"
-  "unzip"
   "imv"
   "swayimg"
   "mpv"
@@ -57,6 +56,19 @@ declare -a PACMAN_PKGS=(
   "tlp"
   "git"
   "base-devel"
+  "7zip"
+  "aria2"
+  "catdoc"
+  "docx2txt"
+
+  "vifm"
+  "ueberzugpp"
+  "imagemagick"
+  "ffmpegthumbnailer"
+  "gnome-epub-thumbnailer"
+  "yazi"
+
+  # "w3m"
 
   "thunar"
   "gvfs"
@@ -67,13 +79,11 @@ declare -a PACMAN_PKGS=(
   "zathura-pdf-mupdf"
   # "libreoffice-still"
 
-  "linuxqq"
-  "wechat-bin"
-  "dingtalk-bin"
-  "discord_arch_electron"
+  "keepassxc"
+  "bitwarden"
 
-  "v2ray"
-  "v2raya"
+  # "v2ray"
+  # "v2raya"
 
   # "localsend"
 
@@ -111,13 +121,28 @@ declare -a PACMAN_PKGS=(
   "lua-language-server"
   "pyright"
   "libsynctex"
+
+  "xdg-desktop-portal-wlr"
+  "xdg-desktop-portal-gtk"
 )
 
 declare -a YAY_PKGS=(
   "smem"
+  "oryx-bin"
   # "visual-studio-code-bin"
   "spotify"
   "spotify-player-full"
+  "linuxqq"
+  "wechat"
+  "dingtalk-bin"
+  # "discord_arch_electron"
+  # "1password"
+  "mihomo-party-electron-bin"
+
+  # "xremap-wlroots-bin"
+
+  "qt5-styleplugins"
+  "qt6gtk2"
 )
 
 log_message() {

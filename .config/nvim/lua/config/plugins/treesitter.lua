@@ -5,7 +5,11 @@ return {
     event = "VeryLazy",
     priority = 1000,
     build = ":TSUpdate",
-    cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
+    cmd = {
+      "TSUpdateSync",
+      "TSUpdate",
+      "TSInstall"
+    },
     config = function()
       require("nvim-treesitter.configs").setup({
         -- A list of parser names, or "all"

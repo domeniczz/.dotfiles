@@ -362,6 +362,7 @@ user_pref("browser.safebrowsing.provider.mozilla.updateURL", "");
 // user_pref("image.animation_mode", "once");
 
 user_pref("layout.css.devPixelsPerPx", 1.8);
+user_pref("browser.uidensity", 1);
 user_pref("browser.autofocus", false);
 
 user_pref("browser.startup.page", 3);
