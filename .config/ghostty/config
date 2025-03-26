@@ -13,8 +13,6 @@ confirm-close-surface = false
 quit-after-last-window-closed = true
 wait-after-command = false
 
-initial-command = if [[ -z "$TMUX" ]]; then tmux new-session -A -s general; else exec zsh; fi
-
 scrollback-limit = 10000000
 image-storage-limit = 320000000
 
