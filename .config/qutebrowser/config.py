@@ -325,11 +325,12 @@ c.hints.chars = 'asdfghjkl'
 # c.hints.dictionary = '/usr/share/dict/words'
 
 ## Which implementation to use to find elements to hint.
+## Not available with QtWebEngine backend
 ## Type: String
 ## Valid values:
 ##   - javascript: Better but slower
 ##   - python: Slightly worse but faster
-c.hints.find_implementation = 'javascript'
+# c.hints.find_implementation = 'javascript'
 
 ## Hide unmatched hints in rapid mode.
 ## Type: Bool
@@ -865,6 +866,8 @@ c.url.searchengines = {
     'dp': 'https://packages.debian.org/search?keywords={}&searchon=names&section=all',
     'man': 'https://man.archlinux.org/search?q={}',
     'debman': 'https://dyn.manpages.debian.org/jump?q={}',
+
+    'sum': 'https://kagi.com/summarizer/?target_language=EN&summary=summary&url={}',
 }
 
 ## Page(s) to open at the start.
@@ -907,8 +910,9 @@ c.zoom.levels = ['25%', '33%', '50%', '67%', '75%', '90%', '100%', '110%', '125%
 c.zoom.mouse_divider = 512
 
 ## Apply the zoom factor on a frame only to the text or to all content.
+## Not available with QtWebEngine backend
 ## Type: Bool
-c.zoom.text_only = False
+# c.zoom.text_only = False
 
 # -----------------------------------------------------------------------------
 # Tab bar & Status bar
@@ -1264,16 +1268,18 @@ c.content.blocking.whitelist = []
 ## that use the application cache via JavaScript, the loader engine will
 ## first ask the application cache for the contents, before hitting the
 ## network.
+## Not available with QtWebEngine backend
 ## Type: Bool
-c.content.cache.appcache = True
+# c.content.cache.appcache = True
 
 ## Maximum number of pages to hold in the global memory page cache. The
 ## page cache allows for a nicer user experience when navigating forth or
 ## back to pages in the forward/back history, by pausing and resuming up
 ## to _n_ pages. For more information about the feature, please refer to:
 ## https://webkit.org/blog/427/webkit-page-cache-i-the-basics/
+## Not available with QtWebEngine backend
 ## Type: Int
-c.content.cache.maximum_pages = 20
+# c.content.cache.maximum_pages = 20
 
 ## Size (in bytes) of the HTTP network cache. Null to use the default
 ## value. With QtWebEngine, the maximum supported value is 2147483647 (~2
@@ -1335,8 +1341,9 @@ c.content.dns_prefetch = True
 
 ## Expand each subframe to its contents. This will flatten all the frames
 ## to become one scrollable page.
+## Not available with QtWebEngine backend
 ## Type: Bool
-c.content.frame_flattening = False
+# c.content.frame_flattening = False
 
 ## Set fullscreen notification overlay timeout in milliseconds. If set to
 ## 0, no overlay will be displayed.
@@ -1412,8 +1419,9 @@ c.content.images = True
 c.content.javascript.alert = True
 
 ## Allow JavaScript to close tabs.
+## Not available with QtWebEngine backend
 ## Type: Bool
-c.content.javascript.can_close_tabs = False
+# c.content.javascript.can_close_tabs = False
 
 ## Allow JavaScript to open new tabs without user interaction.
 ## Type: Bool
@@ -1620,8 +1628,9 @@ c.content.private_browsing = False
 c.content.proxy = 'system'
 
 ## Send DNS requests over the configured proxy.
+## Not available with QtWebEngine backend
 ## Type: Bool
-c.content.proxy_dns_requests = True
+# c.content.proxy_dns_requests = True
 
 ## Allow websites to register protocol handlers via
 ## `navigator.registerProtocolHandler`.
@@ -1833,6 +1842,8 @@ config.bind('i', 'mode-enter insert')
 config.bind('j', 'scroll down')
 config.bind('k', 'scroll up')
 config.bind('l', 'scroll right')
+config.bind('<Ctrl-J>', 'scroll-page 0 0.2')
+config.bind('<Ctrl-K>', 'scroll-page 0 -0.2')
 config.bind('m', 'quickmark-save')
 config.bind('n', 'search-next')
 config.bind('o', 'cmd-set-text -s :open')
