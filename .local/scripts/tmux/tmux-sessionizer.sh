@@ -8,31 +8,30 @@ set -euo pipefail
 # Thanks @ThePrimeTimeagen
 # ------------------------------------------------------------------------------
 
-if (( $# > 1 )); then
-  selected=$1
+places="$HOME/Work $HOME/Personal $HOME/Personal/repository $HOME/Clones"
+
+if command -v fd >/dev/null 2>&1; then
+  selected=$(fd . $places --min-depth 1 --max-depth 1 --type d | sort --reverse | fzf --prompt="sessionizer > ")
 else
-  places="$HOME/Work $HOME/Personal $HOME/Personal/repository $HOME/Clones"
-  if command -v fd >/dev/null 2>&1; then
-    selected=$(fd . $places --min-depth 1 --max-depth 1 --type d | sort --reverse | fzf --prompt="sessionizer: ")
-  else
-    selected=$(find $places -mindepth 1 -maxdepth 1 -type d | sort --reverse | fzf --prompt="sessionizer: ")
-  fi
+  selected=$(find $places -mindepth 1 -maxdepth 1 -type d | sort --reverse | fzf --prompt="sessionizer > ")
 fi
 
-if [[ -z $selected ]]; then
-  exit 0
-fi
+[[ -z $selected ]] && exit 0
 
-selected_name=$(basename "$selected" | tr . _ | cut -c1-20)
+selected_name=$(basename "$selected" | tr '.' '_' | cut -c1-20)
 is_tmux_running=$(pgrep tmux)
 
 if [[ -z $TMUX ]] && [[ -z $is_tmux_running ]]; then
-  tmux new-session -s $selected_name -c $selected
+  tmux new-session -s $selected_name -c $selected -n "nvim" "nvim ."
+  tmux new-window -t $selected_name:2 -c $selected
+  tmux select-window -t $selected_name:1
   exit 0
 fi
 
 if ! tmux has-session -t=$selected_name 2>/dev/null; then
-  tmux new-session -ds $selected_name -c $selected
+  tmux new-session -ds $selected_name -c $selected -n "nvim" "nvim ."
+  tmux new-window -t $selected_name:2 -c $selected
+  tmux select-window -t $selected_name:1
 fi
 
 tmux switch-client -t $selected_name

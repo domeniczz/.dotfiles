@@ -9,7 +9,7 @@ set -euo pipefail
 #   <script-name> [--program PROGRAM] [--mode MODE] ...
 #
 # Options:
-#   --program PROGRAM  Program to launch, USER_INPUT, FZF_SEARCH
+#   --program PROGRAM  Program to launch, USER_INPUT, FZF_SEARCH (default: $SHELL)
 #   --mode MODE        Launch mode: split, or newwin (default: newwin)
 #   --sudo             Run program with sudo privileges
 #   --path PATH        Path to start program in
@@ -23,7 +23,7 @@ set -euo pipefail
 # ------------------------------------------------------------------------------
 
 LAUNCH_MODE="newwin"
-PROGRAM=""
+PROGRAM="${SHELL:-$(command -v bash)}"
 USE_SUDO=0
 WIN_NAME=""
 START_PATH=$(tmux display-message -p "#{pane_current_path}")
@@ -76,9 +76,6 @@ while (( $# > 0 )); do
   esac
 done
 
-# Default window name to program name if empty
-WIN_NAME=${WIN_NAME:-$PROGRAM}
-
 # -------------------------------------------------------------------------------
 # Launch logic
 # -------------------------------------------------------------------------------
@@ -87,6 +84,8 @@ if ! command -v "$PROGRAM" >/dev/null 2>&1; then
   tmux display-message -d 1000 "Program \"$PROGRAM\" does not exist!"
   exit 1
 fi
+
+WIN_NAME=$(basename "${WIN_NAME:-$PROGRAM}" | tr '.' '_' | cut -c1-20)
 
 if (( $USE_SUDO == 1 )); then
   CMD="sudo --preserve-env $PROGRAM"
