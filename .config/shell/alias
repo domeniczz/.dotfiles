@@ -29,22 +29,22 @@ alias shutdown="systemctl poweroff"
 alias poweroff="systemctl poweroff"
 alias reboot="systemctl reboot"
 
-alias myip="ip address | rg --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
+alias myip="ip address | grep --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
 
 alias fman="man -k . | awk -F' - ' '{print $1}' | fzf --prompt='man page > ' --bind='enter:execute(man {1})' --border --height 60%"
 alias fvi="fzf --prompt='$EDITOR open > ' --bind='enter:execute($EDITOR {+})' --preview 'bat --number --color=always --line-range :500 {}' --height 80%"
 alias ftr="realpath * | fzf --prompt='ftree > ' --preview 'command tree -L1 {}' --border --height 60%"
-alias fgl="git log | rg '^commit ' | command cut -d' ' -f2 | fzf --prompt='git commit > ' --preview 'git show {} | bat --number --color=always --language=diff --theme=base16' --border --height 80%"
+alias fgl="git log | grep '^commit ' | command cut -d' ' -f2 | fzf --prompt='git commit > ' --preview 'git show {} | bat --number --color=always --language=diff --theme=base16' --border --height 80%"
 alias fglf="fzf --prompt='git file hist > ' --preview 'git log --follow -p {} | bat --number --color=always --language=diff --theme=base16' --border --height 80%"
 alias fpi="pacman -Qq | fzf --prompt='package info > ' --preview 'pacman -Qi {}' --border --height 60%"
 alias fpc="pacman -Qq | fzf --prompt='package cache > ' --preview 'command ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst' --border --height 60%"
 
 function fps() {
-  pacman -Ss $1 | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='package search > ' --preview 'pacman -Si {}' --bind='enter:become(echo {+} && sudo pacman -S {+})' --border --height 60%
+  pacman -Ss $1 | grep -v '^ ' | command cut -d' ' -f1 | fzf --prompt='package search > ' --preview 'pacman -Si {}' --bind='enter:become(echo {+} && sudo pacman -S {+})' --border --height 60%
 }
 
 function yfps() {
-  yay -Ss $1 | rg -v '^ ' | command cut -d' ' -f1 | fzf --prompt='aur package search > ' --preview 'yay -Si {}' --border --height 60%
+  yay -Ss $1 | grep -v '^ ' | command cut -d' ' -f1 | fzf --prompt='aur package search > ' --preview 'yay -Si {}' --border --height 60%
 }
 
 function ramu() {
