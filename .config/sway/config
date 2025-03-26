@@ -1,6 +1,6 @@
 font pango:Hack Nerd Font 10
 
-default_orientation horizontal
+default_orientation vertical
 workspace_layout default
 default_border none
 default_floating_border none
