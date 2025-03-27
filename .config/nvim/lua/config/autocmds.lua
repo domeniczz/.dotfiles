@@ -1,5 +1,5 @@
 local function augroup(name)
-  return vim.api.nvim_create_augroup("nvim_user_ac" .. name, { clear = true })
+  return vim.api.nvim_create_augroup("nvim_user_ac_" .. name, { clear = true })
 end
 
 local autocmd = vim.api.nvim_create_autocmd
@@ -46,7 +46,7 @@ autocmd({ "BufEnter", "FileType" }, {
   group = augroup("filetype_specific_settings"),
   callback = function()
     local ft = vim.bo.filetype
-    if ft == "lua" or ft == "sh" or ft == "yaml" or ft == "vim" then
+    if ft == "lua" or ft == "sh" or ft == "yaml" or ft == "json" or ft == "vim" then
       vim.opt_local.tabstop = 2
       vim.opt_local.softtabstop = 2
       vim.opt_local.shiftwidth = 2
@@ -95,3 +95,16 @@ autocmd("BufReadPre", {
     end
   end,
 })
+
+autocmd("VimEnter", {
+  group = augroup("statusline"),
+  callback = function()
+    require("config.statusline").setup()
+  end,
+})
+
+-- vim.api.nvim_create_autocmd("ColorScheme", {
+--   callback = function()
+--     require("config.statusline").update_highlight_groups()
+--   end,
+-- })
