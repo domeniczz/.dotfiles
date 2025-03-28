@@ -97,6 +97,8 @@ function M.kill_buffer_or_close_window()
     end
     if should_quit then vim.cmd("quit") end
     return
+  elseif buf_ft == "help" or buf_ft == "qf" then
+    vim.api.nvim_win_close(current_win, false)
   end
 
   local force = false
@@ -187,6 +189,21 @@ function M.sudo_write(tmpfile, filepath)
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
   end
   vim.fn.delete(tmpfile)
+end
+
+-- -----------------------------------------------------------------------------
+-- Log
+-- -----------------------------------------------------------------------------
+
+local log_file = vim.fn.stdpath("cache") .. "/nvim_debug_log.log"
+
+function M.log(message)
+  local file = io.open(log_file, "a")
+  if file then
+    local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+    file:write(string.format("[%s] %s\n", timestamp, message))
+    file:close()
+  end
 end
 
 return M
