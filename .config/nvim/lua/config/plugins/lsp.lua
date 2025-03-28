@@ -73,6 +73,9 @@ return {
         underline = true,
         update_in_insert = false,
         severity_sort = true,
+        virtual_lines = {
+          current_line = true
+        },
         float = {
           focusable = false,
           style = "minimal",

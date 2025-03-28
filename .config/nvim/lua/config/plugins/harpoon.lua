@@ -36,16 +36,12 @@ return {
     local map = vim.keymap.set
 
     map("n", "<A-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
-    map("n", "<leader>a", function() harpoon:list():add() end, { desc = "Add buffer to harpoon" })
-    map("n", "<C-h>", function() harpoon:list():select(1) end, { desc = "Switch to buffer 1" })
-    map("n", "<C-j>", function() harpoon:list():select(2) end, { desc = "Switch to buffer 2" })
-    map("n", "<C-k>", function() harpoon:list():select(3) end, { desc = "Switch to buffer 3" })
-    map("n", "<C-l>", function() harpoon:list():select(4) end, { desc = "Switch to buffer 4" })
-    map("n", "<leader><C-h>", function() harpoon:list():replace_at(1) end)
-    map("n", "<leader><C-t>", function() harpoon:list():replace_at(2) end)
-    map("n", "<leader><C-n>", function() harpoon:list():replace_at(3) end)
-    map("n", "<leader><C-s>", function() harpoon:list():replace_at(4) end)
-    -- map("n", "<A-P>", function() harpoon:list():prev() end, { desc = "Switch to prev buffer" })
-    -- map("n", "<A-N>", function() harpoon:list():next() end, { desc = "Switch to next buffer" })
+    map("n", "<leader>a", function() harpoon:list():add() end, { desc = "Harpoon: add buffer" })
+    map("n", "<C-h>", function() harpoon:list():select(1) end, { desc = "Harpoon: buffer 1" })
+    map("n", "<C-j>", function() harpoon:list():select(2) end, { desc = "Harpoon: buffer 2" })
+    map("n", "<C-k>", function() harpoon:list():select(3) end, { desc = "Harpoon: buffer 3" })
+    map("n", "<C-l>", function() harpoon:list():select(4) end, { desc = "Harpoon: buffer 4" })
+    -- map("n", "<A-P>", function() harpoon:list():prev() end, { desc = "Harpoon: prev buffer" })
+    -- map("n", "<A-N>", function() harpoon:list():next() end, { desc = "Harpoon: next buffer" })
   end,
 }

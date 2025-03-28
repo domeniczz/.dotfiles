@@ -11,6 +11,6 @@ return {
     "TabVifm"
   },
   config = function()
-    vim.keymap.set("n", "<leader>v", "<CMD>EditVifm<CR>", { desc = "Toggle vifm" })
+    vim.keymap.set("n", "<leader>v", "<CMD>EditVifm<CR>", { desc = "Vifm: toggle view" })
   end,
 }

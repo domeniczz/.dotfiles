@@ -8,6 +8,18 @@ return {
   },
   keys = {
     { "<leader>A", "<CMD>AerialToggle!<CR>", desc = "Aerial: toggle view" },
+    { "<leader>}", "<CMD>AerialNext<CR>", desc = "Aerial: jump to next symbol" },
+    { "<leader>{", "<CMD>AerialPrev<CR>", desc = "Aerial: jump to prev symbol" },
+  },
+  cmd = {
+    "AerialToggle",
+    "AerialOpen",
+    "AerialOpenAll",
+    "AerialNavToggle",
+    "AerialNavOpen",
+    "AerialGo",
+    "AerialNext",
+    "AerialPrev",
   },
   config = function()
     require("aerial").setup({
@@ -34,9 +46,8 @@ return {
       show_guides = true,
       -- Set when aerial has attached to a buffer
       on_attach = function(bufnr)
-        -- Jump forwards/backwards with '{' and '}'
-        vim.keymap.set("n", "{", "<CMD>AerialPrev<CR>", { buffer = bufnr })
-        vim.keymap.set("n", "}", "<CMD>AerialNext<CR>", { buffer = bufnr })
+        vim.keymap.set("n", "<leader>}", "<CMD>AerialNext<CR>", { buffer = bufnr, desc = "Aerial: jump to next symbol" })
+        vim.keymap.set("n", "<leader>{", "<CMD>AerialPrev<CR>", { buffer = bufnr, desc = "Aerial: jump to prev symbol" })
       end,
     })
     vim.keymap.set("n", "<leader>A", "<CMD>AerialToggle!<CR>", { desc = "Aerial: toggle view" })
