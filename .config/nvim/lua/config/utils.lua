@@ -112,7 +112,7 @@ function M.kill_buffer_or_close_window()
       end
       local success, err = pcall(vim.cmd, "silent! write " .. vim.fn.fnameescape(filename))
       if not success then
-        return vim.api.nvim_err_writeln("Failed to save buffer: " .. tostring(err))
+        return vim.api.notify("Failed to save buffer: " .. tostring(err))
       end
     elseif choice == 2 then
       force = true

@@ -1,5 +1,5 @@
 " ------------------------------------------------------------------------------
-" Main options
+" Options
 " ------------------------------------------------------------------------------
 
 only
@@ -105,7 +105,7 @@ command! reload :write | restart full
 command! bak :clone %c.bak
 
 " ------------------------------------------------------------------------------
-" Keyboard mappings
+" Key mappings
 " ------------------------------------------------------------------------------
 
 " Start shell in current directory
@@ -179,6 +179,8 @@ nnoremap <silent> <C-i> :histnext<CR>
 
 nnoremap <silent> <C-t> :tabnew | only | cd $HOME<CR>
 nnoremap <silent> T :tabnew | only<CR>
+nnoremap <silent> <Tab> :tabnext<CR>
+nnoremap <silent> <S-Tab> :tabprevious<CR>
 
 nnoremap <silent> ! :!
 nnoremap <silent> @ :!<space>%f<left><left><left>

@@ -13,7 +13,7 @@ LISTMAX=200
 ((INCOGNITO == 1)) && SAVEHIST=0 && PROMPT="%K{#1b527e}%F{#f0f0f0} incognito %f%k$PROMPT"
 
 setopt append_history inc_append_history share_history extended_history
-setopt hist_ignore_space hist_reduce_blanks hist_verify
+setopt hist_ignore_dups hist_ignore_space hist_reduce_blanks hist_verify
 setopt autocd check_jobs
 
 bindkey -v

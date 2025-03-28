@@ -66,7 +66,7 @@ map("n", "<leader>s", [[:%s/<C-r><C-w>/<C-r><C-w>/gIc<Left><Left><Left><Left>]],
 map("v", "<leader>s", [[:s///gIc<Left><Left><Left><Left><Left>]], { noremap = true })
 
 -- Make current file executable
-map("n", "<leader>x", "<CMD>!chmod +x %<CR>", { silent = true }, { noremap = true, silent = true })
+map("n", "<leader>x", "<CMD>!chmod +x %<CR>", { noremap = true, silent = true })
 
 -- Yank the whole file
 map({ "n", "v" }, "<leader>[", "<CMD>%y+<CR>", { noremap = true, silent = true })

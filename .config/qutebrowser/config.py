@@ -2049,8 +2049,11 @@ config.bind('n', 'prompt-accept no', mode='yesno')
 config.bind('y', 'prompt-accept yes', mode='yesno')
 
 config.bind('<Alt-Shift-D>', 'spawn --userscript darkmode-toggle')
+config.bind('<Alt-Shift-D>', 'spawn --userscript darkmode-toggle', mode='insert')
+config.bind('<Alt-Shift-D>', 'spawn --userscript darkmode-toggle', mode='caret')
 
 config.bind('<Alt-T>', 'spawn --userscript translate-selection')
+config.bind('<Alt-T>', 'spawn --userscript translate-selection', mode='insert')
 config.bind('<Alt-T>', 'spawn --userscript translate-selection', mode='caret')
 
 # -----------------------------------------------------------------------------
