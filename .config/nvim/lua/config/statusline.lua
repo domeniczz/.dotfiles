@@ -265,7 +265,7 @@ local function expose_statusline_functions()
 end
 
 -- -----------------------------------------------------------------------------
--- Define module to expose
+-- Setup module to expose
 -- -----------------------------------------------------------------------------
 
 local M = {}
@@ -286,8 +286,8 @@ function M.setup()
     " %m",                                         -- Modified flag
     "%r",                                          -- Readonly flag
     "%{%v:lua.git_status()%}",                     -- Git branch
-    "%{%v:lua.lsp_status()%}",                     -- LSP status
-    "%{%v:lua.lsp_diagnostic()%}",                 -- LSP diagnostics
+    " %{%v:lua.lsp_status()%}",                     -- LSP status
+    " %{%v:lua.lsp_diagnostic()%}",                 -- LSP diagnostics
     "%=",                                          -- Left/right separator
     "%{%v:lua.available_plugin_updates()%}",       -- Number of available updates
     " %{%v:lua.buffer_index()%}",                  -- Buffer index
@@ -299,7 +299,7 @@ function M.setup()
 
   vim.opt.statusline = table.concat(statusline_components, "")
 
-  local augroup = vim.api.nvim_create_augroup("nvim_custom_statusline_ac", { clear = true })
+  local augroup = vim.api.nvim_create_augroup("nvim_custom_statusline_ac_", { clear = true })
   local autocmd = vim.api.nvim_create_autocmd
 
   autocmd("VimEnter", {
@@ -350,6 +350,13 @@ function M.setup()
       local bufnr = args.buf
       cache.git_file_status[bufnr] = nil
       cache.lsp_diagnostic[bufnr] = nil
+    end,
+  })
+
+  autocmd("ColorScheme", {
+    group = augroup,
+    callback = function()
+      setup_highlight_groups()
     end,
   })
 end

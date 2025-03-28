@@ -42,18 +42,36 @@ autocmd({ "WinLeave", "FocusLost" }, {
   end,
 })
 
-autocmd({ "BufEnter", "FileType" }, {
-  group = augroup("filetype_specific_settings"),
+autocmd("BufEnter", {
+  group = augroup("bash_filetype_specific_tab_config"),
   callback = function()
     local ft = vim.bo.filetype
-    if ft == "lua" or ft == "sh" or ft == "yaml" or ft == "json" or ft == "vim" then
+    if ft == "bash" or ft == "sh" then
       vim.opt_local.tabstop = 2
       vim.opt_local.softtabstop = 2
       vim.opt_local.shiftwidth = 2
-    elseif ft == "markdown" then
-      vim.opt_local.list = true
-      vim.opt_local.listchars:append({ eol = "↲" })
     end
+  end,
+})
+
+autocmd("FileType", {
+  group = augroup("code_filetype_specific_tab_config"),
+  pattern = { "lua", "bash", "sh", "yaml", "json", "vim" },
+  callback = function()
+    vim.opt_local.tabstop = 2
+    vim.opt_local.softtabstop = 2
+    vim.opt_local.shiftwidth = 2
+  end,
+})
+
+autocmd("FileType", {
+  group = augroup("text_filetype_specific_config"),
+  pattern = { "text", "markdown", "org", "gitcommit" },
+  callback = function()
+    vim.opt_local.list = true
+    vim.opt_local.listchars:append({ eol = "↲" })
+    vim.opt_local.spell = true
+    vim.opt_local.spelllang = "en_us,en_gb"
   end,
 })
 
@@ -102,9 +120,3 @@ autocmd("VimEnter", {
     require("config.statusline").setup()
   end,
 })
-
--- vim.api.nvim_create_autocmd("ColorScheme", {
---   callback = function()
---     require("config.statusline").update_highlight_groups()
---   end,
--- })
