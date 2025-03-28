@@ -1,18 +1,27 @@
+" ------------------------------------------------------------------------------
+" Options
+" ------------------------------------------------------------------------------
+
 let g:netrw_home = $XDG_DATA_HOME."/vim"
 
 syntax on
 set autoread
 set number
 set relativenumber
+set cursorline
 " set wildmenu
 " set wildmode=longest:list,full
 " set autoindent " Minimal automatic indenting for any filetype.
 set backspace=indent,eol,start " Intuitive backspace behavior.
+
 set tabstop=4
 set softtabstop=4
 set shiftwidth=4
 set expandtab
+
 set hlsearch
+set incsearch
+
 set wrap
 set whichwrap+=<,>,[,]
 set scrolloff=10
@@ -31,18 +40,7 @@ set undofile
 
 set viminfofile=$XDG_DATA_HOME/vim/viminfo
 
-" set statusline=%f\ %m%=%l:%c\ %P
-
-nnoremap Q <nop>
-
-augroup numbertoggle
-  autocmd!
-  autocmd BufEnter,FocusGained,InsertLeave,WinEnter * if &nu && mode() != "i" | set rnu   | endif
-  autocmd BufLeave,FocusLost,InsertEnter,WinLeave   * if &nu                  | set nornu | endif
-augroup END
-
 " Use a line cursor within insert mode and a block cursor everywhere else.
-"
 " Reference chart of values:
 "   Ps = 0  -> blinking block.
 "   Ps = 1  -> blinking block (default).
@@ -53,6 +51,35 @@ augroup END
 "   Ps = 6  -> steady bar (xterm).
 let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
+
+" ------------------------------------------------------------------------------
+" Key mappings
+" ------------------------------------------------------------------------------
+
+nnoremap Q <nop>
+nnoremap <silent> Q :call KillBufferOrCloseWindow()<CR>
+
+" ------------------------------------------------------------------------------
+" Autocmds
+" ------------------------------------------------------------------------------
+
+augroup numbertoggle
+  autocmd!
+  autocmd BufEnter,FocusGained,InsertLeave,WinEnter * if &nu && mode() != "i" | set rnu   | endif
+  autocmd BufLeave,FocusLost,InsertEnter,WinLeave   * if &nu                  | set nornu | endif
+augroup END
+
+augroup text_filetype_specific_config
+  autocmd!
+  autocmd FileType text,markdown,org,gitcommit setlocal list
+  autocmd FileType text,markdown,org,gitcommit setlocal listchars+=eol:↲
+  autocmd FileType text,markdown,org,gitcommit setlocal spell
+  autocmd FileType text,markdown,org,gitcommit setlocal spelllang=en_us,en_gb
+augroup END
+
+" ------------------------------------------------------------------------------
+" Commands and functions
+" ------------------------------------------------------------------------------
 
 " Allow files to be saved as root when forgetting to start vim using sudo
 command W :execute ':silent! write !sudo tee % > /dev/null' | :edit!
@@ -113,8 +140,6 @@ function! KillBufferOrCloseWindow()
   endif
 endfunction
 
-nnoremap <silent> Q :call KillBufferOrCloseWindow()<CR>
-
 function! Clearregs() abort
   let regs=split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"', '\zs')
   for r in regs
@@ -122,5 +147,15 @@ function! Clearregs() abort
   endfor
 endfunction
 
-" Optionally, map a key to call this function
-" nnoremap <leader>cr :call Clearregs()<CR>
+" ------------------------------------------------------------------------------
+" Color scheme
+" ------------------------------------------------------------------------------
+
+highlight clear SpellBad
+highlight clear SpellCap
+highlight clear SpellRare
+highlight clear SpellLocal
+highlight SpellBad   cterm=underline gui=underline
+highlight SpellCap   cterm=underline gui=underline
+highlight SpellRare  cterm=underline gui=underline
+highlight SpellLocal cterm=underline gui=underline
