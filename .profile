@@ -4,6 +4,8 @@
 
 export VISUAL=nvim
 export EDITOR=nvim
+# To take effect, `sudo visudo` and add: Defaults env_keep += "SYSTEMD_EDITOR"
+export SYSTEMD_EDITOR=nvim
 export PAGER=less
 export TERMINAL=ghostty
 export SYSTOP=btop
@@ -36,12 +38,14 @@ export GOMODCACHE="$XDG_CACHE_HOME"/go/mod
 export TEXMFHOME="$XDG_DATA_HOME"/texmf
 export TEXMFVAR="$XDG_CACHE_HOME"/texlive/texmf-var
 export TEXMFCONFIG="$XDG_CONFIG_HOME"/texlive/texmf-config
-export STARSHIP_CONFIG="$XDG_CONFIG_HOME"/starship/starship.toml
 export BASH_COMPLETION_USER_FILE="$XDG_CONFIG_HOME"/bash-completion/bash_completion
+export OLLAMA_MODELS="$XDG_DATA_HOME"/ollama/models
+export STARSHIP_CONFIG="$XDG_CONFIG_HOME"/starship/starship.toml
+export W3M_DIR="$XDG_STATE_HOME"/w3m
 export FFMPEG_DATADIR="$XDG_CONFIG_HOME"/ffmpeg
 export WGETRC="$XDG_CONFIG_HOME"/wget/wgetrc
-export W3M_DIR="$XDG_STATE_HOME"/w3m
-export OLLAMA_MODELS="$XDG_DATA_HOME"/ollama/models
+export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/ripgrep/ripgreprc"
+export FZF_DEFAULT_OPTS_FILE="$XDG_CONFIG_HOME/fzf/fzfrc"
 
 # -----------------------------------------------------------------------------
 # PATH

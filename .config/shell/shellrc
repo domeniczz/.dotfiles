@@ -1,10 +1,3 @@
-# Set default systemd editor
-# AND `sudo visudo` then add: Defaults env_keep += "SYSTEMD_EDITOR"
-export SYSTEMD_EDITOR='nvim'
-
-export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
-export FZF_DEFAULT_OPTS_FILE="$HOME/.config/fzf/fzfrc"
-
 # Attach to tmux only when not attached yet
 if command -v tmux &>/dev/null && [[ -z "$TMUX" ]]; then
   if ! tmux has-session -t general 2>/dev/null; then
