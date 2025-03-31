@@ -17,9 +17,9 @@ elif command -v find >/dev/null 2>&1; then
   export FZF_ALT_C_COMMAND="find . -type d"
 fi
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_CTRL_T_OPTS="--border --height=60% --preview 'bat --line-range :500 {}' --walker-skip .git,node_modules"
-export FZF_CTRL_R_OPTS="--layout=reverse --height 25% --border=top --scroll-off=0 --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'"
-export FZF_ALT_C_OPTS="--border --height=60% --preview 'eza --tree --color=always {} | head -200'"
+export FZF_CTRL_T_OPTS="--reverse --border=top --height=60% --preview 'bat --line-range :500 {}' --walker-skip .git,node_modules"
+export FZF_CTRL_R_OPTS="--reverse --border=top --height 25% --scroll-off=0 --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'"
+export FZF_ALT_C_OPTS="--reverse --border=top --height=60% --preview 'eza --tree --color=always {} | head -200'"
 # Advanced customization
 # - The first argument to the function is the name of the command.
 # - You should make sure to pass the rest of the arguments to fzf.
@@ -27,10 +27,10 @@ _fzf_comprun() {
   local command=$1
   shift
   case "$command" in
-    cd)           fzf --preview 'eza --tree --level=2 --color=always {} | head -200' "$@" ;;
-    export|unset) fzf --preview "eval 'echo $'{}"         "$@" ;;
-    ssh)          fzf --preview 'dig {}'                   "$@" ;;
-    *)            fzf --preview "bat --line-range :200 {}" "$@" ;;
+    cd)           fzf --preview 'eza --tree --level=2 --color=always {} | head -200' "$@" --border=top ;;
+    export|unset) fzf --preview "eval 'echo $'{}"         "$@" --border=top ;;
+    ssh)          fzf --preview 'dig {}'                   "$@" --border=top ;;
+    *)            fzf --preview "bat --line-range :200 {}" "$@" --border=top ;;
   esac
 }
 # Searching Git objects

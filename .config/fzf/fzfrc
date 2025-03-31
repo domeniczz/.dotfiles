@@ -1,8 +1,8 @@
 --bind='ctrl-f:page-down,ctrl-b:page-up'
 --bind='ctrl-j:preview-down,ctrl-k:preview-up'
---bind='ctrl-/:change-preview-window(down|hidden|)'
+--bind='ctrl-/:toggle-preview'
 --smart-case
 --multi
 --min-height=10+
---preview-window 'right:60%'
+--preview-window 'right,60%,border-left,cycle'
 --highlight-line

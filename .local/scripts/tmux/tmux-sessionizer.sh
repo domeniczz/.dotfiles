@@ -11,9 +11,9 @@ set -euo pipefail
 places="$HOME/Work $HOME/Personal $HOME/Personal/repository $HOME/Clones"
 
 if command -v fd >/dev/null 2>&1; then
-  selected=$(fd . $places --min-depth 1 --max-depth 1 --type d | sort --reverse | fzf --prompt="sessionizer > ")
+  selected=$(fd . $places --min-depth 1 --max-depth 1 --type d | sort --reverse | fzf --prompt="sessionizer > " --border=none)
 else
-  selected=$(find $places -mindepth 1 -maxdepth 1 -type d | sort --reverse | fzf --prompt="sessionizer > ")
+  selected=$(find $places -mindepth 1 -maxdepth 1 -type d | sort --reverse | fzf --prompt="sessionizer > " --border=none)
 fi
 
 [[ -z $selected ]] && exit 0
