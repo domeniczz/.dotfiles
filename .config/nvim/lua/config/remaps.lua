@@ -21,6 +21,10 @@ map({ 'n', "i", "v", "x" }, '<Right>', '<Nop>', { noremap = true, silent = true 
 -- Open vim file explorer newrw
 -- map("n", "<leader>pv", vim.cmd.Ex, { noremap = true, silent = true })
 
+-- Navigate thorugh items in quickfix list
+map("n", "<M-j>", "<CMD>cnext<CR>", { noremap = true, silent = true })
+map("n", "<M-k>", "<CMD>cprev<CR>", { noremap = true, silent = true })
+
 -- Move highlighted text up/down
 map("v", "K", ":move '<-2<CR>gv=gv", { noremap = true, silent = true })
 map("v", "J", ":move '>+1<CR>gv=gv", { noremap = true, silent = true })
@@ -36,9 +40,8 @@ map("n", "<C-u>", "<C-u>zz", { noremap = true, silent = true })
 map("n", "n", "nzzzv", { noremap = true, silent = true })
 map("n", "N", "Nzzzv", { noremap = true, silent = true })
 
--- Stop setting `vim.opt.clipboard` to sync every fucking item in vim yanks with system clipboard
--- Normal yank won't sync to system clipboard
--- Sync to system clipboard
+-- Stop setting `vim.opt.clipboard` to sync every item vim yanks to system clipboard
+-- Yank to system clipboard
 map({ "n", "v" }, "<leader>y", [["+y]], { noremap = true, silent = true })
 map({ "n", "v" }, "<leader>Y", [["+Y]], { noremap = true, silent = true })
 
@@ -71,9 +74,7 @@ map("n", "<leader>x", "<CMD>!chmod +x %<CR>", { noremap = true, silent = true })
 -- Yank the whole file
 map({ "n", "v" }, "<leader>[", "<CMD>%y+<CR>", { noremap = true, silent = true })
 
--- Create a vertical split window
 map("n", "<leader>vs", "<CMD>vertical split<CR>", { noremap = true, silent = true })
--- Create a verOpentical split new window
 map("n", "<leader>vn", "<CMD>vertical new<CR>", { noremap = true, silent = true })
 
 map("n", "<leader>ls", "<CMD>LspStart<CR>", { noremap = true, silent = true })
@@ -91,4 +92,4 @@ map("n", "<leader>`", function()
   vim.cmd("startinsert")
 end, { desc = "Open a small terminal at bottom", noremap = true, silent = true })
 
-map("n", "Q", require('config.utils').kill_buffer_or_close_window, { noremap = true, silent = true })
+map("n", "Q", require('config.utils').smart_delete_buffer, { noremap = true, silent = true })

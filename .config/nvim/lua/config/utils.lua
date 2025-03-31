@@ -7,9 +7,11 @@ local M = {}
 function M.get_current_file_size()
   local filepath = vim.fn.expand("%:p")
   if filepath == "" then return 0, false end
-  local ok, stats = pcall(vim.loop.fs_stat, vim.fn.expand("%"))
-  if ok and stats then return stats.size, true end
-  return 0, false
+  local ok, stats = pcall(vim.loop.fs_stat, filepath)
+  if ok and stats then
+    return stats.size
+  end
+  return -1
 end
 
 function M.is_current_large_file(max_filesize, prompt)
@@ -31,98 +33,185 @@ end
 -- Delete current buffer
 -- -----------------------------------------------------------------------------
 
-local function delete_buf_preserve_win_layout(bufnr, opts)
-  opts = opts or { force = false, has_valid_buffer = true }
-  if #vim.api.nvim_list_wins() == 1 then
-    return vim.api.nvim_buf_delete(bufnr, { force = opts.force })
-  else
-    if #vim.fn.win_findbuf(vim.api.nvim_get_current_buf()) > 1 then
-      if not opts.has_valid_buffer then return end
-      return vim.api.nvim_buf_delete(bufnr, { force = opts.force })
-    end
-  end
-  local alternate_buf = vim.fn.bufnr('#')
-  if alternate_buf ~= -1 and alternate_buf ~= bufnr and vim.api.nvim_buf_is_valid(alternate_buf) then
-    vim.api.nvim_set_current_buf(alternate_buf)
-    vim.api.nvim_buf_delete(bufnr, { force = opts.force })
-  else
-    vim.api.nvim_buf_delete(bufnr, { force = opts.force })
-  end
-end
-
-function M.kill_buffer_or_close_window()
-  if vim.fn.getcmdwintype() ~= "" then return vim.cmd("quit") end
-
-  local current_win = vim.api.nvim_get_current_win()
-  local current_buf = vim.api.nvim_get_current_buf()
-
-  if vim.bo[current_buf].buftype == "terminal" or vim.bo[current_buf].filetype == "terminal" then
-    return delete_buf_preserve_win_layout(current_buf)
-  end
-
-  local clients = vim.lsp.get_clients({ bufnr = current_buf })
-  for _, client in ipairs(clients) do
-    vim.lsp.buf_detach_client(current_buf, client.id)
-  end
-
-  local has_valid_buffer = false
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted and buf ~= current_buf then
-      has_valid_buffer = true
-      break
-    end
-  end
-  local should_quit = not has_valid_buffer
-
-  local special_buf = {
-    lazy = { force = false },
-    fugitive = { force = false },
+local buf_config = {
+  filetypes = {
+    help = { force = false },
+    qf = { force = false },
     netrw = { force = false },
+    fugitive = { force = false },
+    undotree = { force = false },
     aerial = { force = false },
+    oil = { force = false },
     harpoon = { force = true },
     TelescopePrompt = { force = true },
-  }
-  local buf_ft = vim.bo[current_buf].filetype
-  if special_buf[buf_ft] then
-    vim.api.nvim_buf_delete(current_buf, { force = special_buf[buf_ft].force })
-    return
-  elseif buf_ft == "undotree" then
-    vim.cmd("UndotreeHide")
-    return
-  elseif buf_ft == "oil" then
-    if vim.bo[current_buf].modified then
-      vim.cmd("write")
-    else
-      delete_buf_preserve_win_layout(current_buf)
-    end
-    if should_quit then vim.cmd("quit") end
-    return
-  elseif buf_ft == "help" or buf_ft == "qf" then
-    vim.api.nvim_win_close(current_win, false)
-  end
+  },
+  buftypes = {
+    quickfix = { force = false },
+    prompt = { force = false },
+    nofile = { force = false },
+    acwrite = { force = false },
+    nowrite = { force = false },
+  },
+}
 
-  local force = false
-  if vim.bo[current_buf].modified then
-    local choice = vim.fn.confirm("Buffer has unsaved changes. Save before closing?", "&Yes\n&No\n&Cancel", 1)
-    if choice == 1 then
-      local filename = vim.fn.bufname(current_buf)
-      if filename == "" then
-        filename = vim.fn.input("Enter file name to save: ")
-        if filename == "" then return end
+local function is_normal_buffer(bufnr)
+  local filetype = vim.bo[bufnr].filetype
+  local buftype = vim.bo[bufnr].buftype
+  if buf_config.filetypes[filetype] or buf_config.buftypes[buftype] then
+    return false
+  end
+  return true
+end
+
+function M.smart_delete_buffer(force)
+  local current_buf = vim.api.nvim_get_current_buf()
+  local current_win = vim.api.nvim_get_current_win()
+
+  local filetype = vim.bo[current_buf].filetype
+  local buftype = vim.bo[current_buf].buftype
+  local bufname = vim.api.nvim_buf_get_name(current_buf)
+  local bufmodified = vim.bo[current_buf].modified
+
+  local ignore_changes = force or false
+
+  -- Handle special buffers - close window directly
+  if buf_config.filetypes[filetype] or buf_config.buftypes[buftype] then
+    if filetype == "undotree" then
+      return vim.cmd("UndotreeHide")
+    end
+    if #vim.api.nvim_list_wins() > 1 then
+      local f = force
+      if buf_config.filetypes[filetype] then
+        f = buf_config.filetypes[filetype].force
+      elseif buf_config.buftypes[buftype] then
+        f = buf_config.buftypes[buftype].force
       end
-      local success, err = pcall(vim.cmd, "silent! write " .. vim.fn.fnameescape(filename))
-      if not success then
-        return vim.api.notify("Failed to save buffer: " .. tostring(err))
-      end
-    elseif choice == 2 then
-      force = true
-    else
+      vim.api.nvim_win_close(current_win, f)
       return
     end
   end
-  delete_buf_preserve_win_layout(current_buf, { force = force, has_valid_buffer = has_valid_buffer })
 
-  if should_quit then vim.cmd("quit") end
+  if not ignore_changes and bufmodified then
+    local choice = vim.fn.confirm(
+      string.format("Save before closing the buffer? (%s)", (bufname ~= "" and bufname or "[No Name]")),
+      "&Yes\n&No\n&Cancel", 1)
+    if choice == 1 then
+      local ok = pcall(vim.cmd, "silent! write")
+      if not ok then
+        vim.notify("Failed to save buffer!", vim.log.levels.ERROR)
+        return
+      end
+      bufmodified = false
+    elseif choice == 2 then
+      ignore_changes = true
+    elseif choice == 3 then
+      return
+    end
+  end
+
+  if not ignore_changes and buftype == "terminal" then
+    local job_state = vim.fn.jobwait({ vim.bo[current_buf].channel }, 0)
+    if job_state and job_state[1] == -1 then
+      local choice = vim.fn.confirm(
+        string.format("Terminal is still running. (%s)", (bufname ~= "" and bufname or "[No Name]")),
+        "&Ignore\n&Cancel", 1)
+      if choice == 1 then
+        ignore_changes = true
+      else
+        return
+      end
+    end
+  end
+
+  -- Get list of valid and listed buffers (excluding current buffer)
+  local rest_valid_buffers = vim.tbl_filter(function(buf)
+    return vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted and buf ~= current_buf
+  end, vim.api.nvim_list_bufs())
+
+  if #rest_valid_buffers == 0 then
+    if ignore_changes or not bufmodified then
+      vim.cmd("silent! quit" .. (ignore_changes and "!" or ""))
+    else
+      local choice = vim.fn.confirm("Save before quitting nvim?", "&Yes\n&No\n&Cancel", 1)
+      if choice == 1 then
+        vim.cmd("silent! write")
+        vim.cmd("quit")
+      elseif choice == 2 then
+        vim.cmd("quit!")
+      end
+    end
+    return
+  end
+
+  local normal_buf_count = 0
+  local first_noremal_buf_to_keep = nil
+  for _, buf in ipairs(rest_valid_buffers) do
+    if is_normal_buffer(buf) then
+      normal_buf_count = normal_buf_count + 1
+      if not first_noremal_buf_to_keep then
+        first_noremal_buf_to_keep = buf
+      end
+    end
+  end
+
+  -- Consolidate all windows if only one normal buffer remain
+  if normal_buf_count == 1 and #vim.api.nvim_list_wins() > 1 then
+    if first_noremal_buf_to_keep then
+      local win_to_keep = current_win
+      vim.api.nvim_win_set_buf(win_to_keep, first_noremal_buf_to_keep)
+      for _, win in ipairs(vim.api.nvim_list_wins()) do
+        if win ~= win_to_keep then
+          vim.api.nvim_win_close(win, true)
+        end
+      end
+      local use_force = ignore_changes or buftype == "terminal"
+      vim.cmd("silent! bdelete" .. (use_force and "!" or "") .. " " .. current_buf)
+      return
+    end
+  end
+
+  -- Find most recently used buffer to switch to
+  local bufnr_switched_to = -1
+  local max_lastused_timestamp = -1
+
+  for _, bufnr in ipairs(rest_valid_buffers) do
+    local bufinfo = vim.fn.getbufinfo(bufnr)[1]
+    if bufinfo and bufinfo.lastused > max_lastused_timestamp then
+      max_lastused_timestamp = bufinfo.lastused
+      bufnr_switched_to = bufnr
+    end
+  end
+
+  if bufnr_switched_to == -1 then
+    bufnr_switched_to = vim.api.nvim_create_buf(true, false)
+    if bufnr_switched_to == 0 then
+      vim.notify("Failed to create a buffer to switch to", vim.log.levels.ERROR)
+      return
+    end
+  end
+
+  -- Get list of windows displaying the current buffer
+  local wins_displaying_current_buf = vim.tbl_filter(function(win)
+    return vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == current_buf
+  end, vim.api.nvim_list_wins())
+
+  -- Switch all windows of current buffer to the new buffer
+  for _, win in ipairs(wins_displaying_current_buf) do
+    vim.api.nvim_win_set_buf(win, bufnr_switched_to)
+  end
+
+  local use_force = ignore_changes or buftype == "terminal"
+  local ok = pcall(vim.cmd, "silent! bdelete" .. (use_force and "!" or "") .. " " .. current_buf)
+  if not ok then
+    vim.notify("Fail to delete buffer", vim.log.levels.ERROR)
+  end
+
+  if #rest_valid_buffers == 1 then
+    local last_valid_buf = vim.api.nvim_get_current_buf()
+    if vim.bo[last_valid_buf].buftype == "quickfix" then
+      vim.cmd("qa!")
+    end
+  end
 end
 
 -- -----------------------------------------------------------------------------
