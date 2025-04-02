@@ -50,6 +50,27 @@ for path in /sys/class/backlight/*/actual_brightness; do
 done
 
 # ------------------------------------------------------------------------------
+# Traps
+# ------------------------------------------------------------------------------
+
+function err_exit() {
+  local log_file="/tmp/statusbar.log"
+  local line="${BASH_LINENO[0]}"
+  local source="${BASH_SOURCE[1]:-$0}"
+  local command="${BASH_COMMAND}"
+  local exit_code=$?
+  printf "[%s] ERROR (code: %d): '%s' failed at %s:%s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$exit_code" "$command" "$source" "$line" >> "$log_file"
+  if [[ "$command" =~ \$\{?[a-zA-Z_][a-zA-Z0-9_]*(\[\])?\}? ]]; then
+    printf "[%s] Hint: Possible unbound variable (-u)\n" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log_file"
+  elif [[ "$command" == *"|"* ]]; then
+    printf "[%s] Hint: Command contains a pipe, check pipefail (-o pipefail)\n" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log_file"
+  fi
+  exit 1
+}
+
+trap err_exit ERR
+
+# ------------------------------------------------------------------------------
 # Monitor network interface & connection changes
 # ------------------------------------------------------------------------------
 
@@ -278,8 +299,8 @@ while true; do
     "${FUNC_OUTPUTS[bluetooth]:-}" \
     "${FUNC_OUTPUTS[wifi]:-}" \
     "${FUNC_OUTPUTS[brightness]:-}" \
-    "${FUNC_OUTPUTS[battery]:-}" \
     "${FUNC_OUTPUTS[volume]:-}" \
+    "${FUNC_OUTPUTS[battery]:-}" \
     "${FUNC_OUTPUTS[date]:-}"
 
   sleep $REFRESH_INTERVAL
