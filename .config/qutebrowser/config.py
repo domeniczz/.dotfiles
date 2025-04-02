@@ -850,6 +850,8 @@ c.url.searchengines = {
     # 'disroot': 'https://search.disroot.org/?q={}',
     # 'mojeek': 'https://www.mojeek.com/search?q={}&theme=light&t=40&arc=us&newtab=1&hp=minimal&date=1&cdate=1&qsba=1&tn=0&qss=Bing,Google,Yandex',
 
+    'gpt': 'https://kagi.com/fastgpt?query={}',
+
     'img': 'https://www.google.com/search?tbm=isch&q={}',
     'yt': 'http://www.youtube.com/results?search_query={}',
 
@@ -1404,7 +1406,7 @@ c.content.headers.referer = 'same-domain'
 ## between 5.12 and 5.14 (inclusive), changing the value exposed to
 ## JavaScript requires a restart.
 ## Type: FormatString
-c.content.headers.user_agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.5666.197 Safari/537.36'
+c.content.headers.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'
 
 ## Enable hyperlink auditing (`<a ping>`).
 ## Type: Bool
@@ -1997,13 +1999,16 @@ config.bind('<Ctrl-E>', 'edit-text', mode='insert')
 config.bind('<Escape>', 'mode-leave ;; jseval -q document.activeElement.blur()', mode='insert')
 config.bind('<Shift-Escape>', 'fake-key <Escape>', mode='insert')
 config.bind('<Shift-Ins>', 'insert-text -- {primary}', mode='insert')
+config.bind('<Ctrl-T>', 'open -t', mode='passthrough')
 config.bind('<Ctrl-W>', 'tab-close', mode='insert')
+config.bind('<Alt-Left>', 'back', mode='insert')
+config.bind('<Alt-Right>', 'forward', mode='insert')
 config.bind('<F5>', 'reload', mode='insert')
 config.bind('<F11>', 'fullscreen', mode='insert')
 
 ## Bindings for passthrough mode
 config.bind('<Shift-Escape>', 'mode-leave', mode='passthrough')
-# config.bind('<Escape>', 'mode-leave', mode='passthrough')
+config.bind('<Ctrl-T>', 'open -t', mode='passthrough')
 config.bind('<Ctrl-W>', 'tab-close', mode='passthrough')
 config.bind('<F11>', 'fullscreen', mode='passthrough')
 
@@ -2050,10 +2055,12 @@ config.bind('y', 'prompt-accept yes', mode='yesno')
 
 config.bind('<Alt-Shift-D>', 'spawn --userscript darkmode-toggle')
 config.bind('<Alt-Shift-D>', 'spawn --userscript darkmode-toggle', mode='insert')
+config.bind('<Alt-Shift-D>', 'spawn --userscript darkmode-toggle', mode='passthrough')
 config.bind('<Alt-Shift-D>', 'spawn --userscript darkmode-toggle', mode='caret')
 
 config.bind('<Alt-T>', 'spawn --userscript translate-selection')
 config.bind('<Alt-T>', 'spawn --userscript translate-selection', mode='insert')
+config.bind('<Alt-T>', 'spawn --userscript translate-selection', mode='passthrough')
 config.bind('<Alt-T>', 'spawn --userscript translate-selection', mode='caret')
 
 # -----------------------------------------------------------------------------
@@ -2500,7 +2507,7 @@ c.colors.webpage.darkmode.algorithm = 'lightness-cielab'
 ## `colors.webpage.darkmode.policy.images` to `never`.  - "With selective
 ## image inversion": qutebrowser default settings.
 ## Type: Bool
-# c.colors.webpage.darkmode.enabled = False
+c.colors.webpage.darkmode.enabled = False
 
 ## Which images to apply dark mode to.
 ## Type: String
@@ -2527,14 +2534,14 @@ c.colors.webpage.darkmode.policy.page = 'smart'
 ## behavior is the opposite of
 ## `colors.webpage.darkmode.threshold.foreground`!
 ## Type: Int
-c.colors.webpage.darkmode.threshold.background = 0
+c.colors.webpage.darkmode.threshold.background = 10
 
 ## Threshold for inverting text with dark mode. Text colors with
 ## brightness below this threshold will be inverted, and above it will be
 ## left as in the original, non-dark-mode page. Set to 256 to always
 ## invert text color or to 0 to never invert text color.
 ## Type: Int
-c.colors.webpage.darkmode.threshold.foreground = 256
+# c.colors.webpage.darkmode.threshold.foreground = 256
 
 ## Value to use for `prefers-color-scheme:` for websites. The "light"
 ## value is only available with QtWebEngine 5.15.2+. On older versions,

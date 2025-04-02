@@ -62,3 +62,8 @@ function rmorphan() {
   orphans=$(pacman -Qdtq)
   [[ -n "$orphans" ]] && sudo pacman -Rns $orphans
 }
+
+function als() {
+  local cmd=$(alias | sed "s/^alias //" | fzf --prompt="alias > " --preview "echo {}" --ansi --reverse --border=top --height 25% | awk -F'=' '{print $2}' | tr -d "'")
+  [[ -n $cmd ]] && eval "$cmd"
+}

@@ -11,7 +11,7 @@ set syscalls
 "set syncregs=main
 set trash
 set trashdir=%r/.vifm-Trash,$XDG_DATA_HOME/Trash/files
-set vifminfo=chistory,shistory,phistory,fhistory,dirstack,registers,bookmarks,bmarks,tabs
+set vifminfo=chistory,shistory,phistory,fhistory,dirstack,registers,bookmarks,bmarks
 set sessionoptions=tui,state,tabs,savedirs,dhistory
 set history=100
 set undolevels=100
@@ -220,7 +220,7 @@ nnoremap <silent> yd :!echo -n %d | wl-copy %i && echo -n %d | wl-copy -p %i<CR>
 nnoremap <silent> yf :!echo -n %c:p | wl-copy %i && echo -n %c:p | wl-copy -p %i<CR>
 
 let g:millerview_preview_flag = 1
-nnoremap <silent> gp :
+nnoremap <silent> ,p :
       \| if g:millerview_preview_flag == 1
       \| set milleroptions=lsize:1,csize:7
       \| let g:millerview_preview_flag = 0
