@@ -1,30 +1,35 @@
-set $popup floating enable; border pixel 1; sticky enable
-set $float floating enable; border pixel 1; move position center
+set $popup floating enable; border pixel 3; sticky enable
+set $float floating enable; border pixel 3; move position center
 set $video inhibit_idle fullscreen; border none; max_render_time off
 
 for_window {
     [all] allow_tearing no
 
-    [app_id="firefox" title="^Picture-in-Picture$"] $popup; resize set 30ppt 30ppt; move position 70ppt 70ppt
+    # Popups
+    [app_id="firefox" title="^Picture-in-Picture$"] $popup; resize set 25ppt 25ppt; move position 75ppt 75ppt
+    [app_id="" title="^Picture in picture$"] $popup; resize set 25ppt 25ppt; move position 75ppt 75ppt
 
+    # Floats
     [app_id="pavucontrol"] $float
     [window_role="pop-up"] $float
     [window_role="bubble"] $float
     [window_role="dialog"] $float
     [window_role="task_dialog"] $float
     [window_role="About"] $float
-	[window_type="dialog"] $float
-	[window_type="utility"] $float
-	[window_type="toolbar"] $float
-	[window_type="splash"] $float
-	[window_type="menu"] $float
-	[window_type="dropdown_menu"] $float
-	[window_type="popup_menu"] $float
-	[window_type="tooltip"] $float
-	[window_type="notification"] $float
+    [window_type="dialog"] $float
+    [window_type="utility"] $float
+    [window_type="toolbar"] $float
+    [window_type="splash"] $float
+    [window_type="menu"] $float
+    [window_type="dropdown_menu"] $float
+    [window_type="popup_menu"] $float
+    [window_type="tooltip"] $float
+    [window_type="notification"] $float
 
+    # Videos
     [app_id="mpv"] $video
     [app_id="vlc"] $video
 
+    # Miscellaneous
     [app_id="org.qutebrowser.qutebrowser"] max_render_time off
 }

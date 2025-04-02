@@ -11,7 +11,7 @@ bar {
     colors {
         statusline #ffffff
         background #363636
-        focused_workspace #23658a #23658a #ffffff
+        focused_workspace #00658a #23658a #ffffff
         active_workspace #dc6000 #dc6000 #ffffff
         inactive_workspace #202020 #202020 #7c7e7f
         urgent_workspace #d5302a #d5302a #ffffff
