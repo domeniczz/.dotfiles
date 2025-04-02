@@ -136,10 +136,10 @@ List packages installed from AUR: `pacman -Qm`
 
 Install latex tree-sitter parser:
 
-> Actually I don't use tree-sitter parser for latex, I use vimtex for syntax highlighing.
+> Actually I don't use tree-sitter parser for latex, I use vimtex for syntax highlighting.
 
 It's a bit complicated, you need to install `tree-sitter` and `tree-sitter-cli` packages with pacman, and also install node.
 
-Latex parser need to be generated from javascript source (i.e. :TSInstallFromGrammar), normal :TSInstall does not require the tree-sittter cli.
+Latex parser need to be generated from javascript source (i.e. :TSInstallFromGrammar), normal :TSInstall does not require the tree-sitter cli.
 
 The tree-sitter executable is not needed for almost all parsers, we only need it when we need to generate parsers from grammar.js files (e.g. latex parser).

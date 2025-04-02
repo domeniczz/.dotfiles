@@ -1,6 +1,6 @@
 dotfile manager is [GNU Stow](https://www.gnu.org/software/stow/)
 
-- `.setup.sh` is the a bash script file that do some installation and initialization.
+- `.setup.sh` is a bash script file that do some installation and initialization.
 
 clone this repository:
 

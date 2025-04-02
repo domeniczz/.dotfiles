@@ -3,19 +3,23 @@
 `0` `$` - jump to first / last character of the line  
 `^` `g_` - jump to first / last printable character of the line
 
-`w` `e` - go forward word by word  
-`W` `E` - take whitespace and punctuation into account
+`w` - go forward one word  
+`W` - go forward one WORD  
+`e` - go forward to the end of word  
+`E` - go forward to the end of WORD
 
-`b` `ge` - go backward word by word  
-`B` `gE` - take whitespace and punctuation into account
+`b` - go backward one word  
+`B` - go backward one WORD  
+`ge` - go backward to the end of previous word  
+`gE` - go backward to the end of previous WORD
 
 `gj` `gk` - go upwards / downwards through the visual lines (used in wrapped lines)  
 `g0` `g$` - go to beginning / end of the current visual line (used in wrapped lines)
 
-`f<char>` - search and jump ON paticular character in current line  
+`f<char>` - search and jump ON particular character in current line  
 `F<char>` - go backward  
-`t<char>` - search and jump BEFORE paticular character in current line  
-`T<char>` - go backword  
+`t<char>` - search and jump BEFORE particular character in current line  
+`T<char>` - go backward  
 `;` - repeat the search and jump motion  
 `,` - repeat the search and jump motion, but in the opposite direction
 
@@ -47,6 +51,15 @@
 `Ctrl-o` - go backwards in the jump list  
 `Ctrl-i` - go forwards in the jump list
 
+`Ctrl-^` / `Ctrl-6` - alternate file
+
+`Ctrl-e` - Scroll down one line  
+`Ctrl-y` - Scroll up one line  
+`Ctrl-d` - Scroll down half a page  
+`Ctrl-u` - Scroll up half a page  
+`Ctrl-f` - Scroll down full page  
+`Ctrl-b` - Scroll up full page
+
 ## mark
 
 `m<lowercase-letter>` - mark position under cursor with the lowercase letter (scope is current buffer)  
@@ -64,7 +77,7 @@
 {VISUAL}`u` - convert selection to lowercase
 
 `~` - toggle between upper and lower case  
-`g~`{motion} - toggle text convered by motion between upper and lower case  
+`g~`{motion} - toggle text covered by motion between upper and lower case  
 `g~~` - toggle current line between upper and lower case  
 `gU`{motion} - convert text covered by motion to uppercase  
 `gUU` `gUgU` - convert current line to uppercase  
@@ -74,6 +87,9 @@
 
 {INSERT}`Ctrl-w` - delete the previous word  
 {INSERT}`Ctrl-u` - delete to the beginning of current line
+
+{INSERT}`Ctrl-t` - increase indent of current line  
+{INSERT}`Ctrl-d` - decrease indent of current line
 
 {INSERT}`Ctrl-x Ctrl-l` - complete current line by searching backwards for lines starting with same text  
 {INSERT}`Ctrl-x Ctrl-f` - complete the file name
@@ -91,6 +107,15 @@
 
 # Change
 
+`S` `cc` - delete current line and start insert
+
+`r` - replace character under cursor
+`R` - enter REPLACE mode
+
+`Ctrl-a` - increment the first number or alphabetic character at or after the cursor  
+`Ctrl-x` - decrement the first number or alphabetic character at or after the cursor  
+{VISUAL}`g Ctrl-a` - increment the first number or alphabetic character in highlighted lines
+
 `=` - auto indent current line  
 {VISUAL}`=` - auto indent selection  
 `=ap` - auto indent current paragraph
@@ -103,8 +128,11 @@
 
 `g&` - repeat last ":s" substitute action on all lines
 
+# Delete
+
 `D` - Delete from cursor to eol  
-`dt<char>` - delete till the character
+`dt<char>` - delete till the character  
+`dap` - delete around current paragraph
 
 # Repeat
 
@@ -118,7 +146,7 @@
 `zc` - close all folds under cursor  
 `zC` - close all folds under cursor recursively  
 `zo` - open all folds under cursor  
-`zO` - open all folds under cursor recursively  
+`zO` - open all folds under cursor recursively
 
 `zM` - close all folds  
 `zR` - open all folds
@@ -131,12 +159,22 @@
 
 `g Ctrl-g` - display file statistic info
 
+`q:` / `: Ctrl-f` - show all previous commands in a buffer
+
 `ZZ` - save and quit  
 `ZQ` - quit without saving
 
-`Ctrl-z` - put vim into background so we could return to terminal without quitting vim, and restore with command `fg` in terminal
+`:tabnew` - new tab  
+`:tabclose` - close tab  
+`gt` - Go to next tab  
+`gT` - Go to prev tab  
+`<num>gt` - Go to specific tab
+
+`Ctrl-z` - put vim in background without quitting, and restore with `fg` command in terminal
 
 # Cmdline
+
+`:g/<pattern>/<cmd>` - execute command on the lines that match the pattern
 
 `:find<filename>` - find for files under cwd, you could use *, e.g. `:find *.md` search for filenames start or end with ".md"
 
@@ -151,6 +189,8 @@
 `gcc` - toggle comment on current line  
 `gc`{motion} - toggle comment on lines covered by motion  
 {VISUAL}`gc` - toggle comment on selection
+
+`grr` - list all references to the symbol under cursor in quickfix window
 
 # Reference
 
