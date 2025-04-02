@@ -1,7 +1,5 @@
 local g = vim.g
 
-g.have_nerd_font = true
-
 g.loaded_node_provider = 0
 g.loaded_python3_provider = 0
 g.loaded_perl_provider = 0

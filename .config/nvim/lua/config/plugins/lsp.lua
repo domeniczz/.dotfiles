@@ -5,7 +5,13 @@ return {
     enabled = true,
     event = "LspAttach",
     config = function()
-      require("fidget").setup({})
+      require("fidget").setup({
+        notification = {
+          window = {
+            winblend = 0,
+          },
+        },
+      })
     end,
   },
 

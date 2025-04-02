@@ -1,7 +1,5 @@
 require("config.options")
-require("config.utils")
 require("config.commands")
 require("config.remaps")
 require("config.autocmds")
-require("config.statusline")
 require("config.lazy_init")

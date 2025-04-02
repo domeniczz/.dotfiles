@@ -55,9 +55,6 @@ map("x", "p", [["_dP]], { noremap = true, silent = true })
 -- Delete into black hole register
 map({ "n", "v" }, "<leader>d", [["_d]], { noremap = true, silent = true })
 
--- Change original vim "x" action, delete to black hole register
-map({ "n", "v" }, "x", [["_x]], { noremap = true, silent = true })
-
 -- Quickfix list navigation
 map("n", "<C-k>", "<CMD>cnext<CR>zz", { noremap = true, silent = true })
 map("n", "<C-j>", "<CMD>cprev<CR>zz", { noremap = true, silent = true })
@@ -78,7 +75,9 @@ map("n", "<leader>vs", "<CMD>vertical split<CR>", { noremap = true, silent = tru
 map("n", "<leader>vn", "<CMD>vertical new<CR>", { noremap = true, silent = true })
 
 map("n", "<leader>ls", "<CMD>LspStart<CR>", { noremap = true, silent = true })
-map("n", "<leader>lx", "<CMD>LspStop<CR>", { noremap = true, silent = true })
+map("n", "<leader>lx", "<CMD>LspRestart<CR>", { noremap = true, silent = true })
+map("n", "<leader>vrr", vim.lsp.buf.references, { noremap = true, silent = true })
+map("n", "<leader>vrn", vim.lsp.buf.rename, { noremap = true, silent = true })
 
 map("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit terminal insert mode", noremap = true, silent = true })
 map("n", "<leader>`", function()
