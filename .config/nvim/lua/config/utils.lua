@@ -100,6 +100,57 @@ function M.sudo_write(tmpfile, filepath)
 end
 
 -- -----------------------------------------------------------------------------
+-- Floating terminal
+-- -----------------------------------------------------------------------------
+
+local floating_term_bufnr = nil
+
+local function is_buffer_visible(bufnr)
+  for _, win_id in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_buf(win_id) == bufnr then
+      return win_id
+    end
+  end
+  return nil
+end
+
+local function toggle_floating_window(bufnr)
+  local width = math.floor(vim.o.columns * 0.8)
+  local height = math.floor(vim.o.lines * 0.8)
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+  local opts = {
+    relative = 'editor',
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = 'minimal',
+    border = 'rounded',
+  }
+  local win_id = vim.api.nvim_open_win(bufnr, true, opts)
+  vim.api.nvim_set_option_value('winblend', 0, { win = win_id })
+  return win_id
+end
+
+function M.toggle_floating_terminal()
+  if not floating_term_bufnr or not vim.api.nvim_buf_is_valid(floating_term_bufnr) then
+    floating_term_bufnr = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_call(floating_term_bufnr, function() vim.cmd('terminal') end)
+    vim.api.nvim_set_option_value('buflisted', false, { buf = floating_term_bufnr })
+    vim.api.nvim_set_option_value('filetype', 'terminal', { buf = floating_term_bufnr })
+    toggle_floating_window(floating_term_bufnr)
+  else
+    local win_id = is_buffer_visible(floating_term_bufnr)
+    if win_id then
+      vim.api.nvim_win_close(win_id, false)
+    else
+      toggle_floating_window(floating_term_bufnr)
+    end
+  end
+end
+
+-- -----------------------------------------------------------------------------
 -- Close current buffer with proper window management
 -- -----------------------------------------------------------------------------
 
@@ -132,6 +183,12 @@ local function is_normal_buffer(bufnr)
     return false
   end
   return true
+end
+
+local function is_floating_window(winid)
+  local config = vim.api.nvim_win_get_config(winid)
+  -- Check if 'relative' is set (indicating a floating window)
+  return config.relative ~= "" and config.relative ~= nil
 end
 
 local function is_terminal_idle(bufnr)
@@ -200,7 +257,7 @@ local function select_buffer_to_switch(current_buf, valid_buffers)
     selected_bufnr = vim.api.nvim_create_buf(true, false)
     if selected_bufnr == 0 then
       vim.notify("Failed to create a buffer to switch to", vim.log.levels.ERROR)
-      return -1
+      return nil
     end
   end
   return selected_bufnr
@@ -220,7 +277,7 @@ local function consolidate_windows(valid_buffers)
       -- Marks the window as "primary" display for the buffer
       if not buf_win_map[buf] then
         buf_win_map[buf] = win
-      -- Window with same buffer detected, duplicate
+        -- Window with same buffer detected, duplicate
       else
         local existing_win = buf_win_map[buf]
         if existing_win == current_win then
@@ -249,6 +306,11 @@ end
 function M.smart_close_buffer(force)
   local current_buf = vim.api.nvim_get_current_buf()
   local current_win = vim.api.nvim_get_current_win()
+
+  if is_floating_window(current_win) then
+    vim.api.nvim_win_close(current_win, true)
+    return
+  end
 
   local filetype = vim.bo[current_buf].filetype
   local buftype = vim.bo[current_buf].buftype
@@ -323,7 +385,7 @@ function M.smart_close_buffer(force)
 
   -- Select a buffer to switch to after closing current buffer
   local bufnr_switched_to = select_buffer_to_switch(current_buf, rest_valid_buffers)
-  if bufnr_switched_to == -1 then
+  if not bufnr_switched_to then
     return
   end
 

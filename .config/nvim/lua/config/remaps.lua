@@ -91,4 +91,5 @@ map("n", "<leader>`", function()
   vim.cmd("startinsert")
 end, { desc = "Open a small terminal at bottom", noremap = true, silent = true })
 
+map("n", "<leader>tt", require('config.utils').toggle_floating_terminal, { noremap = true, silent = true })
 map("n", "Q", require('config.utils').smart_close_buffer, { noremap = true, silent = true })
