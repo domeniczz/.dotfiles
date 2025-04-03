@@ -105,6 +105,13 @@ command! reload :write | restart full
 command! bak :clone %c.bak
 
 " ------------------------------------------------------------------------------
+" Command abbreviations
+" ------------------------------------------------------------------------------
+
+cabbrev h help
+cabbrev fc filter clear
+
+" ------------------------------------------------------------------------------
 " Key mappings
 " ------------------------------------------------------------------------------
 
@@ -239,17 +246,8 @@ qnoremap e q
 autocmd DirEnter $HOME/Downloads/**/* setlocal sort=-mtime,dir
 
 " ------------------------------------------------------------------------------
-" Command abbreviations
-" ------------------------------------------------------------------------------
-
-cabbrev h help
-cabbrev fc filter clear
-
-" ------------------------------------------------------------------------------
 " Bookmarks
 " ------------------------------------------------------------------------------
-
-" :mark mark /full/directory/path [filename]
 
 mark h $HOME/
 mark d $HOME/Downloads/
@@ -262,45 +260,46 @@ mark c $XDG_CONFIG_HOME/
 " ------------------------------------------------------------------------------
 
 " Text
-filetype <text/*,application/x-sh,application/x-shellscript,application/toml,application/json,application/xml,application/yaml> nvim %f, vim %f, nano %f
-fileviewer <text/*,application/x-sh,application/x-shellscript,application/toml,application/json,application/xml,application/yaml> bat --color=always --style=plain --pager=never --line-range=:500 %c
+filetype <text/*,application/x-sh,application/x-shellscript,application/toml,application/json,application/xml,application/yaml>
+      \ nvim %f, vim %f, nvim --clean %f, vim --clean %f
+fileviewer <text/*,application/x-sh,application/x-shellscript,application/toml,application/json,application/xml,application/yaml>
+      \ bat --color=always --style=plain --pager=never --line-range=:500 %c
 
 " Empty file
-filetype <inode/x-empty,application/x-empty,application/x-zerosize> nvim %f, vim %f, nano %f
+filetype <inode/x-empty,application/x-empty,application/x-zerosize> nvim %f, vim %f, nvim --clean %f, vim --clean %f
 fileviewer <inode/x-empty,application/x-empty,application/x-zerosize> file --dereference --brief %c
 
 " Video
 filextype <video/*> mpv %f %i, ffplay -fs -hide_banner -autoexit %f
-fileviewer <video/*> #ueberzug#video %px %py %pw %ph %pc #ueberzug#clear, ffprobe -hide_banner -pretty %c 2>&1
+fileviewer <video/*> ffprobe -hide_banner -pretty %c, #ueberzug#video %px %py %pw %ph %pc #ueberzug#clear
 
 " Audio
 filetype <audio/*> mpv --no-video %f %i %s, ffplay -nodisp -hide_banner -autoexit %c
-fileviewer <audio/*> ffprobe -hide_banner -pretty %c 2>&1
+fileviewer <audio/*> ffprobe -hide_banner -pretty %c
 
 " Images
 filetype <image/*> imv %f %i, swayimg %f %i
-fileviewer <image/gif> #ueberzug#image_no_cache %px %py %pw %ph %pc #ueberzug#clear
+fileviewer <image/gif> #ueberzug#image_no_cache %px %py %pw %ph %pc #ueberzug#clear, identify %c
 fileviewer <image/*> #ueberzug#image %px %py %pw %ph %pc #ueberzug#clear, identify %c
 
 " Web
 filextype {*.htm,*.html},<text/html> qutebrowser %f %i, firefox %f %i
-filetype {*.htm,*.html},<text/html> nvim %f, vim %f
+filetype {*.htm,*.html},<text/html> nvim %f, vim %f, nvim --clean %f, vim --clean %f
 fileviewer {*.htm,*.html},<text/html> w3m %f
 
 " Pdf
 filextype <application/pdf> zathura %f %i
-fileviewer <application/pdf> #ueberzug#pdf %px %py %pw %ph %pc #ueberzug#clear, pdftotext -nopgbrk %c -
+fileviewer <application/pdf> pdftotext -nopgbrk %c -, #ueberzug#pdf %px %py %pw %ph %pc #ueberzug#clear
 
 " Epub
 filextype {*.ebup},<application/epub+zip> zathura %c %i
-fileviewer {*.ebup},<application/epub+zip> #ueberzug#epub %px %py %pw %ph %pc #ueberzug#clear
+fileviewer {*.ebup},<application/epub+zip> epub2txt %c, #ueberzug#epub %px %py %pw %ph %pc #ueberzug#clear
 
 " Office
 filetype {*.odt,*.odp,*.doc,*.docx,*.xls,*.xlsx,*.pptx,*.ppt},<application/vnd.openxmlformats-officedocument.*,application/msword,application/vnd.ms-excel>
       \ libreoffice %f %i &
+fileviewer {*.docx},<application/vnd.openxmlformats-officedocument.*> docx2txt %c -
 fileviewer {*.doc},<application/msword> catdoc %c
-fileviewer {*.docx},<application/vnd.openxmlformats-officedocument.wordprocessingml.document>
-      \ docx2txt.pl %c -
 
 " Zip
 filetype <application/zip,application/java-archive>
