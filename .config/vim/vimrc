@@ -82,7 +82,7 @@ augroup END
 " ------------------------------------------------------------------------------
 
 " Allow files to be saved as root when forgetting to start vim using sudo
-command W :execute ':silent! write !sudo tee % > /dev/null' | :edit!
+command W :execute ':silent! write !sudo tee % >/dev/null' | :edit!
 
 function! KillBufferOrCloseWindow()
   " Exit if in command window (access with q: or Q)
