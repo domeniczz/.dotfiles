@@ -29,7 +29,7 @@ done
 # Traps
 # ------------------------------------------------------------------------------
 
-function err_exit() {
+function log_error() {
   local log_file="/tmp/statusbar.log"
   local line="${BASH_LINENO[0]}"
   local source="${BASH_SOURCE[1]:-$0}"
@@ -41,10 +41,21 @@ function err_exit() {
   elif [[ "$command" == *"|"* ]]; then
     printf "[%s] Hint: Command contains a pipe, check pipefail (-o pipefail)\n" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log_file"
   fi
-  exit 1
 }
 
-trap err_exit ERR
+trap log_error ERR
+
+function cleanup() {
+  # Kill the background process
+  if [[ -n "$IFACE_MONITOR_PID" && -e /proc/$IFACE_MONITOR_PID ]]; then
+    kill $IFACE_MONITOR_PID 2>/dev/null
+  fi
+  # Remove temporary files
+  rm -f "$NETWORK_INTERFACE_FILE"
+  exit 0
+}
+
+trap cleanup EXIT SIGINT SIGTERM
 
 # ------------------------------------------------------------------------------
 # Monitor network interface & connection changes
@@ -56,7 +67,7 @@ declare -g NETWORK_INTERFACE_FILE="/tmp/network_interface"
 function get_all_network_interfaces() {
   for iface in /sys/class/net/*; do
     name=$(basename "$iface")
-    if [[ "$name" != "lo" ]]; then
+    if ! readlink "$iface" | command grep -q "virtual/"; then
       NETWORK_INTERFACES+=("$name")
     fi
   done
@@ -74,7 +85,7 @@ function monitor_active_interfaces() {
     fi
     for iface in "${NETWORK_INTERFACES[@]}"; do
       if [[ -f "/sys/class/net/${iface}/operstate" ]]; then
-        state=$(timeout 0.2s cat "/sys/class/net/${iface}/operstate")
+        state=$(timeout 0.2s cat "/sys/class/net/${iface}/operstate" || echo "err")
         if [[ "$state" == "up" ]]; then
           echo "${iface}" > $NETWORK_INTERFACE_FILE
         else
@@ -86,7 +97,9 @@ function monitor_active_interfaces() {
   done
 }
 
+declare -g IFACE_MONITOR_PID=""
 monitor_active_interfaces &
+IFACE_MONITOR_PID=$!
 
 # ------------------------------------------------------------------------------
 # Get status
@@ -96,14 +109,14 @@ function get_bluetooth() {
   local bluetooth_device icon
   local bluetooth_device_text=""
   BLUETOOTH_COUNT=$(timeout 0.2s bluetoothctl devices Connected | wc -l || echo "-1")
-  (( BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT )) && timeout 0.2s playerctl pause
+  (( BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT )) && timeout 0.2s playerctl pause || true
   BLUETOOTH_PREV_COUNT=$BLUETOOTH_COUNT
   if (( BLUETOOTH_COUNT > 0 )); then
     icon=${bluetooth_icons[1]}
     while IFS= read -r device; do
       [[ -n "$bluetooth_device_text" ]] && bluetooth_device_text+=" "
       bluetooth_device_text+="$icon $device"
-    done < <(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "Error")
+    done < <(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "err")
   else
     icon=${bluetooth_icons[0]}
     bluetooth_device_text="$icon "
@@ -117,7 +130,7 @@ function get_internet_speed() {
   local time_diff=$(( current_time - PREV_SPEED_TIME ))
   (( time_diff < 1 )) && return
   local active_interface
-  [[ -f "$NETWORK_INTERFACE_FILE" ]] && active_interface=$(timeout 0.2s cat "$NETWORK_INTERFACE_FILE" || echo "Error")
+  [[ -f "$NETWORK_INTERFACE_FILE" ]] && active_interface=$(timeout 0.2s cat "$NETWORK_INTERFACE_FILE" || echo "err")
   if [[ -n "$active_interface" ]]; then
     local rx_bytes=$(timeout 0.2s cat "/sys/class/net/$active_interface/statistics/rx_bytes" || echo "0")
     local tx_bytes=$(timeout 0.2s cat "/sys/class/net/$active_interface/statistics/tx_bytes" || echo "0")

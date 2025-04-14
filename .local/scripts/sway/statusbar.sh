@@ -53,7 +53,7 @@ done
 # Traps
 # ------------------------------------------------------------------------------
 
-function err_exit() {
+function log_error() {
   local log_file="/tmp/statusbar.log"
   local line="${BASH_LINENO[0]}"
   local source="${BASH_SOURCE[1]:-$0}"
@@ -65,10 +65,19 @@ function err_exit() {
   elif [[ "$command" == *"|"* ]]; then
     printf "[%s] Hint: Command contains a pipe, check pipefail (-o pipefail)\n" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log_file"
   fi
-  exit 1
 }
 
-trap err_exit ERR
+trap log_error ERR
+
+function cleanup() {
+  if [[ -n "$IFACE_MONITOR_PID" && -e /proc/$IFACE_MONITOR_PID ]]; then
+    kill $IFACE_MONITOR_PID 2>/dev/null
+  fi
+  rm -f "$WIFI_NAME_FILE" "$NETWORK_INTERFACE_FILE"
+  exit 0
+}
+
+trap cleanup EXIT SIGINT SIGTERM
 
 # ------------------------------------------------------------------------------
 # Monitor network interface & connection changes
@@ -77,12 +86,14 @@ trap err_exit ERR
 declare -g WIFI_NAME_FILE="/tmp/wifi_name"
 declare -a NETWORK_INTERFACES
 declare -g NETWORK_INTERFACE_FILE="/tmp/network_interface"
+declare -g IFACE_MONITOR_PID=""
 
 function get_all_network_interfaces() {
   for iface in /sys/class/net/*; do
     name=$(basename "$iface")
-    [[ "$name" == "lo" ]] && continue
-    NETWORK_INTERFACES+=("$name")
+    if ! readlink "$iface" | command grep -q "virtual/"; then
+      NETWORK_INTERFACES+=("$name")
+    fi
   done
 }
 
@@ -98,27 +109,32 @@ function monitor_active_interfaces() {
       get_all_network_interfaces
       continue
     fi
+    local found_up_iface=false
     for iface in "${NETWORK_INTERFACES[@]}"; do
       [[ ! -f "/sys/class/net/${iface}/operstate" ]] && continue
-      state=$(timeout 0.2s cat "/sys/class/net/${iface}/operstate")
+      state=$(timeout 0.2s cat "/sys/class/net/${iface}/operstate" || echo "err")
       if [[ "$state" == "up" ]]; then
         echo "${iface}" > $NETWORK_INTERFACE_FILE
-        current_network_conn=$(timeout 0.2s nmcli --terse --fields NAME connection show --active | head -n1 || echo "Error")
+        current_network_conn=$(timeout 0.2s nmcli --terse --fields NAME connection show --active | head -n1 || echo "err")
         echo "$current_network_conn" > "$WIFI_NAME_FILE"
         if [[ "$iface" != "$prev_iface" ]]; then
           prev_iface="$iface"
         fi
+        found_up_iface=true
         break
-      else
-        echo "" > $NETWORK_INTERFACE_FILE
-        prev_iface=""
       fi
     done
+    if [[ $found_up_iface == "false" ]]; then
+      echo "" > $NETWORK_INTERFACE_FILE
+      echo "" > $WIFI_NAME_FILE
+      prev_iface=""
+    fi
     sleep 2
   done
 }
 
 monitor_active_interfaces &
+IFACE_MONITOR_PID=$!
 
 # ------------------------------------------------------------------------------
 # Get status
@@ -130,7 +146,8 @@ function send_battery_alert() {
     --app-name="Battery Monitor" \
     --category="device.warning" \
     "Critical Battery Alert" \
-    "Battery level is below ${BATTERY_CRITICAL_THRESHOLD}%\nPlease charge immediately!"
+    "Battery level is below ${BATTERY_CRITICAL_THRESHOLD}%\nPlease charge immediately!" \
+  || true
 }
 
 function get_battery() {
@@ -157,8 +174,8 @@ function get_battery() {
 
 function get_volume() {
   local volume_info volume_pct icon icon_index
-  volume_pct=$(timeout 0.2s pactl get-sink-volume @DEFAULT_SINK@ | awk '{print $5}' | sed 's/%//' || echo "0")
-  volume_is_mute=$(timeout 0.2s pactl get-sink-mute @DEFAULT_SINK@ | awk '{print $2}' || echo "yes")
+  volume_pct=$(timeout 0.2s pactl get-sink-volume @DEFAULT_SINK@ | sed -n '/Volume:/{s/.*\/[[:space:]]*\([0-9]\+\)%.*/\1/p;q}' || echo "0")
+  volume_is_mute=$(timeout 0.2s pactl get-sink-mute @DEFAULT_SINK@ | cut -d' ' -f2 || echo "yes")
   if [[ $volume_is_mute == "yes" ]]; then
     icon_index=0
   else
@@ -179,7 +196,7 @@ function get_brightness() {
 
 function get_wifi() {
   local wifi_name
-  [[ -f "$WIFI_NAME_FILE" ]] && wifi_name=$(timeout 0.2s cat "$WIFI_NAME_FILE" || echo "Error")
+  [[ -f "$WIFI_NAME_FILE" ]] && wifi_name=$(timeout 0.2s cat "$WIFI_NAME_FILE" || echo "err")
   if [[ -z "$wifi_name" || "$wifi_name" == "lo" ]]; then
     icon=${wifi_icons[0]}
   else
@@ -192,14 +209,14 @@ function get_bluetooth() {
   local bluetooth_device icon
   local bluetooth_device_text=""
   BLUETOOTH_COUNT=$(timeout 0.2s bluetoothctl devices Connected | wc -l || echo "-1")
-  (( BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT )) && timeout 0.2s playerctl pause
+  (( BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT )) && timeout 0.2s playerctl pause || true
   BLUETOOTH_PREV_COUNT=$BLUETOOTH_COUNT
   if (( BLUETOOTH_COUNT > 0 )); then
     icon=${bluetooth_icons[1]}
     while IFS= read -r device; do
       [[ -n "$bluetooth_device_text" ]] && bluetooth_device_text+=" "
       bluetooth_device_text+="$icon $device"
-    done < <(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "Error")
+    done < <(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "err")
   else
     icon=${bluetooth_icons[0]}
     bluetooth_device_text="$icon "
@@ -213,7 +230,7 @@ function get_internet_speed() {
   local time_diff=$(( current_time - PREV_SPEED_TIME ))
   (( time_diff < 1 )) && return
   local active_interface
-  [[ -f "$NETWORK_INTERFACE_FILE" ]] && active_interface=$(timeout 0.2s cat "$NETWORK_INTERFACE_FILE" || echo "Error")
+  [[ -f "$NETWORK_INTERFACE_FILE" ]] && active_interface=$(timeout 0.2s cat "$NETWORK_INTERFACE_FILE" || echo "err")
   if [[ -n "$active_interface" ]]; then
     local rx_bytes=$(timeout 0.2s cat "/sys/class/net/$active_interface/statistics/rx_bytes" || echo "0")
     local tx_bytes=$(timeout 0.2s cat "/sys/class/net/$active_interface/statistics/tx_bytes" || echo "0")
@@ -289,6 +306,12 @@ echo '{"version":1,"click_events":false}'
 echo '[[],'
 
 while true; do
+  if [[ -n "$IFACE_MONITOR_PID" && ! -e /proc/$IFACE_MONITOR_PID ]]; then
+    cleanup
+    monitor_active_interfaces &
+    IFACE_MONITOR_PID=$!
+  fi
+
   for func in get_volume get_date get_bluetooth get_wifi get_battery get_brightness get_internet_speed get_cpu_usage; do
     $func || true
   done
