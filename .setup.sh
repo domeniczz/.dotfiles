@@ -13,26 +13,26 @@ sudo pacman -S --noconfirm --disable-download-timeout nerd-fonts
 ##### Add china archlinux mirror repo to pacman config #####
 ############################################################
 
-PACMAN_CONFIG='
-[archlinuxcn]
-SigLevel = Never
-Server = https://mirrors.bfsu.edu.cn/archlinuxcn/$arch
-'
-
-# Check if the repository section already exist to avoid duplicate entries
-if grep -q '^\[archlinuxcn\]' /etc/pacman.conf; then
-  echo "The [archlinuxcn] repository is already in /etc/pacman.conf"
-else
-  # Append the content to /etc/pacman.conf
-  echo "Adding the [archlinuxcn] repository to /etc/pacman.conf"
-  echo "$PACMAN_CONFIG" | sudo tee -a /etc/pacman.conf > /dev/null
-  echo "Repository added successfully."
-fi
-
-# Update source
-sudo pacman -Syy
-# Install archlinuxcn-keyring
-sudo pacman -S --noconfirm archlinuxcn-keyring
+# PACMAN_CONFIG='
+# [archlinuxcn]
+# SigLevel = Never
+# Server = https://mirrors.bfsu.edu.cn/archlinuxcn/$arch
+# '
+#
+# # Check if the repository section already exist to avoid duplicate entries
+# if grep -q '^\[archlinuxcn\]' /etc/pacman.conf; then
+#   echo "The [archlinuxcn] repository is already in /etc/pacman.conf"
+# else
+#   # Append the content to /etc/pacman.conf
+#   echo "Adding the [archlinuxcn] repository to /etc/pacman.conf"
+#   echo "$PACMAN_CONFIG" | sudo tee -a /etc/pacman.conf >/dev/null
+#   echo "Repository added successfully."
+# fi
+#
+# # Update source
+# sudo pacman -Syy
+# # Install archlinuxcn-keyring
+# sudo pacman -S --noconfirm archlinuxcn-keyring
 
 
 ##################################################################
@@ -150,14 +150,14 @@ cd
 
 # Check if wayland protocol is used
 check_wayland() {
-  if [ "$XDG_SESSION_TYPE"="wayland" ]; then
-    return 0
-  fi
-  return 1
+    if [ "$XDG_SESSION_TYPE"="wayland" ]; then
+        return 0
+    fi
+    return 1
 }
 
 if check_wayland; then
-  sudo pacman -S --noconfirm --disable-download-timeout wl-clipboard
+    sudo pacman -S --noconfirm --disable-download-timeout wl-clipboard
 fi
 
 sudo pacman -S --noconfirm --disable-download-timeout cliphist
@@ -332,9 +332,9 @@ git restore .
 
 reboot_countdown = 5
 while [ $reboot_countdown -gt 0 ]; do
-  echo -ne "Rebooting in $reboot_countdown seconds...\r"
-  sleep 1
-  reboot_countdown=$((reboot_countdown - 1))
+    echo -ne "Rebooting in $reboot_countdown seconds...\r"
+    sleep 1
+    reboot_countdown=$((reboot_countdown - 1))
 done
 
 sudo reboot

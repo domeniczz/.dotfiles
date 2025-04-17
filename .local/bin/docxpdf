@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
+# View docx files as pdf
+# ------------------------------------------------------------------------------
+
+docxfile="$1"
+realpath=$(realpath "$docxfile")
+filename=$(basename "$realpath")
+hash=$(echo "$realpath" | md5sum | cut -d' ' -f1 | head -c 8)
+tempfile="/tmp/${filename%.docx}_${hash}.pdf"
+
+# Check if cached PDF exists and is newer than the docx file
+if [[ ! -f "$tempfile" ]] || [[ "$realpath" -nt "$tempfile" ]]; then
+    soffice --headless --invisible --nologo --nofirststartwizard \
+        --nodefault --norestore --nolockcheck \
+        --convert-to pdf "$@" >/dev/null 2>&1
+    converted_pdf_file="${docxfile%.docx}.pdf"
+    mv "$converted_pdf_file" "$tempfile"
+fi
+
+if command -v zathura >/dev/null 2>&1; then
+    zathura "$tempfile"
+elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$tempfile"
+elif command -v pdftotext >/dev/null 2>&1; then
+    pdftotext -nopgbrk "$tempfile" - | less
+else
+    echo "No PDF viewer available." >&2
+    exit 1
+fi

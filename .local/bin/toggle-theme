@@ -10,54 +10,54 @@ declare -gr STATE_FILE="$HOME/.local/state/theme-toggle/state.json"
 declare -g THEME="light"
 
 function gtk_dark() {
-  gsettings set org.gnome.desktop.interface color-scheme prefer-dark
-  gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
+    gsettings set org.gnome.desktop.interface color-scheme prefer-dark
+    gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
 }
 
 function gtk_light() {
-  gsettings set org.gnome.desktop.interface color-scheme prefer-light
-  gsettings set org.gnome.desktop.interface gtk-theme Adwaita
+    gsettings set org.gnome.desktop.interface color-scheme prefer-light
+    gsettings set org.gnome.desktop.interface gtk-theme Adwaita
 }
 
 function set_theme_state() {
-  state="$(cat $STATE_FILE)"
-  echo "$state" | jq --arg t "$THEME" '.theme = $t' > "$STATE_FILE"
+    state="$(cat $STATE_FILE)"
+    echo "$state" | jq --arg t "$THEME" '.theme = $t' > "$STATE_FILE"
 }
 
 function get_theme_state() {
-  current="$(jq -r '.theme' "$STATE_FILE")"
-  echo "$current"
+    current="$(jq -r '.theme' "$STATE_FILE")"
+    echo "$current"
 }
 
 function setup() {
-  [[ -f "$STATE_FILE" ]] && return
-  mkdir -p "$(dirname $STATE_FILE)"
-  echo '{"theme": "light"}' > "$STATE_FILE"
+    [[ -f "$STATE_FILE" ]] && return
+    mkdir -p "$(dirname $STATE_FILE)"
+    echo '{"theme": "light"}' > "$STATE_FILE"
 }
 
 function process_args() {
-  if [[ -z "$1" ]]; then
-    echo "Please provide the argument 'dark', 'light' or 'switch'"
-    exit 1
-  fi
-  if [[ "$1" == "light" || "$1" == "dark" ]]; then
-    THEME="$1"
-  elif [[ "$1" == "switch" ]]; then
-    current="$(get_theme_state)"
-    [[ "$current" == "light" ]] && THEME="dark"
-    echo "$THEME"
-  else
-    echo "Unkown argument, please provide the argument 'dark', 'light' or 'switch'"
-    exit 1
-  fi
+    if [[ -z "$1" ]]; then
+        echo "Please provide the argument 'dark', 'light' or 'switch'"
+        exit 1
+    fi
+    if [[ "$1" == "light" || "$1" == "dark" ]]; then
+        THEME="$1"
+    elif [[ "$1" == "switch" ]]; then
+        current="$(get_theme_state)"
+        [[ "$current" == "light" ]] && THEME="dark"
+        echo "$THEME"
+    else
+        echo "Unkown argument, please provide the argument 'dark', 'light' or 'switch'"
+        exit 1
+    fi
 }
 
 function switch_theme() {
-  for f in $(declare -F | grep "$THEME" | awk '{ print($3) }'); do
-    echo "$f"
-    "$f"
-  done
-  notify-send "Switched to $THEME theme"
+    for f in $(declare -F | grep "$THEME" | awk '{ print($3) }'); do
+        echo "$f"
+        "$f"
+    done
+    notify-send "Switched to $THEME theme"
 }
 
 setup

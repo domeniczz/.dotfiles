@@ -15,18 +15,18 @@ swap=$(free -h | awk 'NR==3 {print $3 "/" $2}')
 disk=$(df -h | grep ' /$' | awk '{print $3 "/" $2}')
 
 colors=$(for i in {0..15}; do
-  printf "\e[48;5;${i}m \e[0m"
-  if [ $(( ($i + 1) % 16 )) -eq 0 ]; then
-    printf "\n"
-  fi
+    printf "\e[48;5;${i}m \e[0m"
+    if [ $(( ($i + 1) % 16 )) -eq 0 ]; then
+        printf "\n"
+    fi
 done)
 
 printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" \
-  "os:      $os" \
-  "kernel:  $kernel" \
-  "package: $pkg" \
-  "uptime:  $uptime" \
-  "memory:  $mem" \
-  "swap:    $swap" \
-  "disk:    $disk" \
-  "color:   $colors"
+    "os:      $os" \
+    "kernel:  $kernel" \
+    "package: $pkg" \
+    "uptime:  $uptime" \
+    "memory:  $mem" \
+    "swap:    $swap" \
+    "disk:    $disk" \
+    "color:   $colors"

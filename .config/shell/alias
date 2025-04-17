@@ -1,20 +1,21 @@
-alias update="sudo pacman -Sy --needed archlinux-keyring archlinuxcn-keyring && sudo pacman -Syu && yay -Sua"
-alias vi="$EDITOR"
+alias update="sudo pacman -Sy --needed archlinux-keyring && sudo pacman -Syu && yay -Sua"
+alias vi="nvim"
 alias grep="command grep --color=auto"
 alias rm="command rm -I"
 alias python="python3"
 alias tmuxa="tmux new-session -A -s general"
-alias ls="eza --group-directories-first --color=always --git --git-repos-no-status --long"
+alias ls="command eza --group-directories-first --color=always --git --git-repos-no-status --long"
 alias cd="z"
-alias cat="bat --plain --paging=never --wrap=never --color=auto"
+alias cat="command bat --plain --paging=never --wrap=never --color=auto"
 
 alias ..="cd .."
 alias ...="cd ../.."
 
+alias ..g='cd "$(git rev-parse --show-toplevel)"'
 alias gs="git status"
 alias ga="git add"
 alias gac="git add . && git commit"
-alias gl="git log --graph --all --abbrev-commit"
+alias gl="git log --oneline --decorate --graph --all --abbrev-commit --parents"
 alias glf="git log --follow -p"
 
 alias du="command du --human-readable"
@@ -22,6 +23,7 @@ alias dU="command du --human-readable --max-depth=1 | command sort --human-numer
 alias df="command df --human-readable --exclude-type=tmpfs --exclude-type=efivarfs --exclude-type=devtmpfs"
 alias lsblk="command lsblk --output name,mountpoints,type,size"
 alias free="command free --human"
+alias smem="sudo smem --totals --abbreviate --reverse"
 
 alias suspend="systemctl suspend"
 alias hibernate="systemctl hibernate"
@@ -29,41 +31,35 @@ alias shutdown="systemctl poweroff"
 alias poweroff="systemctl poweroff"
 alias reboot="systemctl reboot"
 
-alias myip="ip address | grep --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
+alias myip="ip address | command grep --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
 
-alias ftr="realpath --quiet * | fzf --prompt='ftree > ' --preview 'command tree -L1 {}' --reverse --height 60%"
-alias fman="man -k . | awk -F' - ' '{print $1}' | fzf --prompt='man page > ' --bind='enter:execute(man {1})' --reverse --height 60%"
-alias fvi="fzf --prompt='$EDITOR open > ' --preview 'bat --number --color=always --line-range :500 {}' --bind='enter:execute($EDITOR {+})' --reverse --height 80%"
-alias fgl="git log | grep '^commit ' | command cut -d' ' -f2 | fzf --prompt='git commit > ' --preview 'git show {} | bat --number --color=always --language=diff --theme=base16' --bind 'enter:execute(git show {} | delta | less --RAW-CONTROL-CHARS)' --reverse --height 80%"
-alias fglf="fzf --prompt='git file hist > ' --preview 'git log --follow -p {} | bat --number --color=always --language=diff --theme=base16' --bind 'enter:execute(git log --follow -p {} | delta | less --RAW-CONTROL-CHARS)' --reverse --height 80%"
-alias fpi="pacman -Qq | fzf --prompt='package info > ' --preview 'pacman -Qi {}' --reverse --height 60%"
-alias fpc="pacman -Qq | fzf --prompt='package cache > ' --preview 'command ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst' --reverse --height 60%"
-
-function fps() {
-  pacman -Ss $1 | grep -v '^ ' | command cut -d' ' -f1 | fzf --prompt='package search > ' --preview 'pacman -Si {}' --bind='enter:become(echo {+} && sudo pacman -S {+})' --reverse --height 60%
-}
-
-function yfps() {
-  yay -Ss $1 | grep -v '^ ' | command cut -d' ' -f1 | fzf --prompt='aur package search > ' --preview 'yay -Si {}' --reverse --height 60%
-}
+alias ftr="realpath --quiet * | fzf --prompt='ftree ❯ ' --preview 'command tree -C -L1 {}' --reverse --height 60%"
+alias fman="man -k . | awk -F' - ' '{print $1}' | fzf --prompt='man page ❯ ' --bind='enter:execute(man {1})' --reverse --height 60%"
+alias fvi="fzf --prompt='nvim open ❯ ' --preview 'command bat --number --color=always --line-range :500 {}' --bind='enter:execute(nvim {+})' --reverse --height 80%"
+alias fgl="git log | grep '^commit ' | command cut -d' ' -f2 | fzf --prompt='git commit ❯ ' --preview 'git show {} | command bat --number --color=always --language=diff --theme=base16' --bind 'enter:execute(git show {} | command delta | command less --RAW-CONTROL-CHARS)' --reverse --height 80%"
+alias fglf="fzf --prompt='git file hist ❯ ' --preview 'git log --follow -p {} | command bat --number --color=always --language=diff --theme=base16' --bind 'enter:execute(git log --follow -p {} | command delta | command less --RAW-CONTROL-CHARS)' --reverse --height 80%"
+alias fpi="pacman -Qq | fzf --prompt='package info ❯ ' --preview 'pacman -Qi {}' --reverse --height 60%"
+alias fpc="pacman -Qq | fzf --prompt='package cache ❯ ' --preview 'command ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst' --reverse --height 60%"
+alias fps="pacman -Ssq | fzf --prompt='package search ❯ ' --preview 'pacman -Si {}' --bind='enter:become(echo {+} && sudo pacman -S {+})' --reverse --height 60%"
+alias fys="yay -Slaq | fzf --prompt='aur package search ❯ ' --preview 'yay -Si {}' --bind='enter:become(echo {+} && yay -S {+})' --reverse --height 60%"
 
 function ramu() {
-  if [ $# -eq 0 ]; then
-    ps -axo rss | awk 'NR>1 {sum+=$1} END {printf "Total RAM usage: %d MB\n", sum/1024}'
-    return
-  fi
-  processes=$(printf "%s|" "$@" | sed 's/|$//')
-  ps -axo rss,command | command grep -iE "$processes" | command grep -v grep | awk 'NR>1 {sum+=$1} END {printf "Total RAM usage: %d MB\n", sum/1024}'
+    if (( $# == 0 )); then
+        ps -axo rss | awk 'NR>1 {sum+=$1} END {printf "Total RAM usage: %d MB\n", sum/1024}'
+    else
+        processes=$(printf "%s|" "$@" | sed 's/|$//')
+        ps -axo rss,command | command grep -iE "$processes" | command grep -v grep | awk '{sum+=$1} END {printf "Total RAM usage: %d MB\n", sum/1024}'
+    fi
 }
 
 alias rmpkgcache="sudo paccache -vruk0 && sudo paccache -vrk2"
 
 function rmorphan() {
-  orphans=$(pacman -Qdtq)
-  [[ -n "$orphans" ]] && sudo pacman -Rns $orphans
+    orphans=$(pacman -Qdtq)
+    [[ -n "$orphans" ]] && sudo pacman -Rns $orphans
 }
 
 function als() {
-  local cmd=$(alias | sed "s/^alias //" | fzf --prompt="alias > " --preview "echo {}" --ansi --reverse --height 25% | awk -F'=' '{print $2}' | tr -d "'")
-  [[ -n $cmd ]] && eval "$cmd"
+    local cmd=$(alias | sed "s/^alias //" | fzf --prompt="alias ❯ " --preview "echo {}" --reverse --height 25% | awk -F'=' '{print $2}' | tr -d "'")
+    [[ -n $cmd ]] && eval "$cmd"
 }

@@ -9,8 +9,8 @@ set -euo pipefail
 window_count=$(tmux list-windows | wc -l)
 
 if (( window_count == 1 )); then
-  tmux new-window
-  tmux kill-window -t !
+    tmux new-window
+    tmux kill-window -t !
 else
-  tmux kill-window
+    tmux kill-window
 fi

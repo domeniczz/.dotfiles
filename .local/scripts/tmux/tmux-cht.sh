@@ -8,7 +8,7 @@ set -euo pipefail
 
 TMUX_CONF_PATH="$XDG_CONFIG_HOME/tmux"
 
-selected=$(cat $TMUX_CONF_PATH/.tmux-cht-languages $TMUX_CONF_PATH/.tmux-cht-command | sort --reverse | fzf --prompt='cheat sheet > ' --border=none)
+selected=$(cat $TMUX_CONF_PATH/.tmux-cht-languages $TMUX_CONF_PATH/.tmux-cht-command | sort --reverse | fzf --prompt='cheat sheet ❯ ' --border=none)
 
 [[ -z $selected ]] && exit 0
 
@@ -21,7 +21,7 @@ query=$(echo $query | tr ' ' '+')
 LESS_CMD="less --use-color --wordwrap --RAW-CONTROL-CHARS --incsearch --ignore-case --mouse"
 
 if grep -qs "$selected" "$TMUX_CONF_PATH/.tmux-cht-languages"; then
-  tmux new-window -n "ctsh" bash -c "curl -s cht.sh/$selected/$query | $LESS_CMD"
+    tmux new-window -n "ctsh" bash -c "curl -s cht.sh/$selected/$query | $LESS_CMD"
 else
-  tmux new-window -n "ctsh" bash -c "curl -s cht.sh/$selected~$query | $LESS_CMD"
+    tmux new-window -n "ctsh" bash -c "curl -s cht.sh/$selected~$query | $LESS_CMD"
 fi

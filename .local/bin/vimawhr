@@ -7,33 +7,35 @@ set -euo pipefail
 # and copy content to clipboard after quitting
 # ------------------------------------------------------------------------------
 
-err() { echo -e "$@" 1>&2; }
+function err() {
+    echo -e "$@" 1>&2;
+}
 
 if ! command -v wl-copy >/dev/null 2>&1; then
-  err "wl-clipboard is not installed"
-  exit 1
+    err "wl-clipboard is not installed"
+    exit 1
 fi
 
 editors=("nvim" "vim" "vi")
 editor=""
 
 for e in "${editors[@]}"; do
-  if command -v "$e" >/dev/null 2>&1; then
-    editor="$e"
-    break
-  fi
+    if command -v "$e" >/dev/null 2>&1; then
+        editor="$e"
+        break
+    fi
 done
 
 if [[ -z "$editor" ]]; then
-  err "No suitable editor (nvim, vim, or vi) found"
-  exit 1
+    err "No suitable editor (nvim, vim, or vi) found"
+    exit 1
 fi
 
 while getopts ":v" opt; do
-  case "$opt" in
-    v) set -x ;;
-    *) err "Invalid option: -$OPTARG" >&2 ;;
-  esac
+    case "$opt" in
+        v) set -x ;;
+        *) err "Invalid option: -$OPTARG" >&2 ;;
+    esac
 done
 
 TMPFILE_DIR=/tmp/vim-anywhere

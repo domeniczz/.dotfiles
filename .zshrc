@@ -1,26 +1,41 @@
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
-PROMPT="%K{#3a4055}%F{#f0f0f0} %n %K{#4c566a} %3~ %f%k ❯ "
-
-HISTFILE=$HOME/.zsh_history
+HISTFILE=$XDG_DATA_HOME/.zsh_history
 HISTSIZE=2000
 SAVEHIST=100000
 HISTCONTROL=ignoreboth
 KEYTIMEOUT=5
 LISTMAX=200
 
-((INCOGNITO == 1)) && SAVEHIST=0 && PROMPT="%K{#1b527e}%F{#f0f0f0} incognito %f%k$PROMPT"
-
+setopt prompt_subst
 setopt append_history inc_append_history share_history extended_history
-setopt hist_ignore_dups hist_ignore_space hist_reduce_blanks hist_verify
+setopt hist_ignore_dups hist_ignore_all_dups hist_expire_dups_first
+setopt hist_ignore_space hist_reduce_blanks hist_verify
 setopt autocd check_jobs
+
+function git_branch_info() {
+    local ref=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
+    [[ -z "$ref" ]] && ref=$(git describe --tags --always 2>/dev/null)
+    [[ -n "$ref" ]] && echo "%K{#006532}%F{#f0f0f0} $ref %f%k"
+}
+
+PROMPT_INCOGNITO="%K{#1b527e}%F{#f0f0f0} incognito %f%k"
+PROMPT_USER="%K{#3a4055}%F{#f0f0f0} %n "
+PROMPT_DIR="%K{#4c566a} %3~ %f%k"
+PROMPT_GIT='$(git_branch_info)'
+PROMPT_SYMBOL=" ❯ "
+
+PROMPT="$PROMPT_USER$PROMPT_DIR$PROMPT_GIT$PROMPT_SYMBOL"
+
+((INCOGNITO == 1)) && SAVEHIST=0 && PROMPT="$PROMPT_INCOGNITO$PROMPT"
 
 bindkey -v
 
 zstyle ":completion:*" menu select completer _expand _complete _ignored _approximate
 zstyle :compinstall filename "$HOME/.zshrc"
-autoload -Uz compinit; compinit
+[[ -d "$XDG_CACHE_HOME/zsh" ]] || mkdir -p "$XDG_CACHE_HOME/zsh"
+autoload -Uz compinit; compinit -d "$XDG_CACHE_HOME/zcompdump"
 
 ZSH_PLUGINS_DIR=/usr/share/zsh/plugins
 source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -68,19 +83,19 @@ bindkey "^P" history-beginning-search-backward
 bindkey "^N" history-beginning-search-forward
 
 function zle-line-init {
-  echo -ne '\e[2 q'
+    echo -ne '\e[2 q'
 }
 zle -N zle-line-init
 
 function zle-keymap-select {
-  case $KEYMAP in
-    vicmd)
-      echo -ne '\e[4 q'
-      ;;
-    viins|main)
-      echo -ne '\e[2 q'
-      ;;
-  esac
+    case $KEYMAP in
+        vicmd)
+            echo -ne '\e[4 q'
+            ;;
+        viins|main)
+            echo -ne '\e[2 q'
+            ;;
+    esac
 }
 zle -N zle-keymap-select
 
