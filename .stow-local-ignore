@@ -22,6 +22,12 @@ CVS
 ^\.git$
 ^\.gitmodules$
 ^/.+/\.gitignore$
+^/.+/\.gitconfig$
+
+^dot-gitconfig$
+^\.stow-local-ignore$
+
+^fcitx5$
 
 .+~          # emacs backup files
 \#.*\#       # emacs autosave files

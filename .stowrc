@@ -3,5 +3,3 @@
 --verbose 2
 --target=$HOME
 --dir=$HOME/.dotfiles
---ignore=".stow-local-ignore"
---ignore="fcitx5"
