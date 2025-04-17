@@ -17,15 +17,7 @@ bindsym $mod+b exec 'if pgrep --exact "$(basename $browser)" > /dev/null; then s
 bindsym $mod+Shift+q kill
 bindsym $mod+Ctrl+shift+q [workspace=__focused__] kill
 
-bindsym $mod+Ctrl+l exec swaylock \
-    --ignore-empty-password \
-    --show-failed-attempts \
-    --daemonize \
-    --indicator-idle-visible \
-    --indicator-radius 100 \
-    --indicator-thickness 12 \
-    --image $HOME/Pictures/wallpapers/lockscreen.jpg \
-    --scaling fill
+bindsym $mod+Ctrl+l exec swaylock
 
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+Ctrl+F12 exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
