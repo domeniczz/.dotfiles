@@ -1,10 +1,14 @@
 [init]
-	defaultBranch = master
+	defaultBranch = main
 [core]
-    pager = delta
+	pager = delta
 [interactive]
-    diffFilter = delta --color-only
+	diffFilter = delta --color-only
 [delta]
-    navigate = true
+	navigate = true
 [merge]
-    conflictstyle = zdiff3
+	conflictstyle = zdiff3
+[pull]
+	rebase = true
+[rerere]
+	enabled = true
