@@ -1,9 +1,13 @@
+--bind='ctrl-q:abort,ctrl-c:abort,esc:abort'
+--bind='ctrl-n:down,ctrl-p:up'
 --bind='ctrl-f:page-down,ctrl-b:page-up'
 --bind='ctrl-j:preview-down,ctrl-k:preview-up'
 --bind='ctrl-/:toggle-preview'
+--ansi
 --smart-case
 --multi
 --min-height=10+
 --preview-window 'right,60%,border-left,cycle'
 --highlight-line
 --border=top
+--prompt='❯ '
