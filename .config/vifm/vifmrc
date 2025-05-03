@@ -6,11 +6,11 @@ only
 filter
 screen!
 
-set vicmd=$EDITOR
-set syscalls
-"set syncregs=main
+set vicmd=nvim
+" set syscalls
+" set syncregs=main
 set trash
-set trashdir=%r/.vifm-Trash,$XDG_DATA_HOME/Trash/files
+set trashdir=$XDG_DATA_HOME/Trash/files
 set vifminfo=chistory,shistory,phistory,fhistory,dirstack,registers,bookmarks,bmarks
 set sessionoptions=tui,state,tabs,savedirs,dhistory
 set history=100
@@ -25,11 +25,11 @@ set vimhelp
 set notitle
 set timeoutlen=1000
 set mintimeoutlen=200
-set mouse=a
+set mouse=mq
 set confirm-=delete
 set dotdirs=treeleafsparent
 set dirsize=nitems
-set shortmess=Tp
+set shortmess=LMTp
 set tabscope=global
 
 " For non-Windows systems
@@ -43,6 +43,7 @@ set milleroptions=lsize:1,csize:3,rsize:4,rpreview:all
 set previewoptions=maxtreedepth:1
 set suggestoptions=delay:400,normal,visual,view,otherpane,keys,marks,registers
 set tuioptions=p
+set uioptions=iodetails
 set navoptions=open:dirs
 set cpoptions=st
 
@@ -58,8 +59,8 @@ set nowrap
 set wildmenu
 set wildstyle=popup
 
-set grepprg="rg --hidden --color=never %i %a %s"
-set findprg="fd --hidden --color=never %p %s"
+set grepprg="rg --hidden --color=never %i %a %s | sort"
+set findprg="fd --hidden --color=never %p %s | sort"
 
 if system('id -u') == '0'
   let g:root_prefix='root'
@@ -77,8 +78,6 @@ set statusline="%2*%[%{g:root_prefix}  %]%0*%A  %u:%-g %d  %E  %1*%[-> %T%]%0* %
 " Commands
 " ------------------------------------------------------------------------------
 
-" :com[mand][!] command_name action
-"
 " These are some of the macros that can be used in the action part:
 "  %a for user arguments
 "  %c for current file under the cursor
@@ -93,16 +92,59 @@ set statusline="%2*%[%{g:root_prefix}  %]%0*%A  %u:%-g %d  %E  %1*%[-> %T%]%0* %
 "  %u uses command's output to build a file list
 "  see `:help vifm-macros` and `:help vifm-filename-modifiers` for more
 
-command! df df -h %m 2> /dev/null
+command! df df -h %m 2>/dev/null
+command! du du -sh %d %m 2>/dev/null
+
 command! diff nvim -d %f %F
+command! gdiff git diff %c
+
 command! zip zip -r %c.zip %f
 command! unzip unzip -q %f
+command! compress 7z a -t7z -mx=9 -mhe=on -p %a %f
+command! extract 7z x -aoa -o%a %f
+
+command! mkcd :mkdir %a | cd %a
+command! bak :clone %c.bak
+
 command! run !! ./%f
 command! make !!make %a
-command! mkcd :mkdir %a | cd %a
-command! vgrep vim "+grep %a"
+
 command! reload :write | restart full
-command! bak :clone %c.bak
+
+command! z :execute 'cd' fnameescape(term('zoxide query -i'))
+
+" Grep literal string under current directory, search matches with fzf, and open in nvim
+" Vifm have a builtin command `grep` and show matches in a menu
+command! gd :
+      \| if '%a' == ''
+      \|   echo 'Search pattern required'
+      \| else
+      \|   let g:res = term("
+      \      matches=$(rg --hidden --color=always --line-number -- \"%a\");
+      \      if [[ -z $matches ]]; then
+      \        echo 'GREP_NO_MATCHES';
+      \      else
+      \        echo \"$matches\" | sort | fzf --ansi --delimiter=: --smart-case
+      \          --prompt 'grep ❯ '
+      \          --preview 'bat --number --color=always --paging=never --wrap=never --line-range={2}: {1}'
+      \          --bind 'enter:execute([[ -n $TMUX ]] && tmux new-window \"nvim {1} +{2}\" || nvim {1} +{2})';
+      \      fi
+      \    ")
+      \|   if g:res == 'GREP_NO_MATCHES'
+      \|     echo 'No matches found'
+      \|   endif
+      \| endif
+
+" Toggle millerview preview panel
+let g:millerview_preview_flag = 1
+command! togglepreview :
+      \| if g:millerview_preview_flag == 1
+      \|   set milleroptions=lsize:1,csize:7
+      \|   let g:millerview_preview_flag = 0
+      \| else
+      \|   set milleroptions=lsize:1,csize:3,rsize:4,rpreview:all
+      \|   let g:millerview_preview_flag = 1
+      \| endif
 
 " ------------------------------------------------------------------------------
 " Command abbreviations
@@ -122,10 +164,7 @@ nnoremap <silent> s :shell<CR>
 nnoremap <silent> S :sort<CR>
 
 " Toggle showing hidden files
-nnoremap <silent> zh za
-
-nnoremap <silent> q :q<CR>
-nnoremap <silent> Q :q<CR>
+nnoremap <silent> zh :set dotfiles!<CR>
 
 " Select item
 nnoremap <silent> <Space> tj
@@ -135,6 +174,9 @@ nnoremap <silent> K 5k
 
 nnoremap <silent> mk :mkdir<Space>
 nnoremap <silent> ft :touch<Space>
+
+nnoremap <silent> q :q<CR>
+nnoremap <silent> Q :qa<CR>
 
 " Auto enter navigation mode
 " - <C-y> enter/exit nav mode
@@ -152,17 +194,20 @@ nnoremap <silent> / /<c-y>
 " zr clear local filter without changing directory
 " :filter global filter
 nnoremap <silent> = =<c-y>
+" Remap for navigation mode
+anoremap <C-e> <C-j>
 
 " Open file
 nnoremap <silent> o :file<CR>
 nnoremap O :
-      \| let g:p = input('Open with: ')
-      \| if g:p == 'nvim' || g:p == 'vim'
-      \| execute '!' . g:p . ' %c'
+      \| let g:program = input('Open with: ')
+      \| if g:program == 'nvim' || g:program == 'vim'
+      \|   execute '!' . g:program . ' %c'
       \| else
-      \| execute '!' . g:p . ' %c %i'
-      \| endif
-      \| unlet g:p<CR>
+      \|   execute '!' . g:program . ' %c %i'
+      \| endif<CR>
+
+nnoremap <silent> E :!nvim --cmd "lua vim.g.quit_on_empty = false" %d<CR>
 
 " Rename
 nnoremap <silent> I cw<C-a>
@@ -186,8 +231,10 @@ nnoremap <silent> <C-i> :histnext<CR>
 
 nnoremap <silent> <C-t> :tabnew | only | cd $HOME<CR>
 nnoremap <silent> T :tabnew | only<CR>
-nnoremap <silent> <Tab> :tabnext<CR>
-nnoremap <silent> <S-Tab> :tabprevious<CR>
+nnoremap <silent> gt :tabnext<CR>
+nnoremap <silent> gT :tabprevious<CR>
+nnoremap <silent> <A-n> :tabnext<CR>
+nnoremap <silent> <A-p> :tabprevious<CR>
 
 nnoremap <silent> ! :!
 nnoremap <silent> @ :!<space>%f<left><left><left>
@@ -200,7 +247,10 @@ nnoremap <silent> <F3> :!less %f<CR>
 nnoremap <silent> <F4> :edit<CR>
 nnoremap <silent> <F5> :clone<CR>
 nnoremap <silent> <F6> :move<CR>
+" In trash (:lstrash) menu, 'r' to restore, 'dd' to delete permanently
 nnoremap <silent> <F7> :lstrash<CR>
+nnoremap <silent> <F8> :restore<CR>
+nnoremap <silent> <F9> :chmod<CR>
 
 " Open current directory in the other pane
 nnoremap <silent> <A-i> :sync<CR>
@@ -209,32 +259,35 @@ nnoremap <silent> <A-o> :sync %c<CR>
 
 " Fzf search and navigate to selection
 nnoremap <silent> <C-f> :
-      \| let g:s = term('fd --type f --hidden --color=never | fzf --prompt "cwd > "')
-      \| if g:s != ''
-      \| execute 'goto' fnameescape(g:s)
-      \| endif
-      \| unlet g:s<CR>
+      \| let g:fzf_res = term('
+      \    fd --type f --hidden --follow
+      \    --exclude .git --exclude node_modules --exclude .venv |
+      \    fzf --prompt "cwd ❯ "
+      \  ')
+      \| if g:fzf_res != ''
+      \|   execute 'goto' fnameescape(g:fzf_res)
+      \| endif<CR>
 nnoremap <silent> F :
-      \| let g:s = term('fd --type f --hidden --color=never --base-directory $HOME --absolute-path | fzf --prompt "home > "')
-      \| if g:s != ''
-      \| execute 'goto' fnameescape(g:s)
-      \| endif
-      \| unlet g:s<CR>
+      \| let g:fzf_res = term('
+      \    fd --type f --hidden --follow --base-directory $HOME --absolute-path
+      \    --exclude .git --exclude node_modules --exclude .venv |
+      \    fzf --prompt "home ❯ "
+      \    ')
+      \| if g:fzf_res != ''
+      \|   execute 'goto' fnameescape(g:fzf_res)
+      \| endif<CR>
+
+" Grep string under current directory and open the match with nvim
+nnoremap <silent> <C-s> :gd<Space>
 
 " Yank current directory path
-nnoremap <silent> yd :!echo -n %d | wl-copy %i && echo -n %d | wl-copy -p %i<CR>
+nnoremap <silent> yd :!echo -n %d | wl-copy %i && echo -n %d | wl-copy -p %i<CR>:echo "Directory path copied"<CR>
 " Yank current file path
-nnoremap <silent> yf :!echo -n %c:p | wl-copy %i && echo -n %c:p | wl-copy -p %i<CR>
+nnoremap <silent> yf :!echo -n %c:p | wl-copy %i && echo -n %c:p | wl-copy -p %i<CR>:echo "File path copied"<CR>
 
-let g:millerview_preview_flag = 1
-nnoremap <silent> ,p :
-      \| if g:millerview_preview_flag == 1
-      \| set milleroptions=lsize:1,csize:7
-      \| let g:millerview_preview_flag = 0
-      \| else
-      \| set milleroptions=lsize:1,csize:3,rsize:4,rpreview:all
-      \| let g:millerview_preview_flag = 1
-      \| endif<CR>
+" Toggle millerview preview panel (Ctrl-/ or ,p)
+nnoremap <silent> <C-_> :togglepreview<CR>
+nnoremap <silent> ,p :togglepreview<CR>
 
 " Use e to quit view mode
 qnoremap e q
@@ -249,21 +302,25 @@ autocmd DirEnter $HOME/Downloads/**/* setlocal sort=-mtime,dir
 " Bookmarks
 " ------------------------------------------------------------------------------
 
-mark h $HOME/
-mark d $HOME/Downloads/
-mark p $HOME/Personal/
-mark w $HOME/Work/
-mark c $XDG_CONFIG_HOME/
+mark h $HOME/ home
+mark c $XDG_CONFIG_HOME/ config
+mark p $HOME/Personal/ personal
+mark w $HOME/Public/ public
+mark d $HOME/Documents/ documents
+mark x $HOME/Downloads/ downloads
 
 " ------------------------------------------------------------------------------
 " File type associations
 " ------------------------------------------------------------------------------
 
 " Text
-filetype <text/*,application/x-sh,application/x-shellscript,application/toml,application/json,application/xml,application/yaml>
+filetype {*.desktop,*.service,*.target,*.mdx},<text/*,application/x-sh,application/x-shellscript,application/javascript,application/toml,application/json,application/xml,application/yaml>
       \ nvim %f, vim %f, nvim --clean %f, vim --clean %f
-fileviewer <text/*,application/x-sh,application/x-shellscript,application/toml,application/json,application/xml,application/yaml>
-      \ bat --color=always --style=plain --pager=never --line-range=:500 %c
+filextype {*.htm,*.html,*.xhtml},<text/html>
+      \ nvim %f, vim %f, nvim --clean %f, vim --clean %f, qutebrowser %f %i, firefox %f %i
+fileviewer {*.htm,*.html},<text/html> w3m %f
+fileviewer {*.mdx},<text/*,application/x-sh,application/x-shellscript,application/javascript,application/toml,application/json,application/xml,application/yaml>
+      \ bat --color=always --style=plain --paging=never --wrap=never --line-range=:200 %c
 
 " Empty file
 filetype <inode/x-empty,application/x-empty,application/x-zerosize> nvim %f, vim %f, nvim --clean %f, vim --clean %f
@@ -279,21 +336,16 @@ fileviewer <audio/*> ffprobe -hide_banner -pretty %c
 
 " Images
 filetype <image/*> imv %f %i, swayimg %f %i
-fileviewer <image/gif> #ueberzug#image_no_cache %px %py %pw %ph %pc #ueberzug#clear, identify %c
-fileviewer <image/*> #ueberzug#image %px %py %pw %ph %pc #ueberzug#clear, identify %c
-
-" Web
-filextype {*.htm,*.html},<text/html> qutebrowser %f %i, firefox %f %i
-filetype {*.htm,*.html},<text/html> nvim %f, vim %f, nvim --clean %f, vim --clean %f
-fileviewer {*.htm,*.html},<text/html> w3m %f
+fileviewer <image/gif> identify %c, #ueberzug#image_no_cache %px %py %pw %ph %pc #ueberzug#clear
+fileviewer <image/*> identify %c, #ueberzug#image %px %py %pw %ph %pc #ueberzug#clear
 
 " Pdf
-filextype <application/pdf> zathura %f %i
+filextype <application/pdf> zathura %f %i, zathura-sandbox %f %i
 fileviewer <application/pdf> pdftotext -nopgbrk %c -, #ueberzug#pdf %px %py %pw %ph %pc #ueberzug#clear
 
 " Epub
-filextype {*.ebup},<application/epub+zip> zathura %c %i
-fileviewer {*.ebup},<application/epub+zip> epub2txt %c, #ueberzug#epub %px %py %pw %ph %pc #ueberzug#clear
+filextype {*.ebup},<application/epub+zip> zathura %f %i, zathura-sandbox %f %i
+fileviewer {*.ebup},<application/epub+zip> epub2txt %c -, #ueberzug#epub %px %py %pw %ph %pc #ueberzug#clear
 
 " Office
 filetype {*.odt,*.odp,*.doc,*.docx,*.xls,*.xlsx,*.pptx,*.ppt},<application/vnd.openxmlformats-officedocument.*,application/msword,application/vnd.ms-excel>
@@ -303,32 +355,34 @@ fileviewer {*.doc},<application/msword> catdoc %c
 
 " Zip
 filetype <application/zip,application/java-archive>
-      \ unzip -l %f %i | less,
-      \ unzip %f,
-      \ FUSE_MOUNT|fuse-zip %SOURCE_FILE %DESTINATION_DIR
-fileviewer *.zip,*.jar,*.war,*.ear,*.oxt unzip -l %c %i
+      \ 7z x -aoa %f,
+      \ unzip %f
+fileviewer {*.zip,*.jar,*.war,*.ear,*.oxt} 7z l -ba %c | awk '{print $1 " " $2 " - " $NF}', unzip -l %c %i
 
 " Tar
-filetype {*.tar,*.tar.bz2,*.tbz2,*.tgz,*.tar.gz,*.tar.xz,*.txz,*.tar.zst,*.tzst},<application/x-tar>
+filetype {*.tar,*.tar.bz2,*.tbz2,*.tgz,*.tar.gz,*.tar.xz,*.txz,*.tar.zst,*.tzst,*.zst},<application/x-tar,application/x-gzip,application/x-bzip2,application/x-xz,application/zstd>
+      \ 7z x -aoa %f,
       \ tar -tf %c,
-      \ tar -xf %c,
-      \ FUSE_MOUNT|archivemount %SOURCE_FILE %DESTINATION_DIR
-fileviewer *.tgz,*.tar.gz tar -tzf %c
-fileviewer *.tar.bz2,*.tbz2 tar -tjf %c
-fileviewer *.tar.xz,*.txz tar -tJf %c
-fileviewer *.tar.zst,*.tzst tar -t --zstd -f %c
-fileviewer {*.tar},<application/x-tar> tar -tf %c
+      \ tar -xf %c
+fileviewer {*.tar},<application/x-tar> 7z l -ba %c | awk '{print $1 " " $2 " - " $NF}', tar -tf %c
+fileviewer {*.tgz,*.tar.gz},<application/x-gzip> 7z l -ba %c | awk '{print $1 " " $2 " - " $NF}', tar -tzf %c
+fileviewer {*.tar.bz2,*.tbz2},<application/x-bzip2> 7z l -ba %c | awk '{print $1 " " $2 " - " $NF}', tar -tjf %c
+fileviewer {*.tar.xz,*.txz},<application/x-xz> 7z l -ba %c | awk '{print $1 " " $2 " - " $NF}', tar -tJf %c
+fileviewer {*.tar.zst,*.tzst,*.zst},<application/zstd> 7z l -ba %c | awk '{print $1 " " $2 " - " $NF}', tar -t --zstd -f %c
 
 " Rar
-filetype {*.rar},<application/x-rar> FUSE_MOUNT|rar2fs %SOURCE_FILE %DESTINATION_DIR
-fileviewer {*.rar},<application/x-rar> unrar v %c
+filetype {*.rar},<application/x-rar> 7z x -aoa %f, unrar x -o+ %f
+fileviewer {*.rar},<application/x-rar> 7z l -ba %c | awk '{print $1 " " $2 " - " $NF}', unrar l %c
 
 " 7z
-filetype {*.7z},<application/x-7z-compressed> FUSE_MOUNT|fuse-7z %SOURCE_FILE %DESTINATION_DIR
-fileviewer {*.7z},<application/x-7z-compressed> 7z l %c
+filetype {*.7z},<application/x-7z-compressed> 7z x -aoa %f
+fileviewer {*.7z},<application/x-7z-compressed> 7z l -ba %c | awk '{print $1 " " $2 " - " $NF}'
 
 " Iso
 filetype {*.iso},<application/x-iso9660-image> FUSE_MOUNT|fuseiso %SOURCE_FILE %DESTINATION_DIR
+
+" Sql
+filextype {*.sql,*.sqlite},<application/vnd.sqlite3> sqlitebrowser %c %i
 
 " Object
 filetype {*.o},<application/x-object> nm %f | less
@@ -367,12 +421,14 @@ filetype *.sha512 sha512sum -c %f %S
 filetype {*.asc},<application/pgp-signature> !!gpg --verify %c
 
 " Directory
-filextype {*/},{.*/} Thunar %f %i &, nautilus %f %i &, dolphin %f %i &, pcmanfm %f %i &, nemo %f %i &
+filextype {*/},{.*/} imv %f %i, xdg-open %f %i
 fileviewer {*/},{.*/} tree -C -L 1 --dirsfirst --noreport -a -q %c
 
 " Fallback
 filetype * xdg-open %f %i
-fileviewer * file --mime-type %c | grep -q "text/" && bat --color=always --style=plain --pager=never --line-range=:500 %c || file --dereference --brief %c
+fileviewer * file --mime-type %c
+      \ | grep -q "text/" && bat --color=always --style=plain --paging=never --wrap=never --line-range=:200 %c
+      \ || file --dereference --brief %c
 
 " ------------------------------------------------------------------------------
 " Color scheme
@@ -391,73 +447,161 @@ highlight User1 ctermfg=cyan
 highlight User2 ctermfg=red
 
 " ------------------------------------------------------------------------------
-" Devicons for ViFM (https://github.com/cirala/vifm_devicons)
+" Icons
 " ------------------------------------------------------------------------------
 
 " Filetypes/directories
-set classify=' :dir:/, :exe:, :reg:, :link:,? :?:, ::../::'
+set classify+='󰉋 :dir:/, :exe:, :reg:, :link:, :?:, ::../::'
+
+" Specific directories
+set classify+='󱧴 ::root/::/'
+set classify+='󱁿 ::etc/::/'
+set classify+='󱋣 ::lib/,,lib32/,,lib64/::/'
+set classify+='󰉗 ::bin/,,sbin/::/'
+set classify+='󰉖 ::tmp/::/'
+set classify+='󱞊 ::lost+found/::/'
+set classify+='󱂵 ::home/::/'
+set classify+='󰲂 ::documents/::/'
+set classify+='󰉍 ::downloads/::/'
+set classify+='󰉏 ::pictures/::/'
+set classify+='󱧺 ::videos/::/'
+set classify+='󱍙 ::musics/::/'
+set classify+='󰉌 ::personal/::/'
+set classify+='󱥾 ::public/::/'
+set classify+=' ::repository/,,repositories/,,clones/::/'
+set classify+='󰴋 ::sync/::/'
+set classify+='󱊞 ::usb/::/'
+set classify+=' ::trash/::/'
+set classify+='󰢬 ::.gnupg/,,.ssh/,,.pki/::/'
+set classify+='󱁿 ::.config/::/'
+set classify+='󰊢 ::.git/::/'
+set classify+=' ::.github/::/'
+set classify+=' ::.vim/,,vim/::/'
+set classify+=' ::.nvim/,,nvim/::/'
+set classify+=' ::.emacs/,,emacs/,,.emacs.d/::/'
+set classify+=' ::.conda/,,conda/,,anaconda3/,,miniconda3/::/'
+set classify+=' ::.yarn/,,.yarncache/,,.yarn-config/::/'
+set classify+='󰍖 ::.wine/,,wine/::/'
+set classify+=' ::.docker/,,docker/::/'
+set classify+=' ::.azure/,,azure/::/'
+set classify+=' ::.aws/,,aws/::/'
+set classify+=' ::node_modules/::/'
+set classify+='󱧮 ::taregt/,,dist/::/'
+set classify+='󰣇 ::pacman/,,pacman.d/::/'
+set classify+=' ::apt/,,apt.conf.d/,,dpkg/::/'
+set classify+=' ::dnf/,,yum.repos.d/::/'
+set classify+=' ::tmux/::/'
+set classify+='󰈹 ::firefox/::/'
+set classify+=' ::chromium/,,google-chrome/,,google-chrome-beta/,,google-chrome-unstable/,,thorium/,,bravesoftware/,,qutebrowser/::/'
+set classify+='󰇩 ::microsoft-edge/,,microsoft-edge-dev//::/'
+
+" Directories
+set classify+='󱧼 ::*.d/::/'
 
 " Specific files
-set classify+=' ::.Xdefaults,,.Xresources,,.bashprofile,,.bash_profile,,.bashrc,,.dmrc,,.d_store,,.fasd,,.gitconfig,,.gitignore,,.jack-settings,,.mime.types,,.nvidia-settings-rc,,.pam_environment,,.profile,,.recently-used,,.selected_editor,,.xinitpurc,,.zprofile,,.yarnc,,.snclirc,,.tmux.conf,,.urlview,,.config,,.ini,,.user-dirs.dirs,,.mimeapps.list,,.offlineimaprc,,.msmtprc,,.Xauthority,,config::'
-set classify+=' ::dropbox::'
-set classify+=' ::favicon.*,,README,,readme::'
-set classify+=' ::.vim,,.vimrc,,.gvimrc,,.vifm::'
+set classify+=' ::.bashprofile,,.bash_profile,,.bash_aliases,,.bash_logout,,.bashrc,,.profile,,.inputrc,,.zshrc,,.zshenv,,.zprofile,,.editorconfig,,.dmrc,,.d_store,,.fasd,,.fehbg,,.jack-settings,,.mime.types,,.nvidia-settings-rc,,.pam_environment,,.recently-used,,.selected_editor,,.yarnc,,.snclirc,,.tmux.conf,,.urlview,,.config,,.user-dirs.dirs,,.mimeapps.list,,.offlineimaprc,,.msmtprc,,.xinitrc,,.xinitpurc,,.Xauthority,,.Xdefaults,,.Xresources,,config,,user-dirs.dirs::'
+set classify+=' ::favicon.*::'
+set classify+='󰈙 ::readme,,readme.*::'
+set classify+=' ::.vim,,.viminfo,,.vimrc,,vimrc,,.gvimrc,,.vifm,,vifmrc::'
+set classify+=' ::tmux.conf::'
+set classify+=' ::license,,license.*,,copyright,,copying::'
+set classify+=' ::dockerfile,,.dockerignore,,docker-compose.yml::'
+set classify+=' ::makefile,,makefile.*::'
+set classify+=' ::.gitignore,,.gitconfig,,.gitmodules,,.gitattributes,,.git-credentials::'
+set classify+=' ::.gitlab-ci.yml::'
+set classify+=' ::.condarc,,condarc::'
+set classify+=' ::.yarnrc,,yarnrc::'
+set classify+='󰌾 ::.password-store::'
+set classify+='󱆅 ::known_hosts::'
+set classify+=' ::package.json,,package-lock.json::'
+set classify+=' ::gemfile,,gemfile.lock,,rakefile::'
+set classify+=' ::mix.lock::'
 set classify+=' ::gruntfile.coffee,,gruntfile.js,,gruntfile.ls::'
-set classify+=' ::gulpfile.coffee,,gulpfile.js,,gulpfile.ls::'
+set classify+=' ::gulpfile.coffee,,gulpfile.js,,gulpfile.ls::'
+set classify+=' ::pacman.conf::'
+set classify+=' ::dnf.conf::'
+set classify+=' ::.xsession-errors,,log::'
 set classify+=' ::ledger::'
-set classify+=' ::license,,copyright,,copying,,LICENSE,,COPYRIGHT,,COPYING::'
-set classify+=' ::node_modules::'
-set classify+=' ::react.jsx::'
+set classify+=' ::dropbox::'
 
 " File extensions
-set classify+='λ ::*.ml,,*.mli::'
-set classify+=' ::*.styl::'
-set classify+=' ::*.scss::'
-set classify+=' ::*.py,,*.pyc,,*.pyd,,*.pyo::'
-set classify+=' ::*.php::'
-set classify+=' ::*.markdown,,*.md::'
-set classify+=' ::*.json::'
-set classify+=' ::*.js::'
-set classify+=' ::*.bmp,,*.gif,,*.ico,,*.jpeg,,*.jpg,,*.png,,*.svg,,*.svgz,,*.tga,,*.tiff,,*.xmb,,*.xcf,,*.xpm,,*.xspf,,*.xwd,,*.cr2,,*.dng,,*.3fr,,*.ari,,*.arw,,*.bay,,*.crw,,*.cr3,,*.cap,,*.data,,*.dcs,,*.dcr,,*.drf,,*.eip,,*.erf,,*.fff,,*.gpr,,*.iiq,,*.k25,,*.kdc,,*.mdc,,*.mef,,*.mos,,*.mrw,,*.obm,,*.orf,,*.pef,,*.ptx,,*.pxn,,*.r3d,,*.raf,,*.raw,,*.rwl,,*.rw2,,*.rwz,,*.sr2,,*.srf,,*.srw,,*.tif,,*.x3f,,*.webp,,*.avif,,*.jxl::'
-set classify+=' ::*.ejs,,*.htm,,*.html,,*.slim,,*.xml::'
-set classify+=' ::*.mustasche::'
-set classify+=' ::*.css,,*.less,,*.bat,,*.conf,,*.ini,,*.rc,,*.yml,,*.cfg::'
-set classify+=' ::*.rss::'
-set classify+=' ::*.coffee::'
-set classify+=' ::*.twig::'
-set classify+=' ::*.c++,,*.cpp,,*.cxx,,*.h::'
-set classify+=' ::*.cc,,*.c::'
-set classify+=' ::*.hs,,*.lhs::'
-set classify+=' ::*.lua::'
-set classify+=' ::*.jl::'
-set classify+=' ::*.go::'
-set classify+=' ::*.ts::'
-set classify+=' ::*.db,,*.dump,,*.sql::'
+set classify+=' ::*.3fr,,*.ari,,*.arw,,*.avif,,*.bay,,*.bmp,,*.cap,,*.cr2,,*.cr3,,*.crw,,*.data,,*.dcr,,*.dcs,,*.dng,,*.drf,,*.eip,,*.eps,,*.erf,,*.fff,,*.gif,,*.gpr,,*.heic,,*.heif,,*.ico,,*.iiq,,*.jpeg,,*.jpg,,*.jxl,,*.k25,,*.kdc,,*.mdc,,*.mef,,*.mos,,*.mrw,,*.obm,,*.orf,,*.pef,,*.png,,*.ptx,,*.pxn,,*.r3d,,*.raf,,*.raw,,*.rw2,,*.rwl,,*.rwz,,*.sr2,,*.srf,,*.srw,,*.svg,,*.svgz,,*.tga,,*.tif,,*.tiff,,*.webp,,*.x3f,,*.xcf,,*.xmb,,*.xpm,,*.xspf,,*.xwd::'
+set classify+=' ::*.3g2,,*.3gp,,*.amv,,*.asf,,*.avi,,*.f4a,,*.f4b,,*.f4p,,*.f4v,,*.flv,,*.flv,,*.gifv,,*.m2ts,,*.m4v,,*.mkv,,*.mng,,*.mod,,*.mov,,*.mp4,,*.mpe,,*.mpeg,,*.mpg,,*.mpv,,*.mxf,,*.nsv,,*.ogv,,*.qt,,*.rm,,*.rmvb,,*.roq,,*.rrc,,*.svi,,*.vob,,*.webm,,*.wmv,,*.yuv::'
+set classify+='󰸪 ::*.aac,,*.aax,,*.ac3,,*.aiff,,*.alac,,*.amr,,*.anx,,*.ape,,*.asf,,*.au,,*.aup,,*.awb,,*.axa,,*.dss,,*.flac,,*.iklax,,*.m2a,,*.m4a,,*.m4b,,*.m4p,,*.mid,,*.midi,,*.mka,,*.mogg,,*.mp3,,*.mpc,,*.oga,,*.ogg,,*.ogx,,*.opus,,*.ra,,*.ram,,*.rm,,*.spx,,*.tta,,*.vox,,*.wav,,*.wma,,*.wv::'
+set classify+=' ::*.7z,,*.apk,,*.br,,*.bz2,,*.cab,,*.cpio,,*.deb,,*.gem,,*.gz,,*.gzip,,*.lh,,*.lha,,*.lz,,*.lz4,,*.lzh,,*.lzma,,*.lzo,,*.pak,,*.rar,,*.rpm,,*.tar,,*.tgz,,*.xbps,,*.xz,,*.zip,,*.zst::'
+
+set classify+=' ::*.txt,,*.text,,*.rtf::'
+set classify+=' ::*.markdown,,*.md,,*.mdx,,*.adoc,,*.rmd::'
+set classify+=' ::*.org::'
+set classify+=' ::*.tex,,*.latex,,*.bib,,*.bibtex,,*biblatex::'
+set classify+=' ::*.pdf,,*.epub,,*.mobi,,*.fb2,,*.djvu::'
+set classify+=' ::*.docx,,*.doc,,*.odt,,*.fodt,,*.wps,,*.pages::'
+set classify+=' ::*.xlsx,,*.xls,,*.xlsmx,,*.csv,,*.tsv,,*.ods,,*.fods,,*.et::'
+set classify+=' ::*.pptx,,*.ppt,,*.odp,,*.fodp,,*.dps::'
+set classify+=' ::.*.conf,,*.conf,,.*.ini,,*.ini,,.*.yml,,*.yml,,.*.yaml,,*.yaml,,*.cfg,,*.cnf,,*.rc::'
+set classify+=' ::*.vim,,*.vifm::'
+set classify+='󰆊 ::*.diff::'
+set classify+=' ::*.log,,*.dmp,,.*_history,,*_history::'
+set classify+='󰉹 ::*.list::'
+set classify+='󰑫 ::*.rss::'
+set classify+='󱉟 ::*.cbr,,*.cbz::'
+set classify+='󱆅 ::*.gpg,,*.pgp,,*.asc,,*.pub,,*.key::'
+set classify+='󰌾 ::*.kdbx,,*.kdb,,*.1pux::'
+set classify+=' ::*.sum,,*.md5,,*.sha512::'
+set classify+='󰲽 ::*.service,,*.target::'
+set classify+='󰱿 ::*.so,,*.so.*,,*.lib,,*.dll,,*.a::'
+set classify+='󰟨 ::*.sock,,*.socket::'
+set classify+='󰟥 ::*.fifo::'
+set classify+=' ::*.appimage,,*.desktop::'
+set classify+=' ::*.iso,,*.img,,*.dmg,,*.wim,,*.vhd,,*.vhdx::'
+set classify+=' ::*.ttf,,*.otf,,*.ttc,,*.woff,,*.woff2,,*.eot,,*.pfb,,*.pfm,,*.pfa,,*.type1,,*.afm,,*.bdf,,*.pcf,,*.psf,,*.fon,,*.fnt::'
+set classify+=' ::*.exe,,*.msi::'
 set classify+=' ::*.sln,,*.suo::'
-set classify+=' ::*.exe::'
-set classify+=' ::*.diff,,*.sum,,*.md5,,*.sha512::'
+
+set classify+=' ::*.db,,*.dump,,*.sql,,*.sqlite::'
+set classify+=' ::*.awk,,.*.bash,,*.bash,,.*.csh,,*.csh,,.*.fish,,*.fish,,.*.ksh,,*.ksh,,.*.sh,,*.sh,,.*.zsh,,*.zsh::'
+set classify+='󰨊 ::*.ps1,,*.psm1,,*.bat::'
+set classify+=' ::*.json::'
+set classify+=' ::.*.toml,,*.toml::'
+set classify+=' ::*.py,,*.pyc,,*.pyd,,*.pyo::'
+set classify+=' ::*.php::'
+set classify+=' ::*.js,,*.mjs::'
+set classify+=' ::*.ts::'
+set classify+=' ::*.jsx::'
+set classify+=' ::*.htm,,*.html,,*.xhtml,,*.slim::'
+set classify+='󰅴 ::*.xml,,*.ejs,,*.asp::'
+set classify+=' ::*.mustasche::'
+set classify+=' ::*.css,,*.less::'
+set classify+=' ::*.c++,,*.cpp,,*.cxx,,*.cc,,*.hh,,*.hpp,,*.hxx,,*.cu,,*.cuh::'
+set classify+=' ::*.c,,*.cp,,*.h::'
+set classify+=' ::*.hs,,*.lhs::'
+set classify+='󰢱 ::*.lua::'
+set classify+=' ::*.jl::'
+set classify+=' ::*.go::'
+set classify+=' ::*.zig::'
+set classify+=' ::*.dart::'
+set classify+=' ::*.rs,,*.rlib::'
+set classify+=' ::*.java,,*.jar,,*.war,,*.ear::'
 set classify+=' ::*.scala::'
-set classify+=' ::*.java,,*.jar::'
-set classify+=' ::*.xul::'
+set classify+=' ::*.kt,,*.kts::'
+set classify+=' ::*.rb::'
+set classify+=' ::*.ex,,*.exs::'
+set classify+=' ::*.sol::'
 set classify+=' ::*.clj,,*.cljc::'
 set classify+=' ::*.pl,,*.pm,,*.t::'
 set classify+=' ::*.cljs,,*.edn::'
-set classify+=' ::*.rb::'
-set classify+=' ::*.fish,,*.sh,,*.bash::'
-set classify+=' ::*.dart::'
+set classify+='λ ::*.ml,,*.mli::'
+set classify+=' ::*.styl::'
+set classify+=' ::*.scss::'
 set classify+=' ::*.f#,,*.fs,,*.fsi,,*.fsscript,,*.fsx::'
-set classify+=' ::*.rlib,,*.rs::'
 set classify+=' ::*.d::'
 set classify+=' ::*.erl,,*.hrl::'
+set classify+=' ::*.lisp,,*.lsp,,*.el,,*.cl::'
 set classify+=' ::*.ai::'
 set classify+=' ::*.psb,,*.psd::'
-set classify+=' ::*.jsx::'
-set classify+=' ::*.aac,,*.anx,,*.asf,,*.au,,*.axa,,*.flac,,*.m2a,,*.m4a,,*.mid,,*.midi,,*.mp3,,*.mpc,,*.oga,,*.ogg,,*.ogx,,*.ra,,*.ram,,*.rm,,*.spx,,*.wav,,*.wma,,*.ac3::'
-set classify+=' ::*.avi,,*.flv,,*.mkv,,*.mov,,*.mp4,,*.mpeg,,*.mpg,,*.webm,,*.av1::'
-set classify+=' ::*.epub,,*.pdf,,*.fb2,,*.djvu::'
-set classify+=' ::*.7z,,*.apk,,*.bz2,,*.cab,,*.cpio,,*.deb,,*.gem,,*.gz,,*.gzip,,*.lh,,*.lzh,,*.lzma,,*.rar,,*.rpm,,*.tar,,*.tgz,,*.xz,,*.zip,,*.zst::'
-set classify+=' ::*.cbr,,*.cbz::'
-set classify+=' ::*.log::'
-set classify+=' ::*.doc,,*.docx,,*.adoc::'
-set classify+=' ::*.xls,,*.xlsmx::'
-set classify+=' ::*.pptx,,*.ppt::'
+set classify+=' ::*.m,,*.mlx,,*.mat,,*.slx,,*.mdl::'
+set classify+=' ::*.nix::'
+set classify+=' ::*.cmake::'
+set classify+=' ::*.xul::'
+set classify+=' ::*.coffee::'
+set classify+=' ::*.twig::'
