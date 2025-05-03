@@ -22,14 +22,14 @@ selected_name=$(basename "$selected" | tr '.' '_' | cut -c1-20)
 is_tmux_running=$(pgrep tmux)
 
 if [[ -z $TMUX ]] && [[ -z $is_tmux_running ]]; then
-    tmux new-session -s $selected_name -c $selected -n "nvim" "nvim ."
+    tmux new-session -s $selected_name -c $selected -n "nvim" "nvim --cmd \"lua vim.g.quit_on_empty = false\" ."
     tmux new-window -t $selected_name:2 -c $selected
     tmux select-window -t $selected_name:1
     exit 0
 fi
 
 if ! tmux has-session -t=$selected_name 2>/dev/null; then
-    tmux new-session -ds $selected_name -c $selected -n "nvim" "nvim ."
+    tmux new-session -ds $selected_name -c $selected -n "nvim" "nvim --cmd \"lua vim.g.quit_on_empty = false\" ."
     tmux new-window -t $selected_name:2 -c $selected
     tmux select-window -t $selected_name:1
 fi
