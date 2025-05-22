@@ -1,0 +1,350 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# ------------------------------------------------------------------------------
+# Search through the whole system with persistent index
+# and perform actions (preview, open, delete)
+# ------------------------------------------------------------------------------
+
+declare -gr INCLUDED_DIRS=(
+    "/home"
+    "/etc"
+    "/opt"
+    "/usr"
+    "/var"
+)
+
+declare -gr EXCLUDED_DIRS_FD=(
+    "/proc"
+    "/sys"
+    ".git"
+    ".venv"
+    "node_modules"
+    "__pycache__"
+    "*/.cache/go/"
+    "*/.cache/go-build/"
+    "*/.local/share/Trash/"
+)
+
+declare -gr EXCLUDED_DIRS_FIND=(
+    "/proc"
+    "/sys"
+    "*/\.git*"
+    "*/\.venv*"
+    "*/node_modules*"
+    "*/__pycache__*"
+    "*/\.cache/go*"
+    "*/\.cache/go-build*"
+    "*/\.local/share/Trash*"
+)
+
+declare -gr INDEX_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/finder"
+declare -gr INDEX_FILE="$INDEX_DIR/index"
+declare -gr TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/finder_XXXXXX")"
+
+declare -gr EXPLORER="${FILE_MANAGER:-vifm}"
+
+declare -g ENABLE_COLORS=1
+
+declare -g AWK_INTERPRETER=""
+if command -v mawk >/dev/null 2>&1; then
+    AWK_INTERPRETER="mawk -W posix"
+elif command -v gawk >/dev/null 2>&1; then
+    AWK_INTERPRETER="gawk --characters-as-bytes"
+elif command -v awk >/dev/null 2>&1; then
+    AWK_INTERPRETER="awk"
+else
+    echo "AWK interpreter does not exists!" >&2
+    exit 1
+fi
+
+open_file() {
+    local file="$1"
+    if [[ ! -e "$file" && ! -L "$file" ]]; then
+        echo "Error: File or directory no longer exists: $file"
+        read -p "Remove from index? (y/n): " confirm
+        if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
+            remove_from_index "$file"
+            echo "Entry removed from index."
+        fi
+        read -p "Press Enter to continue..."
+        return 0
+    fi
+    if [[ -L "$file" ]]; then
+        local target="$(readlink -f "$file")"
+        if [[ ! -e "$target" ]]; then
+            echo "Error: Symlink target does not exist: $file -> $target"
+            read -p "Press Enter to continue..."
+            return 0
+        fi
+        file="$target"
+    fi
+    if [[ -d "$file" ]]; then
+        $EXPLORER "$file"
+        return 0
+    fi
+    local mime_type=$(file --mime-type --brief "$file" || echo "unknown")
+    local text_mimes="^text/|^inode/x-empty|^application/(x-empty|x-zerosize|x-tex|x-sh|x-shellscript|javascript|json|xml|yaml|toml)$"
+    if [[ "$mime_type" =~ $text_mimes ]]; then
+        nvim "$file"
+    else
+        nohup xdg-open "$file" >/dev/null 2>&1 || true
+    fi
+}
+
+construct_find_command() {
+    local search_cmd
+
+    if command -v fd >/dev/null 2>&1; then
+        search_cmd="fd '' --hidden --no-ignore --absolute-path"
+        if (( ENABLE_COLORS == 0 )); then
+            search_cmd+=" --color=never"
+        else
+            search_cmd+=" --color=always"
+        fi
+        if (( ${#INCLUDED_DIRS[@]} > 0 )); then
+            for dir in "${INCLUDED_DIRS[@]}"; do
+                search_cmd+=" --search-path \"${dir}\""
+            done
+        else
+            search_cmd+=" --search-path /"
+        fi
+        for dir in "${EXCLUDED_DIRS_FD[@]}"; do
+            search_cmd+=" --exclude \"${dir}\""
+        done
+    else
+        ENABLE_COLORS=0
+        search_cmd="find"
+        if (( ${#INCLUDED_DIRS[@]} > 0 )); then
+            for dir in "${INCLUDED_DIRS[@]}"; do
+                search_cmd+=" \"${dir}\""
+            done
+        else
+            search_cmd+=" /"
+        fi
+        for dir in "${EXCLUDED_DIRS_FIND[@]}"; do
+            search_cmd+=" -path \"${dir}\" -prune -o"
+        done
+        search_cmd+=" -print"
+    fi
+
+    search_cmd+=" 2>/dev/null"
+    echo "$search_cmd"
+}
+
+build_index() {
+    echo "Building file index..."
+    mkdir -p "$INDEX_DIR"
+    local tmp_file="$TMP_DIR/unsorted_index"
+
+    eval "$(construct_find_command)" > "$tmp_file" || true
+
+    echo "Sorting index (this may take a while for large indices)..."
+    LC_ALL=C sort "$tmp_file" > "$INDEX_FILE"
+
+    local count=$(wc -l < "$INDEX_FILE")
+    echo "Index built successfully with $count entries."
+}
+
+find_nested_entries() {
+    local dir="$1"
+    [[ "$dir" != */ ]] && dir="${dir}/"
+
+    if (( ENABLE_COLORS == 0 )); then
+        if command -v rg >/dev/null 2>&1; then
+            rg "^$(echo "$dir" | sed 's/[.[\*^$/]/\\&/g')" "$INDEX_FILE" || true
+        else
+            grep "^$(echo "$dir" | sed 's/[.[\*^$/]/\\&/g')" "$INDEX_FILE" || true
+        fi
+    else
+        $AWK_INTERPRETER -v dir="$dir" '
+        BEGIN {
+            ANSI_REGEX = "\033\\[[0-9;]*m"
+        }
+        {
+            line = $0
+            gsub(ANSI_REGEX, "", line)
+            if (index(line, dir) == 1) {
+                print line
+            }
+        }
+        ' "$INDEX_FILE" || true
+    fi
+}
+
+delete_items() {
+    [[ $# -eq 0 ]] && return 0
+    echo "Do you want to delete the following $# item(s)?"
+    for item in "$@"; do
+        echo "  - $item"
+    done
+    local confirm
+    read -p "Proceed with deletion? (y/n): " confirm
+
+    if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
+        local to_remove=()
+
+        for item in "$@"; do
+            if [[ ! -e "$item" ]]; then
+                echo "Warning: $item no longer exists, removing from index only."
+                to_remove+=("$item")
+                continue
+            fi
+
+            # Add the item itself to the removal list
+            to_remove+=("$item")
+
+            # If it's a directory, find and add all nested entries
+            if [[ -d "$item" && ! -L "$item" ]]; then
+                echo "Removing directory: $item"
+
+                # Find nested entries before deleting the directory
+                local nested_entries_file="$TMP_DIR/nested_entries.tmp"
+                find_nested_entries "$item" > "$nested_entries_file"
+
+                # Delete the directory
+                rm -rf "$item" || echo "Error: Failed to delete: $item"
+
+                # Add nested entries to the removal list
+                if [[ -s "$nested_entries_file" ]]; then
+                    while IFS= read -r entry; do
+                        to_remove+=("$entry")
+                    done < "$nested_entries_file"
+                    rm -f "$nested_entries_file"
+                fi
+            else
+                # Delete the file
+                rm -f "$item" || echo "Error: Failed to delete: $item"
+            fi
+        done
+
+        # Remove all collected items from the index
+        if [[ ${#to_remove[@]} -gt 0 ]]; then
+            remove_from_index "${to_remove[@]}"
+            echo "Deletion completed. Index updated."
+        fi
+
+        read -p "Press Enter to continue..."
+    else
+        echo "Deletion cancelled."
+        read -p "Press Enter to continue..."
+    fi
+}
+
+remove_from_index() {
+    local tmp_file="$TMP_DIR/index_filtered"
+    local exclude_file="$TMP_DIR/exclude_list"
+
+    printf "%s\n" "$@" > "$exclude_file"
+
+    if (( ENABLE_COLORS == 0 )); then
+        if command -v rg >/dev/null 2>&1; then
+            rg --invert-match --fixed-strings --line-regexp --file "$exclude_file" "$INDEX_FILE" > "$tmp_file"
+        else
+            grep --invert-match --fixed-strings --line-regexp --file "$exclude_file" "$INDEX_FILE" > "$tmp_file"
+        fi
+    else
+        $AWK_INTERPRETER '
+        BEGIN {
+            ANSI_REGEX = "\033\\[[0-9;]*m"
+        }
+        NR == FNR {
+            line = $0
+            gsub(ANSI_REGEX, "", line)
+            exclude[line] = 1
+            next
+        }
+        {
+            line = $0
+            stripped = $0
+            gsub(ANSI_REGEX, "", stripped)
+            if (!(stripped in exclude)) print line
+        }
+        ' "$exclude_file" "$INDEX_FILE" > "$tmp_file"
+    fi
+
+    mv "$tmp_file" "$INDEX_FILE"
+    rm "$exclude_file"
+}
+
+cleanup() {
+    [[ -d "$TMP_DIR" ]] && rm -rf "$TMP_DIR" || true
+
+    if command -v fd >/dev/null 2>&1; then
+        fd --type d '^finder_' "${TMPDIR:-/tmp}" --max-depth 1 --changed-before 30min --exec rm -rf '{}' ';'
+    else
+        find "${TMPDIR:-/tmp}" -maxdepth 1 -type d -name "finder_*" -mmin +30 -exec rm -rf {} \;
+    fi
+}
+
+main() {
+    trap cleanup EXIT INT TERM
+
+    local preview_cmd='
+        if [[ -d {} ]]; then
+            eza -la --color=always {} 2>/dev/null || ls -la --color=always {} 2>/dev/null || echo "Cannot list directory"
+        else
+            echo -e "{}\n"
+            file --brief {} 2>/dev/null && echo ""
+            mime_type=$(file --mime-type --brief {} 2>/dev/null || echo "unknown")
+            if [[ "$mime_type" =~ "^text/html$" ]]; then
+                w3m {} || bat --color=always --style=plain --line-range=:200 {} 2>/dev/null || cat {} 2>/dev/null || echo "Cannot preview html content"
+            elif [[ "$mime_type" =~ "^text/|^inode/x-empty|^application/(x-empty|x-zerosize|x-tex|x-sh|x-shellscript|javascript|json|xml|yaml|toml)$" ]]; then
+                bat --color=always --style=plain --line-range=:201 {} 2>/dev/null || cat {} 2>/dev/null || echo "Cannot preview text content"
+            elif [[ "$mime_type" =~ "^application/(zip|java-archive|x-rar|x-7z-compressed|x-tar|x-gzip|x-bzip2|x-xz|zstd)$" ]]; then
+                7z l -ba {} 2>/dev/null
+            elif [[ "$mime_type" =~ "^application/pdf$" ]]; then
+                pdftotext -nopgbrk {} - 2>/dev/null
+            elif [[ "$mime_type" =~ "^application/epub\+zip$" ]]; then
+                epub2txt {} - 2>/dev/null
+            elif [[ "$mime_type" =~ "^application/vnd\.openxmlformats-officedocument.*" ]]; then
+                docx2txt {} - 2>/dev/null
+            elif [[ "$mime_type" =~ "^application/msword$" ]]; then
+                catdoc {} 2>/dev/null
+            fi
+        fi
+    '
+
+    if [[ ! -f "$INDEX_FILE" ]]; then
+        build_index
+    fi
+
+    local query_string=""
+
+    while true; do
+        local result=$(cat "$INDEX_FILE" | \
+            fzf --ansi --no-cycle --border=none \
+            --query="$query_string" --print-query \
+            --preview="$preview_cmd" --preview-window '50%' \
+            --expect=del,ctrl-R \
+            --header="Enter: open, del: delete, ctrl-R: rebuild index" \
+            || echo "")
+
+        [[ -z "$result" ]] && exit 0
+
+        query_string=$(echo "$result" | head -1)
+        local key_pressed=$(echo "$result" | head -2 | tail -1)
+        local items_selected=$(echo "$result" | tail -n +3)
+
+        local item_array=()
+        while IFS= read -r line; do
+            [[ -n "$line" ]] && item_array+=("$line")
+        done <<< "$items_selected"
+
+        (( ${#item_array[@]} == 0 )) && continue
+
+        if [[ "$key_pressed" == "ctrl-R" ]]; then
+            build_index
+        elif [[ "$key_pressed" == "del" ]]; then
+            delete_items "${item_array[@]}"
+        elif [[ ${#item_array[@]} -eq 1 ]]; then
+            open_file "${item_array[0]}"
+        elif [[ ${#item_array[@]} -gt 1 ]]; then
+            echo "Multiple items selected. No action taken."
+            read -p "Press Enter to continue..."
+        fi
+    done
+}
+
+main
