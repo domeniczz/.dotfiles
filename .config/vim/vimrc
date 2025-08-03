@@ -53,17 +53,32 @@ let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
 
 " ------------------------------------------------------------------------------
+" Netrw
+" ------------------------------------------------------------------------------
+
+let g:netrw_banner=0
+let g:netrw_altv=1
+let g:netrw_list_hide = "^\./$"
+let g:netrw_hide=1
+
+" augroup netrw_mapping
+"     autocmd!
+"     autocmd filetype netrw nmap <buffer> <silent> H -
+"     autocmd filetype netrw nmap <buffer> <silent> L <CR>
+" augroup END
+
+" ------------------------------------------------------------------------------
 " Key mappings
 " ------------------------------------------------------------------------------
 
-nnoremap Q <nop>
+nnoremap <silent> Q <nop>
 nnoremap <silent> Q :call KillBufferOrCloseWindow()<CR>
 
 " ------------------------------------------------------------------------------
 " Autocmds
 " ------------------------------------------------------------------------------
 
-augroup numbertoggle
+augroup number_toggle
   autocmd!
   autocmd BufEnter,FocusGained,InsertLeave,WinEnter * if &nu && mode() != "i" | set rnu   | endif
   autocmd BufLeave,FocusLost,InsertEnter,WinLeave   * if &nu                  | set nornu | endif
