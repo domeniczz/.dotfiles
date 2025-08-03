@@ -1,7 +1,7 @@
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
-HISTFILE=$XDG_DATA_HOME/.zsh_history
+HISTFILE=$XDG_DATA_HOME/zsh_history
 HISTSIZE=2000
 SAVEHIST=100000
 HISTCONTROL=ignoreboth
@@ -37,9 +37,18 @@ zstyle :compinstall filename "$HOME/.zshrc"
 [[ -d "$XDG_CACHE_HOME/zsh" ]] || mkdir -p "$XDG_CACHE_HOME/zsh"
 autoload -Uz compinit; compinit -d "$XDG_CACHE_HOME/zcompdump"
 
-ZSH_PLUGINS_DIR=/usr/share/zsh/plugins
-source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
-source "$ZSH_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+# Automaticly escape special characters in URLs when typing or pasting
+autoload -Uz url-quote-magic
+zle -N self-insert url-quote-magic
+autoload -Uz bracketed-paste-magic
+zle -N bracketed-paste bracketed-paste-magic
+
+# ZSH_PLUGINS_DIR=/usr/share/zsh/plugins
+# source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
+# source "$ZSH_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+
+source '/usr/share/zsh-antidote/antidote.zsh'
+antidote load ${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}/zsh_plugins.txt
 
 # Create a zkbd compatible hash for terminfo key mapping
 typeset -g -A key
@@ -59,41 +68,24 @@ key[Shift-Tab]="${terminfo[kcbt]}"
 key[Control-P]="^P"
 key[Control-N]="^N"
 
-# Set key bindings by using string capabilities from terminfo
-[[ -n "${key[Home]}"      ]] && bindkey -- "${key[Home]}"       beginning-of-line
-[[ -n "${key[End]}"       ]] && bindkey -- "${key[End]}"        end-of-line
-[[ -n "${key[Insert]}"    ]] && bindkey -- "${key[Insert]}"     overwrite-mode
-[[ -n "${key[Backspace]}" ]] && bindkey -- "${key[Backspace]}"  backward-delete-char
-[[ -n "${key[Delete]}"    ]] && bindkey -- "${key[Delete]}"     delete-char
-[[ -n "${key[Up]}"        ]] && bindkey -- "${key[Up]}"         up-line-or-history
-[[ -n "${key[Down]}"      ]] && bindkey -- "${key[Down]}"       down-line-or-history
-[[ -n "${key[Left]}"      ]] && bindkey -- "${key[Left]}"       backward-char
-[[ -n "${key[Right]}"     ]] && bindkey -- "${key[Right]}"      forward-char
-[[ -n "${key[PageUp]}"    ]] && bindkey -- "${key[PageUp]}"     beginning-of-buffer-or-history
-[[ -n "${key[PageDown]}"  ]] && bindkey -- "${key[PageDown]}"   end-of-buffer-or-history
-[[ -n "${key[Shift-Tab]}" ]] && bindkey -- "${key[Shift-Tab]}"  autosuggest-accept
-[[ -n "${key[Control-P]}" ]] && bindkey -- "${key[Control-P]}"  history-beginning-search-backward
-[[ -n "${key[Control-N]}" ]] && bindkey -- "${key[Control-N]}"  history-beginning-search-forward
-
-# Fallback binding, will be overridden by the terminfo bindings if available
 bindkey "^?" backward-delete-char
 bindkey "^[[3~" delete-char
-bindkey "^[[Z" autosuggest-accept
+bindkey "^[[Z" reverse-menu-complete
 bindkey "^P" history-beginning-search-backward
 bindkey "^N" history-beginning-search-forward
 
 function zle-line-init {
-    echo -ne '\e[2 q'
+    echo -ne '\e[5 q'
 }
 zle -N zle-line-init
 
 function zle-keymap-select {
     case $KEYMAP in
         vicmd)
-            echo -ne '\e[4 q'
+            echo -ne '\e[2 q'
             ;;
         viins|main)
-            echo -ne '\e[2 q'
+            echo -ne '\e[5 q'
             ;;
     esac
 }
