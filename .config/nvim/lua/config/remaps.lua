@@ -6,6 +6,7 @@ vim.g.maplocalleader = " "
 
 local map = vim.keymap.set
 
+-- When line wrapping is enabled
 if vim.opt.wrap:get() then
   map("n", "<Up>", "gk", { noremap = true, silent = true })
   map("n", "<Down>", "gj", { noremap = true, silent = true })
@@ -13,10 +14,10 @@ if vim.opt.wrap:get() then
   map("i", "<Down>", "<C-o>gj", { noremap = true, silent = true })
 end
 
-map({ 'n', "i", "v", "x" }, '<Up>', '<Nop>', { noremap = true, silent = true })
-map({ 'n', "i", "v", "x" }, '<Down>', '<Nop>', { noremap = true, silent = true })
-map({ 'n', "i", "v", "x" }, '<Left>', '<Nop>', { noremap = true, silent = true })
-map({ 'n', "i", "v", "x" }, '<Right>', '<Nop>', { noremap = true, silent = true })
+map({ "n", "i", "v", "x" }, "<Up>", "<Nop>", { noremap = true, silent = true })
+map({ "n", "i", "v", "x" }, "<Down>", "<Nop>", { noremap = true, silent = true })
+map({ "n", "i", "v", "x" }, "<Left>", "<Nop>", { noremap = true, silent = true })
+map({ "n", "i", "v", "x" }, "<Right>", "<Nop>", { noremap = true, silent = true })
 
 -- Open vim file explorer newrw
 -- map("n", "<leader>pv", vim.cmd.Ex, { noremap = true, silent = true })
@@ -24,6 +25,10 @@ map({ 'n', "i", "v", "x" }, '<Right>', '<Nop>', { noremap = true, silent = true 
 -- Navigate thorugh items in quickfix list
 map("n", "<M-j>", "<CMD>cnext<CR>", { noremap = true, silent = true })
 map("n", "<M-k>", "<CMD>cprev<CR>", { noremap = true, silent = true })
+
+-- Navigate thorugh buffers in buffer list
+map("n", "<M-h>", "<CMD>bprevious<CR>", { noremap = true, silent = true })
+map("n", "<M-l>", "<CMD>bnext<CR>", { noremap = true, silent = true })
 
 -- Move highlighted text up/down
 map("v", "K", ":move '<-2<CR>gv=gv", { noremap = true, silent = true })
@@ -52,6 +57,8 @@ map({ "n", "v" }, "<leader>P", [["+P]], { noremap = true, silent = true })
 -- Paste over without loosing the paste register
 map("x", "p", [["_dP]], { noremap = true, silent = true })
 
+map("n", "Y", "y$", { noremap = true, silent = true })
+
 -- Delete into black hole register
 map({ "n", "v" }, "<leader>d", [["_d]], { noremap = true, silent = true })
 
@@ -62,8 +69,8 @@ map("n", "<leader>k", "<CMD>lnext<CR>zz", { noremap = true, silent = true })
 map("n", "<leader>j", "<CMD>lprev<CR>zz", { noremap = true, silent = true })
 
 -- Start %s replace the word cursor is currently on
-map("n", "<leader>s", [[:%s/<C-r><C-w>/<C-r><C-w>/gIc<Left><Left><Left><Left>]], { noremap = true })
-map("v", "<leader>s", [[:s///gIc<Left><Left><Left><Left><Left>]], { noremap = true })
+map("n", "<C-s>", [[:%s/<C-r><C-w>/<C-r><C-w>/gIc<Left><Left><Left><Left>]], { noremap = true })
+map("v", "<C-s>", [[:s///gIc<Left><Left><Left><Left><Left>]], { noremap = true })
 
 -- Make current file executable
 map("n", "<leader>x", "<CMD>!chmod +x %<CR>", { noremap = true, silent = true })
@@ -75,7 +82,7 @@ map("n", "<leader>vs", "<CMD>vertical split<CR>", { noremap = true, silent = tru
 map("n", "<leader>vn", "<CMD>vertical new<CR>", { noremap = true, silent = true })
 
 map("n", "<leader>ls", "<CMD>LspStart<CR>", { noremap = true, silent = true })
-map("n", "<leader>lx", "<CMD>LspRestart<CR>", { noremap = true, silent = true })
+map("n", "<leader>lx", "<CMD>LspStop<CR>", { noremap = true, silent = true })
 map("n", "<leader>vrr", vim.lsp.buf.references, { noremap = true, silent = true })
 map("n", "<leader>vrn", vim.lsp.buf.rename, { noremap = true, silent = true })
 
@@ -92,6 +99,7 @@ map("n", "<leader>`", function()
 end, { desc = "Open a small terminal at bottom", noremap = true, silent = true })
 
 map("n", "<leader>tt", require("config.utils").toggle_floating_terminal, { noremap = true, silent = true })
+map("n", "<leader>o", "<CMD>only<CR>", { noremap = true, silent = true })
 map("n", "Q", function()
   require("config.utils").smart_buffer_close({
     quit_on_empty = vim.g.quit_on_empty ~= false,

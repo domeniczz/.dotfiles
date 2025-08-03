@@ -1,48 +1,51 @@
 return {
   {
     "nvim-treesitter/nvim-treesitter",
+    branch = 'master',
     enabled = true,
     event = "VeryLazy",
     priority = 1000,
     build = ":TSUpdate",
     cmd = {
-      "TSUpdateSync",
+      "TSInstall",
       "TSUpdate",
-      "TSInstall"
+      "TSUpdateSync",
     },
+    cond = function()
+      local max_filesize = vim.g.max_filesize
+      local ok, stats = pcall(vim.loop.fs_stat, vim.fn.expand("%"))
+      if ok and stats and stats.size > max_filesize then
+        return false
+      end
+      return true
+    end,
     config = function()
       require("nvim-treesitter.configs").setup({
-        -- A list of parser names, or "all"
-        ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "javascript", "html" },
-        -- List of parsers to ignore installing (or "all")
-        ignore_install = { "latex", "tex" },
-        -- Install parsers synchronously (only applied to `ensure_installed`)
+        ensure_installed = { "c", "lua", "vim", "vimdoc", "markdown", "javascript", "bash", "html" },
+        ignore_install = { "latex" },
         sync_install = false,
-        -- Automatically install missing parsers when entering buffer
-        -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
         auto_install = true,
-        indent = { enable = true },
+        indent = {
+          enable = true,
+        },
         highlight = {
-          -- `false` will disable the whole extension
           enable = true,
           use_languagetree = true,
-          -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-          -- Set this to `true` if you depend on "syntax" being enabled (like for indentation).
-          -- Using this option will slow down your editor, especially when scrolling.
           additional_vim_regex_highlighting = false,
-          -- additional_vim_regex_highlighting = { "markdown" },
           disable = function(lang)
             local disabled_languages = {
               latex = true,
             }
             if disabled_languages[lang] then return true end
-            -- Disable for large files
-            local max_filesize = 200 * 1024
+            local max_filesize = vim.g.max_filesize
             return require('config.utils').is_current_large_file(
               max_filesize,
               string.format("Treesitter disabled - file larger than %sKB", max_filesize / 1024)
             )
           end,
+        },
+        indent = {
+          enable = true,
         },
         incremental_selection = {
           enable = false,
@@ -72,16 +75,21 @@ return {
   },
   {
     "nvim-treesitter/nvim-treesitter-context",
+    version = "*",
     enabled = true,
     event = "VeryLazy",
     dependencies = {
       "nvim-treesitter/nvim-treesitter",
+    },
+    cmd = {
+      "TSContext",
     },
     config = function()
       require("treesitter-context").setup({
         max_lines = 10,
         min_window_height = 30,
         trim_scope = "outer",
+        mode = 'cursor',
       })
     end
   },

@@ -1,13 +1,14 @@
 return {
-  'stevearc/aerial.nvim',
+  "stevearc/aerial.nvim",
+  version = "*",
   enabled = true,
-  -- event = "VeryLazy",
+  lazy = true,
   dependencies = {
     "nvim-treesitter/nvim-treesitter",
     "nvim-tree/nvim-web-devicons",
   },
   keys = {
-    { "<leader>A", "<CMD>AerialToggle!<CR>", desc = "Aerial: toggle view" },
+    { "<leader>A", "<CMD>AerialToggle<CR>", desc = "Aerial: toggle view" },
     { "<leader>}", "<CMD>AerialNext<CR>", desc = "Aerial: jump to next symbol" },
     { "<leader>{", "<CMD>AerialPrev<CR>", desc = "Aerial: jump to prev symbol" },
   },
@@ -50,6 +51,10 @@ return {
         vim.keymap.set("n", "<leader>{", "<CMD>AerialPrev<CR>", { buffer = bufnr, desc = "Aerial: jump to prev symbol" })
       end,
     })
-    vim.keymap.set("n", "<leader>A", "<CMD>AerialToggle!<CR>", { desc = "Aerial: toggle view" })
+    vim.keymap.set("n", "<leader>A", "<CMD>AerialToggle<CR>", { desc = "Aerial: toggle view" })
+
+    vim.keymap.set("n", "<leader>fA", function()
+      require("telescope").extensions.aerial.aerial()
+    end, { desc = "Telescope: search outline symbols" })
   end,
 }

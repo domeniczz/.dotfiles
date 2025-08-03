@@ -7,7 +7,7 @@ local icons = {
     clean = "󰊢", dirty = "",
   },
   lsp_diagnostics = {
-    error = "", warn = "", info = "", hint = "H",
+    error = "", warn = "", info = "", hint = "",
   },
   lsp = {
     indicator = {
@@ -19,20 +19,19 @@ local icons = {
       python = "󰌠",
       javascript = "",
       typescript = "󰛦",
-      c = "󰙱",
-      cpp = "󰙲",
-      csharp = "󰌛",
+      c = "",
+      cpp = "",
+      csharp = "",
       rust = "󱘗",
       ruby = "󰴭",
-      go = "󰟓",
+      go = "",
       java = "󰬷",
       kotlin = "󱈙",
-      html = "󰌝",
-      css = "󰌜",
+      html = "",
+      css = "",
       default = "󰈮",
     },
   },
-  plugin_updates = " ",
   buffers = "",
 }
 
@@ -75,18 +74,32 @@ local cache = {
 }
 
 -- -----------------------------------------------------------------------------
--- Git status
+-- Relative file path
+-- -----------------------------------------------------------------------------
+
+local function get_relative_file_path()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local bufname = vim.api.nvim_buf_get_name(bufnr)
+
+  if bufname == "" then return "[No Name]" end
+  if vim.bo[bufnr].buftype ~= "" then return bufname end
+
+  local relative = vim.fn.fnamemodify(bufname, ":.")
+  if relative:sub(1, 1) == "/" then
+    return vim.fn.fnamemodify(bufname, ":~")
+  end
+  return relative
+end
+
+-- -----------------------------------------------------------------------------
+-- Git branch and file status
 -- -----------------------------------------------------------------------------
 
 local function get_git_root(file_path)
   local dir = vim.fs.dirname(file_path)
   if not dir then return nil end
-  local git_cmd = { "git", "-C", dir, "--no-optional-locks", "rev-parse", "--show-toplevel" }
-  local res = vim.fn.systemlist(git_cmd)
-  if res and #res > 0 and vim.v.shell_error == 0 then
-    return vim.fs.normalize(res[1])
-  end
-  return nil
+  local git_item = vim.fs.find('.git', { path = dir, upward = true, limit = 1 })[1]
+  return git_item and vim.fs.normalize(vim.fs.dirname(git_item))
 end
 
 local function should_show_git_status()
@@ -100,23 +113,47 @@ local function update_git_file_status_cache()
     cache.git_file_status[bufnr] = ""
     return ""
   end
+
   local resolved_file_path = vim.fn.resolve(bufname)
   local git_root = get_git_root(resolved_file_path)
   if not git_root then
     cache.git_file_status[bufnr] = ""
     return ""
   end
-  local relative_file_path
+
+  local branch_name = ""
+  local git_branch_cmd = { "git", "-C", git_root, "--no-optional-locks", "branch", "--show-current" }
+  local branch_res = vim.fn.systemlist(git_branch_cmd)
+  if vim.v.shell_error == 0 then
+    if branch_res and #branch_res > 0 then
+      branch_name = branch_res[1]
+    else
+      local git_hash_cmd = { "git", "-C", git_root, "--no-optional-locks", "rev-parse", "--short", "HEAD" }
+      local hash_res = vim.fn.systemlist(git_hash_cmd)
+      if hash_res and #hash_res > 0 and vim.v.shell_error == 0 then
+        branch_name = hash_res[1]
+      else
+        branch_name = "detached"
+      end
+    end
+  end
+
+  local relative_file_path = ""
   local abs_file_path = vim.fs.normalize(resolved_file_path)
   if vim.startswith(abs_file_path, git_root .. "/") then
     relative_file_path = abs_file_path:sub(#git_root + 2)
   else
     relative_file_path = vim.fn.fnamemodify(resolved_file_path, ":t")
   end
-  local git_cmd = { "git", "-C", git_root, "--no-optional-locks", "status",
+
+  local git_status = ""
+  local git_status_cmd = { "git", "-C", git_root, "--no-optional-locks", "status",
     "--porcelain=v1", "--untracked-files=all", "--ignored=matching", "--", relative_file_path }
-  local res = vim.fn.system(git_cmd)
-  local git_status = vim.split(res, "\n", { trimempty = true })[1]
+  local git_status_res = vim.fn.systemlist(git_status_cmd)
+  if branch_res and #branch_res > 0 and vim.v.shell_error == 0 then
+    git_status = git_status_res[1]
+  end
+
   local icon, status_text
   if git_status then
     icon = icons.git.dirty
@@ -126,7 +163,8 @@ local function update_git_file_status_cache()
     icon = icons.git.clean
     status_text = "unmodified"
   end
-  local status = "[" .. icon .. " " .. status_text .. "]"
+
+  local status = "[" .. icon .. " " .. branch_name .. " " .. status_text .. "]"
   cache.git_file_status[bufnr] = status
   return status
 end
@@ -255,6 +293,7 @@ M.update_highlight_groups = setup_highlight_groups
 
 function M.setup()
   _G._statusline_module = {
+    relative_path = get_relative_file_path,
     git = get_git_status,
     lsp = get_lsp_status,
     diagnostics = get_lsp_diagnostics,
@@ -269,25 +308,25 @@ function M.setup()
   update_lsp_diagnostics_cache()
 
   local statusline_components = {
-    "%<",                                           -- Truncation point
-    "%f",                                           -- File path
-    " %m",                                          -- Modified flag
-    "%r",                                           -- Readonly flag
-    "%{%v:lua._statusline_module.git()%}",          -- Git branch
-    " %{%v:lua._statusline_module.lsp()%}",         -- LSP status
-    " %{%v:lua._statusline_module.diagnostics()%}", -- LSP diagnostics
-    "%=",                                           -- Left/Right separator
-    "%{%v:lua._statusline_module.updates()%}",      -- Total available updates
-    " %{%v:lua._statusline_module.buffers()%}",     -- Buffer index
-    " [%{&fileencoding?&fileencoding:&encoding}",   -- File encoding
-    " %{&fileformat}]",                             -- File format
-    " %-7(%l:%c%)",                                 -- Line and column
-    " %P",                                          -- Percentage through file
+    "%<",                                            -- Truncation point
+    "%{%v:lua._statusline_module.relative_path()%}", -- File path
+    " %m",                                           -- Modified flag
+    "%r",                                            -- Readonly flag
+    "%{%v:lua._statusline_module.git()%}",           -- Git branch and file status
+    " %{%v:lua._statusline_module.lsp()%}",          -- LSP status
+    " %{%v:lua._statusline_module.diagnostics()%}",  -- LSP diagnostics
+    "%=",                                            -- Left/Right separator
+    "%{%v:lua._statusline_module.updates()%}",       -- Total available updates
+    " %{%v:lua._statusline_module.buffers()%}",      -- Buffer index
+    " [%{&fileencoding?&fileencoding:&encoding}",    -- File encoding
+    " %{&fileformat}]",                              -- File format
+    " %-7(%l:%c%)",                                  -- Line and column
+    " %P",                                           -- Percentage through file
   }
 
   vim.opt.statusline = table.concat(statusline_components, "")
 
-  local augroup = vim.api.nvim_create_augroup("nvim_custom_statusline_ac_", { clear = true })
+  local augroup = vim.api.nvim_create_augroup("_nvim_user_statusline_ac_", { clear = true })
   local autocmd = vim.api.nvim_create_autocmd
 
   autocmd({ "BufReadPost", "BufWritePost", "FileChangedShellPost" }, {
@@ -303,7 +342,9 @@ function M.setup()
     group = augroup,
     callback = function()
       if vim.bo.buftype == "" then
-        update_lsp_status_cache()
+        vim.schedule(function()
+          update_lsp_status_cache()
+        end)
       end
     end,
   })
@@ -318,7 +359,7 @@ function M.setup()
 
   autocmd("User", {
     group = augroup,
-    pattern = "LazyCheck",
+    pattern = { "LazySync", "LazyInstall", "LazyUpdate", "LazyCheck" },
     callback = function()
       cache.plugin_updates = require("lazy.status").updates() or ""
       vim.cmd("redrawstatus")

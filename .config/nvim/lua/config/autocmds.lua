@@ -1,5 +1,5 @@
 local function augroup(name)
-  return vim.api.nvim_create_augroup("nvim_user_ac_" .. name, { clear = true })
+  return vim.api.nvim_create_augroup("_nvim_user_ac_" .. name, { clear = true })
 end
 
 local autocmd = vim.api.nvim_create_autocmd
@@ -33,30 +33,20 @@ autocmd({ "VimEnter", "WinEnter", "BufWinEnter", "FocusGained" }, {
   group = cursorline_toggle,
   callback = function()
     vim.opt_local.cursorline = true
+    -- vim.opt_local.cursorcolumn = true
   end,
 })
 autocmd({ "WinLeave", "FocusLost" }, {
   group = cursorline_toggle,
   callback = function()
     vim.opt_local.cursorline = false
-  end,
-})
-
-autocmd("BufEnter", {
-  group = augroup("bash_filetype_specific_tab_config"),
-  callback = function()
-    local ft = vim.bo.filetype
-    if ft == "bash" or ft == "sh" then
-      vim.opt_local.tabstop = 2
-      vim.opt_local.softtabstop = 2
-      vim.opt_local.shiftwidth = 2
-    end
+    -- vim.opt_local.cursorcolumn = false
   end,
 })
 
 autocmd("FileType", {
   group = augroup("code_filetype_specific_tab_config"),
-  pattern = { "lua", "bash", "sh", "yaml", "json", "vim" },
+  pattern = { "lua", "yaml", "json", "vim" },
   callback = function()
     vim.opt_local.tabstop = 2
     vim.opt_local.softtabstop = 2
@@ -101,7 +91,7 @@ autocmd("BufWritePre", {
 autocmd("BufReadPre", {
   group = augroup("largefile_performance_tweaks"),
   callback = function()
-    if require('config.utils').is_current_large_file(5120 * 1024) then
+    if require("config.utils").is_current_large_file(vim.g.max_filesize) then
       local opt_local = vim.opt_local
       opt_local.spell = false
       opt_local.undofile = false

@@ -365,7 +365,18 @@ function M.smart_buffer_close(user_opts)
     local choice = vim.fn.confirm(
       string.format("Save before closing the buffer? (%s)", bufname), "&Yes\n&No\n&Cancel", 1)
     if choice == 1 then
-      vim.cmd("silent! write")
+      local has_no_name = vim.api.nvim_buf_get_name(current_buf) == ""
+      if has_no_name then
+        local filename = vim.fn.input("Enter filename: ", vim.fn.getcwd() .. "/", "file")
+        if filename ~= "" and filename ~= default_dir then
+          vim.cmd(string.format("silent! write %s", vim.fn.fnameescape(filename)))
+        else
+          vim.notify("Save cancelled, buffer not saved.", vim.log.levels.WARN)
+          return
+        end
+      else
+        vim.cmd("silent! write")
+      end
       if vim.bo[current_buf].modified and not is_special_buffer(current_buf) then
         vim.notify(string.format("Failed to save buffer! (%s)", bufname), vim.log.levels.ERROR)
         return

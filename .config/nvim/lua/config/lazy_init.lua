@@ -22,12 +22,13 @@ require("lazy").setup({
     lazy = false,
   },
   change_detection = {
+    enabled = true,
     notify = false,
   },
   checker = {
     enabled = true,
     notify = false,
-    frequency = 86400,
+    frequency = 21600,
   },
   performance = {
     cache = {
@@ -38,25 +39,25 @@ require("lazy").setup({
       reset = true,
       disabled_plugins = {
         -- "editorconfig",
+        -- "matchit",
+        -- "matchparen",
+        -- "shada",
+        "netrwPlugin",
+        "spellfile",
         "gzip",
         "tarPlugin",
         "zipPlugin",
         "man",
-        -- "matchit",
-        -- "matchparen",
-        -- "osc52",
-        -- "shada",
-        "netrwPlugin",
         "rplugin",
-        "spellfile",
         "tohtml",
+        "osc52",
         "tutor",
       },
     },
   },
   -- Only enable profiling when debugging lazy.nvim
   profiling = {
-    -- Enables extra stats on the debug tab related to the loader cache.
+    -- Enables extra stats on the debug tab related to the loader cache
     -- Additionally gathers stats about all package.loaders
     loader = false,
     -- Track each new require in the Lazy profiling tab

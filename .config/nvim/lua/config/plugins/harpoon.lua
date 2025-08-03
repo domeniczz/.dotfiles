@@ -1,7 +1,7 @@
 return {
   "ThePrimeagen/harpoon",
-  enabled = true,
   branch = "harpoon2",
+  enabled = true,
   event = "VeryLazy",
   dependencies = {
     "nvim-lua/plenary.nvim",
@@ -35,7 +35,7 @@ return {
 
     local map = vim.keymap.set
 
-    map("n", "<A-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
+    map("n", "<leader>e", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
     map("n", "<leader>a", function() harpoon:list():add() end, { desc = "Harpoon: add buffer" })
     map("n", "<C-h>", function() harpoon:list():select(1) end, { desc = "Harpoon: buffer 1" })
     map("n", "<C-j>", function() harpoon:list():select(2) end, { desc = "Harpoon: buffer 2" })

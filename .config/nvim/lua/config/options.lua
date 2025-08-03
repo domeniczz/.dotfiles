@@ -5,6 +5,13 @@ g.loaded_python3_provider = 0
 g.loaded_perl_provider = 0
 g.loaded_ruby_provider = 0
 
+g.max_filesize = 5 * 1024 * 1024
+
+g.netrw_banner = 0
+g.netrw_altv = 1
+g.netrw_list_hide = "^\\./$"
+g.netrw_hide = 1
+
 --  For more options, you can see `:help option-list`
 
 local opt = vim.opt
@@ -76,8 +83,14 @@ opt.splitkeep = "screen"
 
 opt.swapfile = false
 opt.backup = false
-opt.undodir = os.getenv("HOME") .. "/.local/share/nvim/undodir"
 opt.undofile = true
+opt.undolevels = 1500
+
+local xdg_data_home = os.getenv("XDG_DATA_HOME")
+if not xdg_data_home then
+    xdg_data_home = os.getenv("HOME") .. "/.local/share"
+end
+opt.undodir = xdg_data_home .. "/nvim/undodir"
 
 opt.updatetime = 5000
 opt.ttimeoutlen = 20

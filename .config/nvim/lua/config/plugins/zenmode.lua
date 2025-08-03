@@ -1,7 +1,14 @@
 return {
   "folke/zen-mode.nvim",
+  version = "*",
   enabled = true,
-  event = "VeryLazy",
+  lazy = true,
+  keys = {
+    { "<leader>zm", "<CMD>ZenMode<CR>", desc = "Zenmode: toggle zen mode" },
+  },
+  cmd = {
+    "ZenMode",
+  },
   config = function()
     require("zen-mode").setup({
       window = {
@@ -10,8 +17,6 @@ return {
         height = 0.95,
       }
     })
-    vim.keymap.set("n", "<leader>wm", function()
-      require("zen-mode").toggle()
-    end)
+    vim.keymap.set("n", "<leader>zm", "<CMD>ZenMode<CR>", { desc = "Zenmode: toggle zen mode" })
   end
 }

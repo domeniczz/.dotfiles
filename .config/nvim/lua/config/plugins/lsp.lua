@@ -2,6 +2,7 @@ return {
   -- lsp progress messages
   {
     "j-hui/fidget.nvim",
+    version = "*",
     enabled = true,
     event = "LspAttach",
     config = function()
@@ -14,26 +15,22 @@ return {
       })
     end,
   },
-
   {
     "neovim/nvim-lspconfig",
+    version = "*",
     enabled = true,
-    -- event = {"BufReadPre", "BufNewFile"},
-    ft = { "lua", "python", "rust" },
+    ft = {
+      "lua",
+      "python",
+      "rust",
+    },
     dependencies = {
       "saghen/blink.cmp",
       -- "hrsh7th/cmp-nvim-lsp",
     },
-    -- init = function()
-    --   local max_filesize = 5120 * 1024
-    --   if require('config.utils').is_current_large_file(max_filesize, string.format("LSP disabled - file larger than %sKB", max_filesize / 1024)) then
-    --     vim.b.lsp_enabled = false
-    --     return
-    --   end
-    -- end,
     config = function()
       local capabilities = require("blink.cmp").get_lsp_capabilities()
-      -- local capabilities = require('cmp_nvim_lsp').default_capabilities()
+      -- local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
       vim.api.nvim_create_autocmd("LspAttach", {
         callback = function(event)
@@ -75,13 +72,13 @@ return {
 
       vim.diagnostic.config({
         virtual_text = true,
+        -- virtual_lines = {
+        --   current_line = true,
+        -- },
         signs = true,
         underline = true,
         update_in_insert = false,
         severity_sort = true,
-        virtual_lines = {
-          current_line = true
-        },
         float = {
           focusable = false,
           style = "minimal",
@@ -123,7 +120,6 @@ return {
         autostart = false,
         capabilities = capabilities,
       })
-
 
       lspconfig.rust_analyzer.setup({
         autostart = false,

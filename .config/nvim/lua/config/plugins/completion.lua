@@ -61,7 +61,8 @@ return {
         accept = {
           auto_brackets = {
             enabled = true,
-            default_brackets = { "{", "}" },
+            default_brackets = { "(", ")" },
+            override_brackets_for_filetypes = {},
           },
         },
         documentation = {

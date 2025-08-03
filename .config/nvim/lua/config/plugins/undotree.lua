@@ -1,7 +1,8 @@
 return {
   "mbbill/undotree",
+  version = "*",
   enabled = true,
-  -- event = "VeryLazy",
+  lazy = true,
   keys = {
     { "<leader>u", "<CMD>UndotreeToggle<CR>", desc = "Undotree: toggle view" },
   },

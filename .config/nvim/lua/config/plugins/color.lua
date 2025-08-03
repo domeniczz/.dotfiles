@@ -2,6 +2,7 @@ return {
   {
     "folke/tokyonight.nvim",
     name = "tokyonight",
+    version = "*",
     enabled = true,
     lazy = false,
     priority = 1000,
@@ -39,6 +40,7 @@ return {
   {
     "projekt0n/github-nvim-theme",
     name = "github-theme",
+    version = "*",
     enabled = false,
     lazy = false,
     priority = 1000,
@@ -76,6 +78,7 @@ return {
   {
     "ellisonleao/gruvbox.nvim",
     name = "gruvbox",
+    version = "*",
     enabled = false,
     lazy = false,
     priority = 1000,
@@ -110,6 +113,7 @@ return {
   {
     "rose-pine/neovim",
     name = "rose-pine",
+    version = "*",
     enabled = false,
     lazy = false,
     priority = 1000,

@@ -1,5 +1,6 @@
 return {
   "sustech-data/wildfire.nvim",
+  branch = 'master',
   enabled = false,
   event = "VeryLazy",
   dependencies = {
