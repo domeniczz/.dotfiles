@@ -21,7 +21,7 @@ query=$(echo $query | tr ' ' '+')
 LESS_CMD="less --use-color --wordwrap --RAW-CONTROL-CHARS --incsearch --ignore-case --mouse"
 
 if grep -qs "$selected" "$TMUX_CONF_PATH/.tmux-cht-languages"; then
-    tmux new-window -n "ctsh" bash -c "curl -s cht.sh/$selected/$query | $LESS_CMD"
+    tmux new-window -n "ctsh" sh -c "curl -s cht.sh/$selected/$query | $LESS_CMD"
 else
-    tmux new-window -n "ctsh" bash -c "curl -s cht.sh/$selected~$query | $LESS_CMD"
+    tmux new-window -n "ctsh" sh -c "curl -s cht.sh/$selected~$query | $LESS_CMD"
 fi

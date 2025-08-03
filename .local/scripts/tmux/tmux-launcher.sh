@@ -28,14 +28,19 @@ USE_SUDO=0
 WIN_NAME=""
 START_PATH=$(tmux display-message -p "#{pane_current_path}")
 SPLIT_PCT=0
+FZF_SEARCH=0
 
 # ------------------------------------------------------------------------------
-# Aruguments parsing
+# Parse arguments
 # ------------------------------------------------------------------------------
 
 while (( $# > 0 )); do
     case $1 in
-        --mode)
+        --)
+            shift
+            break
+            ;;
+        --mode|-m)
             if [[ $2 =~ ^(split|newwin)$ ]]; then
                 LAUNCH_MODE="$2"
             else
@@ -44,29 +49,29 @@ while (( $# > 0 )); do
             fi
             shift 2
             ;;
-        --program)
+        --program|-p)
             if [[ "$2" == "USER_INPUT" ]]; then
                 PROGRAM=$(tmux command-prompt -p "Program to run:" "display-message -p '%%'")
             elif [[ "$2" == "FZF_SEARCH" ]]; then
-                PROGRAM=$(fd . /usr/bin --type f --color=never --format="{/}" | fzf-tmux -p "40%,60%" --prompt="launch ❯ ") || exit 0
+                FZF_SEARCH=1
             else
                 PROGRAM="$2"
             fi
             shift 2
             ;;
-        --sudo)
+        --sudo|-s)
             USE_SUDO=1
             shift 1
             ;;
-        --path)
+        --path|-d)
             START_PATH="$2"
             shift 2
             ;;
-        --winname)
+        --winname|-n)
             WIN_NAME="$2"
             shift 2
             ;;
-        --splitpct)
+        --splitpct|-b)
             SPLIT_PCT="$2"
             shift 2
             ;;
@@ -80,18 +85,28 @@ done
 # Launch logic
 # -------------------------------------------------------------------------------
 
+if (( FZF_SEARCH == 1 )); then
+    FZF_PROMPT="launch ❯ "
+    if (( USE_SUDO == 1 )); then
+        FZF_PROMPT="sudo launch ❯ "
+    fi
+    PROGRAM=$(
+        {
+            fd . /usr/bin --color=never --format="{/}";
+            fd . ~/.local/bin ~/.bin --color=never --format="{/}";
+        } | fzf --prompt="$FZF_PROMPT" --border=none
+    ) || exit 0
+fi
+
 WIN_NAME=$(basename "${WIN_NAME:-$PROGRAM}" | tr '.' '_' | cut -c1-20)
 
-if (( $USE_SUDO == 1 )); then
+if (( USE_SUDO == 1 )); then
     CMD="sudo --preserve-env $PROGRAM"
 else
     CMD="$PROGRAM"
 fi
 
 if [[ "$LAUNCH_MODE" = "newwin" && -n "$START_PATH" ]]; then
-    # WRAPPER_CMD is used for not closing window after exit program
-    # WRAPPER_CMD="bash -c '$CMD; if [ \$(tmux list-windows | wc -l) -eq 1 ]; then tmux new-window; tmux kill-window -t !; else tmux kill-window; fi'"
-    # tmux new-window -c "$START_PATH" -n "$WIN_NAME" "$WRAPPER_CMD"
     tmux new-window -c "$START_PATH" -n "$WIN_NAME" "$CMD"
     exit
 fi
