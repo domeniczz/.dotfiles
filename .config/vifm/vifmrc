@@ -13,8 +13,8 @@ set trash
 set trashdir=$XDG_DATA_HOME/Trash/files,%r/.vifm-Trash-%u,%r/.vifm-Trash
 set vifminfo=chistory,shistory,phistory,fhistory,dirstack,registers,bmarks
 set sessionoptions=tui,state,tabs,savedirs,dhistory
-set history=100
-set undolevels=100
+set history=50
+set undolevels=50
 set autochpos
 set nofollowlinks
 set dotfiles
@@ -25,15 +25,15 @@ set vimhelp
 set notitle
 set timeoutlen=1000
 set mintimeoutlen=200
-set mouse=mqa
+set mouse=a
 set confirm-=delete
 set dotdirs=treeleafsparent
 set dirsize=nitems
 set shortmess=LMTp
 set tabscope=global
+set cdpath=~
 
-" For non-Windows systems
-if !has('win')
+if has('unix')
   set slowfs=curlftpfs,sshfs,nfs,nfs4,cifs
 endif
 
@@ -42,10 +42,11 @@ set milleroptions=lsize:1,csize:3,rsize:4,rpreview:all
 
 set previewoptions=maxtreedepth:1
 set suggestoptions=delay:400,normal,visual,view,otherpane,keys,marks,registers
-set tuioptions=p
+set hloptions=filehi:onerow
+set tuioptions=pu
 set uioptions=iodetails
 set navoptions=open:dirs
-set cpoptions=st
+set cpoptions=s
 set iooptions+=fastfilecloning
 
 set ignorecase
@@ -59,7 +60,7 @@ set scrolloff=4
 set nowrap
 set wildmenu
 set wildstyle=popup
-set wildinc=:*
+set wildinc=:cd,:edit,:set,:setlocal,:setglobal,:move,:copy,:goto,:bmgo,:wingo,:help
 
 set grepprg="rg --hidden --color=never --line-number %i %a %s"
 set findprg="fd --hidden --color=never %p %s"
@@ -159,6 +160,22 @@ cabbrev fc filter clear
 " Key mappings
 " ------------------------------------------------------------------------------
 
+noremap <silent> J 5j
+noremap <silent> K 5k
+
+noremap <silent> q :q<CR>
+noremap <silent> Q :qa<CR>
+
+" Rename
+noremap <silent> I cw<C-a>
+noremap <silent> cc cw<C-u>
+noremap <silent> A cw
+noremap <silent> i cw
+noremap <silent> gi :%rename<CR>
+
+noremap <silent> ! :!
+noremap <silent> @ :!<space>%f<left><left><left>
+
 " Start shell in current directory
 nnoremap <silent> x :shell<CR>
 
@@ -168,11 +185,15 @@ nnoremap <silent> ss :sort<CR>
 " Toggle showing hidden files
 nnoremap <silent> zh :set dotfiles!<CR>
 
+" Toggle wrap setting on ,w key
+nnoremap <silent> ,w :set wrap!<CR>
+
+" Toggle millerview preview panel (Ctrl-/ or ,p)
+nnoremap <silent> <C-_> :togglepreview<CR>
+nnoremap <silent> ,p :togglepreview<CR>
+
 " Select item
 nnoremap <silent> <Space> tj
-
-nnoremap <silent> J 5j
-nnoremap <silent> K 5k
 
 nnoremap <silent> mk :mkdir<Space>
 nnoremap <silent> ft :touch<Space>
@@ -180,8 +201,38 @@ nnoremap <silent> ft :touch<Space>
 nnoremap <silent> ff :filter<Space>
 nnoremap <silent> fn :filter!<Space>
 
-nnoremap <silent> q :q<CR>
-nnoremap <silent> Q :qa<CR>
+" Grep string under current directory and open the match with nvim
+nnoremap <silent> <C-s> :gd<Space>
+
+" Resize pane
+nnoremap <silent> > :wincmd ><CR>
+nnoremap <silent> < :wincmd <<CR>
+nnoremap <silent> _ :5 wincmd <<CR>
+nnoremap <silent> + :5 wincmd ><CR>
+
+" Close current pane
+nnoremap <silent> <C-w>q <C-w>w<C-w>o
+
+" Prev/Next location
+nnoremap <silent> <C-o> :histprev<CR>
+nnoremap <silent> <C-i> :histnext<CR>
+
+nnoremap <silent> <C-t> :tabnew | only | cd $HOME<CR>
+nnoremap <silent> T :tabnew | only<CR>
+nnoremap <silent> gt :tabnext<CR>
+nnoremap <silent> gT :tabprevious<CR>
+nnoremap <silent> <A-n> :tabnext<CR>
+nnoremap <silent> <A-p> :tabprevious<CR>
+
+noremap <silent> <F2> :rename<CR>
+noremap <silent> <F3> :!less %f<CR>
+noremap <silent> <F4> :edit<CR>
+noremap <silent> <F5> :clone<CR>
+noremap <silent> <F6> :move<CR>
+" In trash (:lstrash) menu, 'r' to restore, 'dd' to delete permanently
+nnoremap <silent> <F7> :lstrash<CR>
+nnoremap <silent> <F8> :restore<CR>
+nnoremap <silent> <F9> :chmod<CR>
 
 " Auto enter navigation mode
 " - <C-y> enter/exit nav mode
@@ -212,50 +263,7 @@ nnoremap O :
       \|   execute '!' . g:program . ' %c %i'
       \| endif<CR>
 
-nnoremap <silent> E :!nvim --cmd "lua vim.g.quit_on_empty = false" %d<CR>
-
-" Rename
-nnoremap <silent> I cw<C-a>
-nnoremap <silent> cc cw<C-u>
-nnoremap <silent> A cw
-nnoremap <silent> i cw
-nnoremap <silent> gi :%rename<CR>
-
-" Toggle wrap setting on ,w key
-nnoremap <silent> ,w :set wrap!<CR>
-
-" Resize pane
-nnoremap <silent> > :wincmd ><CR>
-nnoremap <silent> < :wincmd <<CR>
-nnoremap <silent> _ :5 wincmd <<CR>
-nnoremap <silent> + :5 wincmd ><CR>
-
-" Prev/Next location
-nnoremap <silent> <C-o> :histprev<CR>
-nnoremap <silent> <C-i> :histnext<CR>
-
-nnoremap <silent> <C-t> :tabnew | only | cd $HOME<CR>
-nnoremap <silent> T :tabnew | only<CR>
-nnoremap <silent> gt :tabnext<CR>
-nnoremap <silent> gT :tabprevious<CR>
-nnoremap <silent> <A-n> :tabnext<CR>
-nnoremap <silent> <A-p> :tabprevious<CR>
-
-nnoremap <silent> ! :!
-nnoremap <silent> @ :!<space>%f<left><left><left>
-
-nnoremap <silent> ,C :edit $XDG_CONFIG_HOME/vifm/vifmrc<CR>
-nnoremap <silent> ,c :write | edit $XDG_CONFIG_HOME/vifm/vifmrc | restart full<CR>
-
-nnoremap <silent> <F2> :rename<CR>
-nnoremap <silent> <F3> :!less %f<CR>
-nnoremap <silent> <F4> :edit<CR>
-nnoremap <silent> <F5> :clone<CR>
-nnoremap <silent> <F6> :move<CR>
-" In trash (:lstrash) menu, 'r' to restore, 'dd' to delete permanently
-nnoremap <silent> <F7> :lstrash<CR>
-nnoremap <silent> <F8> :restore<CR>
-nnoremap <silent> <F9> :chmod<CR>
+nnoremap <silent> E :!nvim +"lua vim.g.quit_on_empty = false" %d<CR>
 
 " Fzf search and navigate to selection
 nnoremap <silent> <C-f> :
@@ -277,22 +285,18 @@ nnoremap <silent> F :
       \|   execute 'goto' fnameescape(g:fzf_res)
       \| endif<CR>
 
-" Grep string under current directory and open the match with nvim
-nnoremap <silent> <C-s> :gd<Space>
-
 " Yank current directory path
 nnoremap <silent> yd :!echo -n %d | wl-copy %i && echo -n %d | wl-copy -p %i<CR>:echo "Directory path copied"<CR>
 " Yank current file path
 nnoremap <silent> yf :!echo -n %c:p | wl-copy %i && echo -n %c:p | wl-copy -p %i<CR>:echo "File path copied"<CR>
 
-" Toggle millerview preview panel (Ctrl-/ or ,p)
-nnoremap <silent> <C-_> :togglepreview<CR>
-nnoremap <silent> ,p :togglepreview<CR>
-
 " Open current directory in the other pane
 nnoremap <silent> <A-i> :sync<CR>
 " Open directory under cursor in the other pane
 nnoremap <silent> <A-o> :sync %c<CR>
+
+nnoremap <silent> ,C :edit $XDG_CONFIG_HOME/vifm/vifmrc<CR>
+nnoremap <silent> ,c :write | edit $XDG_CONFIG_HOME/vifm/vifmrc | restart full<CR>
 
 " Use e to quit view mode
 qnoremap e q
@@ -308,12 +312,12 @@ qnoremap e q
 " ------------------------------------------------------------------------------
 
 " '<mark> to go to the location
-bmark! $HOME/ h home
-bmark! $XDG_CONFIG_HOME/ c config
-bmark! $HOME/Personal/ p personal
-bmark! $HOME/Public/ w public
-bmark! $HOME/Documents/ d documents
-bmark! $HOME/Downloads/ x downloads
+mark h $HOME/ home
+mark c $XDG_CONFIG_HOME/ config
+mark p $HOME/Personal/ personal
+mark w $HOME/Public/ public
+mark d $HOME/Documents/ documents
+mark x $HOME/Downloads/ downloads
 
 " ------------------------------------------------------------------------------
 " File type associations
@@ -501,10 +505,11 @@ set classify+='󱧴 :://^/root/$//::/,
 \ :://^/mnt/$//::/,
 \ :://^/run/media/$//::/,
 \ :://^/run/mount/$//::/,
+\󰴉 :://^/opt/$//::/,
 \󱂵 :://^/home/$//::/,
 \󱋣 ::lib/,,lib32/,,lib64/::/,
 \󰉗 ::bin/,,sbin/::/,
-\󰉖 ::tmp/::/,
+\󰪻 ::tmp/::/,
 \󱞊 ::lost+found/::/,
 \󰇄 ::desktop/::/,
 \󱧶 ::documents/,,document/::/,
@@ -512,7 +517,7 @@ set classify+='󱧴 :://^/root/$//::/,
 \󰉏 ::pictures/,,picture/::/,
 \󱧺 ::videos/,,video/::/,
 \󱍙 ::musics/,,music/::/,
-\󰴉 ::programs/,,program/::/,
+\󰴉 ::programs/,,program/,,application/,,applications/::/,
 \󰉌 ::personal/::/,
 \󱥾 ::public/,,work/::/,
 \󰚝 ::favorite/,,favorites/::/,
@@ -522,7 +527,7 @@ set classify+='󱧴 :://^/root/$//::/,
 \ ::mount/::/,
 \󱊞 ::usb/::/,
 \ ::trash/::/,
-\󱂷 ::.local/,,.cache/::/,
+\󱂷 ::.local/,,.cache/,,cache/,,appdata/::/,
 \󱁿 ::.config/::/,
 \󰄤 ::.cert/,,ca-certificates/,,certs/::/,
 \󰢬 ::.gnupg/,,.ssh/,,.pki/::/,
@@ -538,7 +543,7 @@ set classify+='󱧴 :://^/root/$//::/,
 \ ::.yarn/,,.yarncache/,,.yarn-config/::/,
 \ ::.docker/,,docker/::/,
 \ ::.idea/::/,
-\ ::.vscode/::/,
+\ ::.vscode/,,.vscode-oss/::/,
 \󰍖 ::.wine/,,wine/::/,
 \󰓓 ::.steam/,,steam/::/,
 \ ::.aws/,,aws/::/,
@@ -567,18 +572,32 @@ set classify+='󱧴 :://^/root/$//::/,
 \ ::alpinelinux/,,alpine-linux/::/,
 \󱄅 ::nixos/::/,
 \󰣠 ::freebsd/::/,
-\ ::tmux/::/,
+\󰀲 ::android/::/,
+\ ::windows/::/,
+\ ::osx/,,macos/::/,
+\󰊭 ::google/::/,
+\󰍲 ::microsoft/::/,
+\ ::apple/::/,
 \󰈹 ::firefox/,,mercury/::/,
-\ ::chromium/,,google-chrome*/,,thorium/,,bravesoftware/,,qutebrowser/::/,
-\󰇩 ::microsoft-edge*/::/'
+\ ::chromium/,,google-chrome*/,,thorium/::/,
+\󰇩 ::microsoft-edge*/::/,
+\ ::jetbrains/::/,
+\ ::tmux/::/,
+\󰕼 ::vlc/::/,
+\󰉎 ::google drive/::/,
+\󰇣 ::.dropbox/,,dropbox/::/,
+\ ::spotify/::/,
+\ ::telegramdesktop/,,telegram desktop/::/,
+\󰙯 ::discord/::/,
+\ ::slack/::/'
 
 " Directories
 set classify+='󱧼 ::*.d/::/'
 
 " Specific files
-set classify+=' ::.profile,,.bashprofile,,bashprofile,,.bash_profile,,bash_profile,,.bash_aliases,,bash_aliases,,.bash_logout,,bash_logout,,.bashrc,,bashrc,,.inputrc,,inputrc,,.zshrc,,zshrc,,.zshenv,,zshenv,,.zprofile,,zprofile::,
+set classify+=' ::.profile,,.bashprofile,,bashprofile,,.bash_profile,,bash_profile,,.bash_login,,bash_login,,.bash_logout,,bash_logout,,.bash_aliases,,bash_aliases,,.bashrc,,bashrc,,.inputrc,,inputrc,,.zshrc,,zshrc,,.zshenv,,zshenv,,.zprofile,,zprofile::,
 \ ::.dmrc,,.jack-settings,,.mime.types,,mime.types,,.nvidia-settings-rc,,.pam_environment,,.selected_editor,,.mimeapps.list,,.xinitrc,,.xinitpurc,,.Xauthority,,.Xdefaults,,.Xresources,,.config,,config,,.user-dirs.dirs,,user-dirs.dirs,,.user-dirs.locale,,user-dirs.locale,,.ds_store,,ds_store::,
-\ ::fzfrc,,ripgreprc,,nanorc,,wgetrc,,.muttrc,,muttrc,,.neomuttrc,,neomuttrc,,.stowrc,,stowrc,,.stow-local-ignore,,stow-local-ignore,,.nvmrc,,nvmrc,,lfrc,,htoprc,,zathurarc,,.offlineimaprc,,.msmtprc::,
+\ ::fzfrc,,ripgreprc,,nanorc,,wgetrc,,.muttrc,,muttrc,,.neomuttrc,,neomuttrc,,.stowrc,,stowrc,,.stow-local-ignore,,stow-local-ignore,,.nvmrc,,nvmrc,,lfrc,,htoprc,,zathurarc,,vlcrc,,.offlineimaprc,,.msmtprc::,
 \ ::.editorconfig,,editorconfig::,
 \ ::.vim,,.viminfo,,.vimrc,,vimrc,,.gvimrc,,.vifm,,vifmrc::,
 \ ::.tmux.conf,,tmux.conf::,
@@ -587,10 +606,10 @@ set classify+=' ::.profile,,.bashprofile,,bashprofile,,.bash_profile,,bash_pr
 \󰗦 ::copyright,,copying::,
 \ ::code_of_conduct,,code_of_conduct.*::,
 \󰺻 ::.mailmap::,
-\ ::.elpaignore::,
-\󰊢 ::.ignore,,.gitignore,,.gitconfig,,.gitmodules,,.gitattributes::,
+\󰊢 ::.gitignore,,.gitconfig,,.gitmodules,,.gitattributes::,
+\󱅇 ::.*ignore::,
 \ ::.gitlab-ci.yml,,.gitlab-ci.yaml::,
-\ ::dockerfile,,.dockerignore,,docker-compose.yml::,
+\ ::dockerfile,,docker-compose.yml::,
 \ ::helmfile.yaml,,helmfile.yml::,
 \󰯙 ::meson.build,,meson.options,,meson_options.txt::,
 \󱃾 ::kubeconfig.*::,
@@ -601,7 +620,7 @@ set classify+=' ::.profile,,.bashprofile,,bashprofile,,.bash_profile,,bash_pr
 \ ::.codecov.yml,,codecov.yml,,.codecov.yaml,,codecov.yaml::,
 \ ::.travis.yml,,travis.yml,,.travis.yaml,,travis.yaml::,
 \󱄅 ::.flake.lock,,flake.lock::,
-\ ::.npmrc,,npmrc,,.npmignore,,package.json,,package-lock.json::,
+\ ::.npmrc,,npmrc,,package.json,,package-lock.json::,
 \ ::.yarnrc,,yarnrc,,yarn.lock::,
 \ ::.condarc,,condarc::,
 \ ::gulpfile.js,,gulpfile.coffee,,gulpfile.ls::,
@@ -609,55 +628,74 @@ set classify+=' ::.profile,,.bashprofile,,bashprofile,,.bash_profile,,bash_pr
 \ ::swagger.json,,swagger.yml,,swagger.yaml::,
 \ ::openapi.json,,openapi.yml,,openapi.yaml::,
 \󰮆 ::log,,log.old,,.xsession-errors,,.xsession-errors.old::,
-\󰌾 ::.password-store::,
+\󰌾 ::.password-store,,password-store::,
 \󱆅 ::known_hosts::,
-\󰣇 ::pacman.conf::,
+\󰣇 ::pacman.conf,,pkgbuild::,
+\ ::apt.conf::,
 \󰣛 ::dnf.conf::,
 \ ::ledger::,
 \󰇣 ::dropbox::'
 
 " File extensions
-set classify+=' ::*.afm,,*.bdf,,*.eot,,*.fnt,,*.fon,,*.otf,,*.pcf,,*.pfa,,*.pfb,,*.pfm,,*.psf,,*.ttc,,*.ttf,,*.type1,,*.woff,,*.woff2::,
+set classify+=' ::*.abf,,*.afm,,*.bdf,,*.eot,,*.fnt,,*.fon,,*.otf,,*.pcf,,*.pfa,,*.pfb,,*.pfm,,*.psf,,*.tfm,,*.ttc,,*.ttf,,*.type1,,*.woff,,*.woff2::,
 \ ::*.3fr,,*.ari,,*.arw,,*.avif,,*.bay,,*.bmp,,*.cap,,*.cr2,,*.cr3,,*.crw,,*.dcr,,*.dcs,,*.dng,,*.drf,,*.eip,,*.eps,,*.erf,,*.exr,,*.fff,,*.gif,,*.gpr,,*.hdr,,*.heic,,*.heif,,*.ico,,*.icns,,*.iiq,,*.j2k,,*.jfif,,*.jif,,*.jp2,,*.jpe,,*.jpeg,,*.jpx,,*.jpg,,*.jxl,,*.k25,,*.kdc,,*.mdc,,*.mef,,*.mos,,*.mrw,,*.nef,,*.obm,,*.orf,,*.pbm,,*.pef,,*.pgm,,*.pjpg,,*.png,,*.pnm,,*.ppm,,*.ptx,,*.pxn,,*.qoi,,*.r3d,,*.raf,,*.raw,,*.rgb,,*.rw2,,*.rwl,,*.rwz,,*.sr2,,*.srf,,*.srw,,*.svg,,*.svgz,,*.tga,,*.tif,,*.tiff,,*.webp,,*.x3f,,*.xbm,,*.xcf,,*.xpm,,*.xwd::,
-\ ::*.3g2,,*.3gp,,*.amv,,*.asf,,*.av1,,*.avi,,*.f4a,,*.f4b,,*.f4p,,*.f4v,,*.fli,,*.flv,,*.gifv,,*.h26[0-9],,*.m2ts,,*.m1v,,*.m2v,,*.m4v,,*.m4u,,*.mjpg,,*.mjpeg,,*.mkv,,*.mng,,*.mov,,*.movie,,*.mp4,,*.mp4v,,*.mpe,,*.mpeg,,*.mpg,,*.mpg4,,*.mpv,,*.mts,,*.mxf,,*.nsv,,*.ogv,,*.qt,,*.rm,,*.rmvb,,*.roq,,*.rrc,,*.svi,,*.vob,,*.webm,,*.wmv,,*.yuv::,
+\ ::*.3g2,,*.3gp,,*.amv,,*.asf,,*.av1,,*.avchd,,*.avi,,*.f4a,,*.f4b,,*.f4p,,*.f4v,,*.fli,,*.flv,,*.gifv,,*.h26[0-9],,*.m2ts,,*.m1v,,*.m2v,,*.m4v,,*.m4u,,*.mjpg,,*.mjpeg,,*.mkv,,*.mng,,*.mov,,*.movie,,*.mp4,,*.mp4v,,*.mpe,,*.mpeg,,*.mpeg[0-9],,*.mpg,,*.mpg[0-9],,*.mpv,,*.mts,,*.mxf,,*.nsv,,*.ogv,,*.qt,,*.rm,,*.rmvb,,*.roq,,*.rrc,,*.svi,,*.vob,,*.webm,,*.wmv,,*.yuv::,
 \󰸪 ::*.aac,,*.aax,,*.ac3,,*.aif,,*.aifc,,*.aiff,,*.alac,,*.amr,,*.anx,,*.ape,,*.asf,,*.au,,*.aup,,*.awb,,*.axa,,*.dss,,*.dts,,*.flac,,*.iklax,,*.m2a,,*.m4a,,*.m4b,,*.m4p,,*.mid,,*.midi,,*.mka,,*.mogg,,*.mp3,,*.mpa,,*.mpc,,*.oga,,*.ogg,,*.ogx,,*.opus,,*.ra,,*.ram,,*.rm,,*.snd,,*.spx,,*.tta,,*.vox,,*.wav,,*.weba,,*.wma,,*.wv::,
-\ ::*.7z,,*.ace,,*.alz,,*.ar,,*.boz,,*.br,,*.bz,,*.bz2,,*.cab,,*.cpio,,*.gem,,*.gz,,*.gzip,,*.lh,,*.lha,,*.lz,,*.lz4,,*.lzh,,*.lzma,,*.lzo,,*.lzop,,*.pak,,*.rar,,*.rz,,*.sfx,,*.tar,,*.tbz,,*.tbz2,,*.tgz,,*.tlz,,*.txz,,*.tzst,,*.xar,,*.xbps,,*.xz,,*.z,,*.zip,,*.zoo,,*.zpaq,,*.zst::,
-\󰏔 ::*.pkg.tar.zst,,*.deb,,*.udeb,,*.rpm,,*.eopkg,,*.pisi,,*.flatpak,,*.snap,,*.appimage,,*.appimage.zs-old::,
-\ ::*.hdd,,*.iso,,*.img,,*.omg,,*.ova,,*.ovf,,*.qcow,,*.qcow2,,*.qcow3,,*.vdi,,*.vhd,,*.vhdx,,*.vmdk,,*.wim,,*.swm,,*.esd,,*.rom::,
+\ ::*.7z,,*.ace,,*.alz,,*.ar,,*.arc,,*.arj,,*.boz,,*.br,,*.bz,,*.bz2,,*.cab,,*.cpio,,*.gem,,*.gz,,*.gzi,,*.gzip,,*.lbr,,*.lh,,*.lha,,*.lz,,*.lz4,,*.lzh,,*.lzma,,*.lzo,,*.lzop,,*.lzx,,*.pak,,*.pax,,*.pea,,*.r[0-9][0-9],,*.rar,,*.rz,,*.sfx,,*.tar,,*.tbz,,*.tbz2,,*.tgz,,*.tlz,,*.txz,,*.tzst,,*.xar,,*.xbps,,*.xz,,*.z,,*.zip,,*.zoo,,*.zpaq,,*.zst::,
+\󰏔 ::*.pkg.tar.zst,,*.deb,,*.udeb,,*.rpm,,*.eopkg,,*.pisi,,*.pet,,*.flatpak,,*.snap,,*.appimage,,*.appimage.zs-old::,
+\ ::*.udf,,*.iso,,*.img,,*.hfs,,*.omg,,*.ova,,*.ovf,,*.qcow,,*.qcow[0-9],,*.qed,,*.vdi,,*.vfd,,*.vhd,,*.vhdx,,*.vud,,*.vmdk,,*.dsk,,*.hdd,,*.wim,,*.swm,,*.esd,,*.rom,,*.sdi::,
 \󰨖 ::*.ass,,*.srt,,*.ssa,,*.vtt::,
-\󰴠 ::*.torrent,,*.m3u,,*.m3u8,,*.pls,,*.xspf::,
-\ ::*.txt,,*.text,,*.rtf,,*.rtx::,
+\ ::*.docx,,*.doc,,*.docm,,*.dotx,,*.dotm,,*.wiz,,*.odt,,*.ott,,*.oth,,*.otm,,*.fodt,,*.wps,,*.pages,,*.wpd::,
+\ ::*.xlsx,,*.xlm,,*.xls,,*.xlsm,,*.xlsmx,,*.xltx,,*.xlt,,*.xltm,,*.xla,,*.xll,,*.xlam,,*.dif,,*.csv,,*.tsv,,*.psv,,*.odc,,*.otc,,*.ods,,*.ots,,*.fods,,*.et::,
+\ ::*.pptx,,*.ppt,,*.pptm,,*.pot,,*.potx,,*.potm,,*.pps,,*.ppsx,,*.ppsm,,*.ppam,,*.sldx,,*.sldm,,*.odp,,*.otp,,*.fodp,,*.dps::,
+\ ::*.odf,,*.odft::,
+\ ::*.pdf,,*.djv,,*.djvu::,
+\󱉟 ::*.epub,,*.mobi,,*.fb2*,,*.azw,,*.cbr,,*.cbz::'
+
+set classify+='󰒓 ::.*.conf,,*.conf,,.*.config,,*.config,,.*.cfg,,*.cfg,,.*.cnf,,*.cnf,,.*.ini,,*.ini,,.*.inf,,*.inf,,.*.properties,,*.properties::,
+\ ::*.dhall,,*.hcl,,*.nomad::,
+\󰫧 ::*.env,,*.env.*,,*.environment::,
+\ ::*.txt,,*.text,,*.asc,,*.ascii,,*.utf8,,*.rtf,,*.rtx::,
 \ ::*.md,,*.mdown,,*.markdown,,*.mdx,,*.rmd,,*.qmd::,
 \󰴓 ::*.adoc,,*.asciidoc,,*.etx,,*.textile,,*.rdoc,,*.ronn,,*.rst,,*.fountain::,
 \ ::*.org::,
 \ ::*.norg::,
 \ ::*.tex,,*.latex,,*.bib,,*.bibtex,,*biblatex::,
-\ ::*.docx,,*.doc,,*.docm,,*.dotx,,*.dotm,,*.wiz,,*.odt,,*.ott,,*.oth,,*.otm,,*.fodt,,*.wps,,*.pages,,*.wpd::,
-\ ::*.xlsx,,*.xlm,,*.xls,,*.xlsm,,*.xlsmx,,*.xltx,,*.xlt,,*.xltm,,*.xla,,*.xll,,*.xlam,,*.csv,,*.tsv,,*.psv,,*.odc,,*.otc,,*.ods,,*.ots,,*.fods,,*.et::,
-\ ::*.pptx,,*.ppt,,*.pptm,,*.pot,,*.potx,,*.potm,,*.pps,,*.ppsx,,*.ppsm,,*.ppam,,*.sldx,,*.sldm,,*.odp,,*.otp,,*.fodp,,*.dps::,
-\ ::*.odf,,*.odft::,
-\ ::*.pdf,,*.djv,,*.djvu::,
-\󰂺 ::*.epub,,*.mobi,,*.fb2*,,*.azw::,
-\󱉟 ::*.cbr,,*.cbz::,
 \ ::*.vim,,*.vifm::,
+\ ::*.el,,*.elc::,
+\󰴠 ::*.torrent,,*.m3u,,*.m3u8,,*.pls,,*.xspf::,
 \ ::*.rss,,*.atom::,
 \󰩧 ::*.license,,*.lic::,
-\󰄤 ::*.cer,,*.crt,,*.csr,,*.der,,*.pem,,*.cat::,
-\󱆅 ::*.gpg,,*.pgp,,*.pub,,*.key,,*.p12,,*.pfx,,*.sec,,*.jks::,
-\󰷼 ::*.asc,,*.sig::,
-\󰌾 ::*.kdbx,,*.kdb,,*.1pux::,
-\ ::*.sum,,*.md5,,*.sha512::,
+\󰄤 ::*.cer,,*.crt,,*.csr,,*.der,,*.p12,,*.p7b,,*.p7c,,*.pem,,*.pfx::,
+\󱆅 ::*.gpg,,*.pgp,,*.ppk,,*.pub,,*.key,,*.sec,,*.jks::,
+\󰷼 ::*.sig::,
+\󱅞 ::*.bpw,,*.kdb,,*.kdbx,,*.1pux::,
+\󱨧 ::*.sum,,*.md5,,*.sha1,,*.sha256,,*.sha512::,
 \󱀰 ::*.enc,,*.age::,
 \󱊧 ::*.hex::,
+\󱀱 ::*.out::,
+\󰐱 ::*.mod::,
+\󱧉 ::*.lock::,
+\󰾵 ::*.swp::,
+\󰉹 ::*.list,,*.lst::,
+\󰆊 ::*.diff,,*.patch::,
+\󰮆 ::*.log,,*.xlog,,*.dmp,,*.dump,,*.wer,,*.history,,.*_history,,*_history::,
+\ ::*.bak,,*.old,,*.orig::,
+\󱋢 ::*.temp,,*.tmp::,
+\󰋗 ::*.help,,*.chm,,*.hxs,,*.mshi::,
+\󰋼 ::*.info,,*.nfo::,
+\ ::*.idl::,
 \󰟨 ::*.sock,,*.socket::,
 \󰟥 ::*.fifo::,
-\󰓓 ::*.vdf::,
 \󰖄 ::*.wallet::,
 \󰃭 ::*.ics,,*.ical,,*.icalendar::,
+\󰇮 ::*.email,,*.eml,,*.emlx,,*.msg::,
+\󰶍 ::*.mbox,,*.ost,,*.pst::,
 \ ::*.vcf::,
 \󰲽 ::*.service,,*.target,,*.rules::,
 \󱤥 ::*.timer::,
 \ ::*.desktop::,
+\󰓓 ::*.vdf::,
 \󰇟 ::*.mmd,,*.mermaid,,*.drawio,,*.gv::,
 \󱦹 ::*.pcx,,*.odg,,*.sketch::,
 \ ::*.fig::,
@@ -673,29 +711,20 @@ set classify+=' ::*.afm,,*.bdf,,*.eot,,*.fnt,,*.fon,,*.otf,,*.pcf,,*.pfa,,*.p
 \ ::*.iml::,
 \ ::*.sln,,*.suo,,*.csproj,,*.dbproj,,*.vbproj,,*.vcproj,,*.vcxproj,,*.vsix,,*.vsz::,
 \ ::*.net::,
-\ ::*.exe,,*.msi::,
+\ ::*.exe,,*.msi,,*.msix,,*.paf,,*.u3p::,
 \󰣖 ::*.drv,,*.sys,,*.vxd::,
 \ ::*.url,,*.webloc::,
 \ ::*.lnk::,
-\ ::*.app,,*.dmg,,*.pkg,,*.mpkg,,*.ipa::,
+\ ::*.app,,*.dmg,,*.pkg,,*.mpkg,,*.ipa::,
 \󰀲 ::*.apk,,*.aab,,*.aar,,*.apkm,,*.xapk,,*.dex::,
+\󰣨 ::*.ebuild::,
 \ ::*.crx::,
 \󰈹 ::*.xpi::'
 
-set classify+='󰒓 ::.*.conf,,*.conf,,.*.config,,*.config,,.*.cfg,,*.cfg,,.*.cnf,,*.cnf,,.*.ini,,*.ini,,*.inf,,*.properties::,
-\ ::*.dhall,,*.hcl,,*.nomad::,
-\󰫧 ::*.env,,*.env.*,,*.environment::,
-\󰮆 ::*.log,,*.xlog,,*.dmp,,*.history,,.*_history,,*_history::,
-\ ::*.bak,,*.old,,*.orig::,
+set classify+='󰆼 ::*.db,,*.dbf,,*.gdb,,*.pdb,,*.rdb,,*.sdf,,*.sqlite,,*.sqlite3,,*.sqlitedb,,*.realm,,*.mdb,,*.accdb,,*.accde,,*.accdr,,*.accdt::,
+\󰆺 ::*.dat,,*.bin,,*.cue::,
+\󱙋 ::*.sql,,*.eql::,
 \󰱿 ::*.so,,*.so.*,,*.lib,,*.dll,,*.a,,*.o,,*.dylib,,*.elf,,*.obj::,
-\󱀱 ::*.out::,
-\󱧉 ::*.lock::,
-\󰾵 ::*.swp::,
-\󰐱 ::*.mod::,
-\󰉹 ::*.list::,
-\󰆊 ::*.diff,,*.patch::,
-\󰆼 ::*.db,,*.pdb,,*.sql,,*.sqlite,,*.sqlite3,,*.sqlitedb,,*.realm,,*.mdb,,*.accdb,,*.accde,,*.accdr,,*.accdt::,
-\󰮆 ::*.dat,,*.bin,,*.cue::,
 \ ::.*.ash,,*.ash,,.*.awk,,*.awk,,.*.bash,,*.bash,,.*.csh,,*.csh,,.*.elvish,,*.elvish,,.*.fish,,*.fish,,.*.ksh,,*.ksh,,.*.mksh,,*.mksh,,.*.nu,,*.nu,,.*.pdksh,,*.pdksh,,.*.sh,,*.sh,,.*.tcsh,,*.tcsh,,.*.xsh,,*.xsh,,.*.yash,,*.yash,,.*.zsh,,*.zsh::,
 \󰨊 ::*.ps1,,*.psd1,,*.psm1,,*.bat,,*.cmd::,
 \ ::*.dockerfile::,
@@ -731,9 +760,9 @@ set classify+='󰒓 ::.*.conf,,*.conf,,.*.config,,*.config,,.*.cfg,,*.cfg,,.*.cn
 \ ::*.svelte::,
 \ ::*.astro::,
 \ ::*.prisma::,
-\ ::*.htm,,*.html,,*.xhtml,,*.wml,,*.haml,,*.cshtml,,*.asp,,*.aspx,,*.slim,,*.pug,,*.twig,,*.marko::,
-\ ::*.liquid::,
-\ ::*.njk::,
+\ ::*.htm,,*.html,,*.xhtml,,*.shtm,,*.shtml,,*.wml::,
+\󰾔 ::*.mht,,*.mhtml,,*.zim::,
+\󱜧 ::*.haml,,*.cshtml,,*.asp,,*.aspx,,*.phtm,,*.phtml,,*.slim,,*.pug,,*.twig,,*.marko,,*.liquid,,*.njk,,*.cgi::,
 \ ::*.css,,*.less::,
 \ ::*.sass,,*.scss::,
 \ ::*.styl::,
@@ -741,8 +770,8 @@ set classify+='󰒓 ::.*.conf,,*.conf,,.*.config,,*.config,,.*.cfg,,*.cfg,,.*.cn
 \ ::*.hx,,*.hxml::,
 \󱗞 ::*.mustache,,*.handlebars,,*.hbs::,
 \ ::*.c,,*.cp,,*.h,,*.inl::,
-\ ::*.c++,,*.cpp,,*.cxx,,*.cc,,*.cp,,*.hh,,*.hpp,,*.hxx,,*.cu,,*.cuh::,
-\ ::*.cs::,
+\ ::*.c++,,*.cpp,,*.cxx,,*.cc,,*.cp,,*.hh,,*.hpp,,*.hxx,,*.inl,,*.cu,,*.cuh::,
+\ ::*.cs,,*.csx::,
 \󰲒 ::*.hs,,*.lhs::,
 \󰢱 ::*.lua,,*.rock,,*.rockspec::,
 \ ::*.jl::,
@@ -750,7 +779,7 @@ set classify+='󰒓 ::.*.conf,,*.conf,,.*.config,,*.config,,.*.cfg,,*.cfg,,.*.cn
 \ ::*.zig::,
 \ ::*.dart::,
 \󱘗 ::*.rs,,*.rlib::,
-\ ::*.java,,*.jsp,,*.class,,*.jar,,*.war,,*.ear::,
+\ ::*.java,,*.jav,,*.jsp,,*.bsh,,*.class,,*.jar,,*.war,,*.ear::,
 \ ::*.scala::,
 \ ::*.groovy::,
 \󱈙 ::*.kt,,*.kts::,
@@ -766,7 +795,6 @@ set classify+='󰒓 ::.*.conf,,*.conf,,.*.config,,*.config,,.*.cfg,,*.cfg,,.*.cn
 \󰟔 ::*.r,,*.rdata,,*.rds,,*.rda::,
 \ ::*.erl,,*.hrl,,*.beam::,
 \ ::*.lisp,,*.lsp::,
-\ ::*.el::,
 \ ::*.m,,*.mlx,,*.mat,,*.slx,,*.mdl::,
 \ ::*.swift::,
 \ ::*.vb,,*.vbs,,*.vbproj::,
