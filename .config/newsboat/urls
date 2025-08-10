@@ -1,1 +1,22 @@
-https://archlinux.org/feeds/news/
+"query:Today's Articles:age between 0:1" 0_list
+"query:Week's Articles:age between 0:7" 0_list
+
+# "query:Unread Articles:unread = \"yes\"" 0_list
+
+"query:Linux Articles:tags # \"linux\" or title =~ \"Linux\"" 0_list
+"query:Vim/Neovim Articles:tags # \"vim\" or tags # \"neovim\" or title =~ \"[nN]eovim\" or title =~ \"[vV]im\"" 0_list
+
+https://archlinux.org/feeds/news/ "~Arch Linux News" arch linux
+
+https://news.ycombinator.com/rss "~Hacker News" hn
+
+https://www.reddit.com/r/linux/top/.rss?t=month "~Reddit: linux" reddit
+https://www.reddit.com/r/archlinux/top/.rss?t=month "~Reddit: archlinux" reddit
+https://www.reddit.com/r/vim/top/.rss?t=month "~Reddit: vim" reddit
+https://www.reddit.com/r/neovim/top/.rss?t=month "~Reddit: neovim" reddit
+https://www.reddit.com/r/bash/top/.rss?t=month "~Reddit: bash" reddit
+https://www.reddit.com/r/commandline/top/.rss?t=month "~Reddit: commandline" reddit
+https://www.reddit.com/r/git/top/.rss?t=month "~Reddit: git" reddit
+https://www.reddit.com/r/singularity/top/.rss?t=month "~Reddit: singularity" reddit
+
+https://benhoyt.com/writings/rss.xml Ben Hoyt
