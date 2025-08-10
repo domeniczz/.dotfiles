@@ -28,6 +28,7 @@ CVS
 ^\.stow-local-ignore$
 
 ^fcitx5$
+^keepassxc.ini$
 
 .+~          # emacs backup files
 \#.*\#       # emacs autosave files
