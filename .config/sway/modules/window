@@ -1,4 +1,4 @@
-set $popup floating enable; border pixel 3; sticky enable
+set $popup floating enable; border pixel 0; sticky enable
 set $float floating enable; border pixel 3; move position center
 set $video inhibit_idle fullscreen; border none; max_render_time off
 
@@ -11,6 +11,8 @@ for_window {
 
     # Floats
     [app_id="pavucontrol"] $float
+    [app_id="foot" title="float_window"] $float
+    [app_id="Alacritty" title="float_window"] $float
     [window_role="pop-up"] $float
     [window_role="bubble"] $float
     [window_role="dialog"] $float

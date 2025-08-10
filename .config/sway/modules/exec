@@ -5,12 +5,13 @@ exec udiskie &
 exec mako &
 exec wl-paste --watch cliphist store
 exec fcitx5 -d
+exec foot --server
 exec mkfifo /tmp/volume-wob-pipe && tail --follow /tmp/volume-wob-pipe | wob
 exec mihomo-party
 
-exec swaymsg 'workspace 2; exec $terminal'
+exec sh -c 'sleep 0.5 && swaymsg "workspace 2; exec $terminal"'
 
 # exec swayidle -w \
-#   timeout 1200 'brightnessctl set 5% -s' resume 'brightnessctl -r' \
-#   timeout 2700 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
-#   before-sleep ''
+#     timeout 1800 'brightnessctl -s set 5%' resume 'brightnessctl -r' \
+#     timeout 3000 'systemctl suspend' \
+#     before-sleep 'swaylock'

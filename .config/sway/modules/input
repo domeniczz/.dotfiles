@@ -2,6 +2,7 @@ input type:touchpad {
     # events disabled
     dwt enable
     tap enable
+    drag_lock disabled
     natural_scroll enable
     middle_emulation enable
 }
@@ -13,5 +14,6 @@ input type:pointer {
 
 input type:keyboard {
     repeat_delay 400
+    xkb_layout "us"
     xkb_options caps:escape
 }

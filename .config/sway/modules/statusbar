@@ -6,14 +6,20 @@ bar {
     workspace_buttons yes
     separator_symbol "|"
     font pango:Hack Nerd Font 9
-    status_command statusbar.sh
+    # status_command statusbar.sh
     # status_command i3status.sh
+    status_command statusbar
     colors {
         statusline #ffffff
-        background #363636
+        # background #020202cc
+        background #363636d9
+        focused_statusline #ffffff
+        # focused_background #020202cc
+        focused_background #363636d9
         focused_workspace #00658a #23658a #ffffff
         active_workspace #dc6000 #dc6000 #ffffff
         inactive_workspace #202020 #202020 #7c7e7f
         urgent_workspace #d5302a #d5302a #ffffff
+        binding_mode #326614 #326614 #ffffff
     }
 }
