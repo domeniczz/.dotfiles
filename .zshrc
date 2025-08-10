@@ -1,18 +1,18 @@
-# If not running interactively, don't do anything
 [[ $- != *i* ]] && return
-
-HISTFILE=$XDG_DATA_HOME/zsh_history
-HISTSIZE=2000
-SAVEHIST=100000
-HISTCONTROL=ignoreboth
-KEYTIMEOUT=5
-LISTMAX=200
 
 setopt prompt_subst
 setopt append_history inc_append_history share_history extended_history
 setopt hist_ignore_dups hist_ignore_all_dups hist_expire_dups_first
 setopt hist_ignore_space hist_reduce_blanks hist_verify
 setopt autocd check_jobs
+setopt extended_glob
+
+HISTFILE=$XDG_DATA_HOME/zsh_history
+HISTSIZE=2000
+SAVEHIST=100000
+HISTORY_IGNORE="(ls#( *)#|cd#( *)#|history#( *)#|[bf]g#( *)#|pwd|whoami|clear|exit)"
+KEYTIMEOUT=5
+LISTMAX=150
 
 function git_branch_info() {
     local ref=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
@@ -34,10 +34,8 @@ bindkey -v
 
 zstyle ":completion:*" menu select completer _expand _complete _ignored _approximate
 zstyle :compinstall filename "$HOME/.zshrc"
-[[ -d "$XDG_CACHE_HOME/zsh" ]] || mkdir -p "$XDG_CACHE_HOME/zsh"
 autoload -Uz compinit; compinit -d "$XDG_CACHE_HOME/zcompdump"
 
-# Automaticly escape special characters in URLs when typing or pasting
 autoload -Uz url-quote-magic
 zle -N self-insert url-quote-magic
 autoload -Uz bracketed-paste-magic
@@ -47,8 +45,9 @@ zle -N bracketed-paste bracketed-paste-magic
 # source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
 # source "$ZSH_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-source '/usr/share/zsh-antidote/antidote.zsh'
-antidote load ${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}/zsh_plugins.txt
+[[ -f /usr/share/zsh-antidote/antidote.zsh ]] && \
+    source /usr/share/zsh-antidote/antidote.zsh && \
+    antidote load ${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}/zsh_plugins.txt
 
 # Create a zkbd compatible hash for terminfo key mapping
 typeset -g -A key
