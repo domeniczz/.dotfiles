@@ -1,14 +1,23 @@
+export LESS="--wordwrap --RAW-CONTROL-CHARS --incsearch --ignore-case --search-options=W --file-size --use-color --HILITE-UNREAD --status-column --mouse --wheel-lines=2 --quiet"
+export LESSCHARSET=utf-8
+
+eval "$(fzf --$(ps -p $$ -o comm=))"
+eval "$(zoxide init $(ps -p $$ -o comm=))"
+# eval $(thefuck --alias)
+# eval $(thefuck --alias fk)
+# eval "$(starship init $(ps -p $$ -o comm=))"
+
 # Attach to tmux only when not attached yet
-if command -v tmux &>/dev/null && [[ -z "$TMUX" ]]; then
-    if ! tmux has-session -t general 2>/dev/null; then
+if command -v tmux >/dev/null 2>&1 && [[ -z "$TMUX" ]]; then
+    if ! tmux ls &> /dev/null; then
         tmux new-session -s general
-    elif [[ -z "$(tmux list-clients -t general 2>/dev/null)" ]]; then
-        tmux attach-session -t general
+    else
+        if [[ -z "$(tmux list-clients)" ]]; then
+            tmux attach-session
+        fi
     fi
 fi
 
-# Setup fzf keybinding and fuzzy completion
-eval "$(fzf --$(ps -p $$ -o comm=))"
 if command -v fd >/dev/null 2>&1; then
     export FZF_DEFAULT_COMMAND="command fd --type file --hidden --exclude .git --exclude node_modules --exclude .venv"
     export FZF_ALT_C_COMMAND="command fd --type directory --hidden --exclude .git --exclude node_modules --exclude .venv"
@@ -17,23 +26,21 @@ elif command -v find >/dev/null 2>&1; then
     export FZF_ALT_C_COMMAND="command find -type d ! -path '*/\.*git*' ! -path '*/\.venv*' ! -path '*/node_modules*'"
 fi
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_CTRL_T_OPTS="--reverse --height=60% --preview 'command bat --line-range :500 {}' --walker-skip .git,node_modules"
+export FZF_CTRL_T_OPTS="--reverse --height=60% --preview 'command bat --line-range :200 {}' --walker-skip .git,node_modules"
 export FZF_CTRL_R_OPTS="--reverse --height 25% --scroll-off=0 --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'"
 export FZF_ALT_C_OPTS="--reverse --height=60% --preview 'command tree -C -L1 {} | head -200'"
-# Advanced customization
 # - The first argument to the function is the name of the command.
 # - You should make sure to pass the rest of the arguments to fzf.
 _fzf_comprun() {
     local command=$1
     shift
     case "$command" in
-        cd)           fzf --preview 'command eza --tree --level=2 --color=always {} | head -200' "$@" ;;
-        export|unset) fzf --preview "eval 'echo $'{}"         "$@" ;;
-        ssh)          fzf --preview 'dig {}'                   "$@" ;;
+        cd)           fzf --preview "command eza --tree --level=2 --color=always {} | head -200" "$@" ;;
+        export|unset) fzf --preview "eval 'echo $'{}" "$@" ;;
+        ssh)          fzf --preview "dig {}" "$@" ;;
         *)            fzf --preview "command bat --line-range :200 {}" "$@" ;;
     esac
 }
-# Searching Git objects
 # Repo: https://github.com/junegunn/fzf-git.sh
 # - CTRL-G-F for Files
 # - CTRL-G-B for Branches
@@ -45,11 +52,6 @@ _fzf_comprun() {
 # - CTRL-G-W for Worktrees
 # - CTRL-G-E for Each ref (git for-each-ref)
 # [[ -f $HOME/Clones/fzf-git.sh/fzf-git.sh ]] && source $HOME/Clones/fzf-git.sh/fzf-git.sh
-
-# eval $(thefuck --alias)
-# eval $(thefuck --alias fk)
-eval "$(zoxide init $(ps -p $$ -o comm=))"
-# eval "$(starship init $(ps -p $$ -o comm=))"
 
 function condainit() {
     local CONDA_BASE="$HOME/Programs"
@@ -66,9 +68,8 @@ function condainit() {
 }
 
 function nvminit() {
-    export NVM_DIR="$HOME/.nvm"
-    [[ -s "$NVM_DIR/nvm.sh" ]] && \. "$NVM_DIR/nvm.sh"
-    [[ -s "$NVM_DIR/bash_completion" ]] && \. "$NVM_DIR/bash_completion"
+    export NVM_DIR="$XDG_DATA_HOME/nvm"
+    [[ -f "/usr/share/nvm/init-nvm.sh" ]] && source /usr/share/nvm/init-nvm.sh
 }
 
 # Change current working directory when exiting Yazi

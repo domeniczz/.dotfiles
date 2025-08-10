@@ -1,12 +1,14 @@
-alias update="sudo pacman -Sy --needed archlinux-keyring && sudo pacman -Syu && yay -Sua"
 alias vi="nvim"
+alias update="sudo pacman -Sy --needed archlinux-keyring && sudo pacman -Syu && yay -Sua"
 alias grep="command grep --color=auto"
 alias rm="command rm -I"
 alias python="python3"
 alias tmuxa="tmux new-session -A -s general"
-alias ls="command eza --group-directories-first --color=always --git --git-repos-no-status --long"
+alias ls="command eza --group-directories-first --classify --color=always --git --git-repos-no-status --long"
 alias cd="z"
-alias cat="command bat --plain --paging=never --wrap=never --color=auto"
+alias cat="command bat --plain --color=auto"
+
+alias mpvyt="command mpv --profile=yt"
 
 alias ..="cd .."
 alias ...="cd ../.."
@@ -22,8 +24,9 @@ alias du="command du --human-readable"
 alias dU="command du --human-readable --max-depth=1 | command sort --human-numeric-sort --reverse"
 alias df="command df --human-readable --exclude-type=tmpfs --exclude-type=efivarfs --exclude-type=devtmpfs"
 alias lsblk="command lsblk --output name,mountpoints,type,size"
-alias free="command free --human"
+alias free="command free --human --total"
 alias smem="sudo smem --totals --abbreviate --reverse"
+alias clearmem="echo 3 | sudo tee /proc/sys/vm/drop_caches"
 
 alias suspend="systemctl suspend"
 alias hibernate="systemctl hibernate"
@@ -34,30 +37,30 @@ alias reboot="systemctl reboot"
 alias myip="ip address | command grep --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
 
 alias ftr="realpath --quiet * | fzf --prompt='ftree ❯ ' --preview 'command tree -C -L1 {}' --reverse --height 60%"
-alias fman="man -k . | awk -F' - ' '{print $1}' | fzf --prompt='man page ❯ ' --bind='enter:execute(man {1})' --reverse --height 60%"
 alias fvi="fzf --prompt='nvim open ❯ ' --preview 'command bat --number --color=always --line-range :500 {}' --bind='enter:execute(nvim {+})' --reverse --height 80%"
+alias fman="man -k . | awk -F' - ' '{print $1}' | fzf --prompt='man page ❯ ' --bind='enter:execute(man {1})' --reverse --height 60%"
+alias ftldr="tldr --list --quiet | fzf --prompt='tldr ❯ ' --bind='enter:execute(tldr --no-raw --no-compact --short-options --long-options --color=always --quiet {} | less)' --preview 'tldr --no-raw --compact --short-options --long-options --color=always --quiet {}' --reverse --height 60%"
 alias fgl="git log | grep '^commit ' | command cut -d' ' -f2 | fzf --prompt='git commit ❯ ' --preview 'git show {} | command bat --number --color=always --language=diff --theme=base16' --bind 'enter:execute(git show {} | command delta | command less --RAW-CONTROL-CHARS)' --reverse --height 80%"
 alias fglf="fzf --prompt='git file hist ❯ ' --preview 'git log --follow -p {} | command bat --number --color=always --language=diff --theme=base16' --bind 'enter:execute(git log --follow -p {} | command delta | command less --RAW-CONTROL-CHARS)' --reverse --height 80%"
-alias fpi="pacman -Qq | fzf --prompt='package info ❯ ' --preview 'pacman -Qi {}' --reverse --height 60%"
-alias fpc="pacman -Qq | fzf --prompt='package cache ❯ ' --preview 'command ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst' --reverse --height 60%"
-alias fps="pacman -Ssq | fzf --prompt='package search ❯ ' --preview 'pacman -Si {}' --bind='enter:become(echo {+} && sudo pacman -S {+})' --reverse --height 60%"
-alias fys="yay -Slaq | fzf --prompt='aur package search ❯ ' --preview 'yay -Si {}' --bind='enter:become(echo {+} && yay -S {+})' --reverse --height 60%"
 
-function ramu() {
-    if (( $# == 0 )); then
-        ps -axo rss | awk 'NR>1 {sum+=$1} END {printf "Total RAM usage: %d MB\n", sum/1024}'
-    else
-        processes=$(printf "%s|" "$@" | sed 's/|$//')
-        ps -axo rss,command | command grep -iE "$processes" | command grep -v grep | awk '{sum+=$1} END {printf "Total RAM usage: %d MB\n", sum/1024}'
-    fi
+function fpi() {
+    pacman -Qq | fzf --prompt="package info ❯ " --preview "pacman -Qi {}" --preview-window "70%,wrap" --reverse --height 60% --query="$1"
+}
+
+function fpc() {
+    pacman -Qq | fzf --prompt='package cache ❯ ' --preview 'command ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst' --reverse --height 60% --query="$1"
+}
+
+function fps() {
+    pacman -Ssq | fzf --prompt="package search ❯ " --preview "pacman -Si {}" --bind="enter:become(echo {+} && sudo pacman -S {+})" --preview-window "70%,wrap" --reverse --height 60% --query="$1"
+}
+
+function fas() {
+    yay -Slaq | fzf --prompt="aur package search ❯ " --preview "yay -Si {}" --bind="enter:become(echo {+} && yay -S {+})" --preview-window "70%,wrap" --reverse --height 60% --query="$1"
 }
 
 alias rmpkgcache="sudo paccache -vruk0 && sudo paccache -vrk2"
-
-function rmorphan() {
-    orphans=$(pacman -Qdtq)
-    [[ -n "$orphans" ]] && sudo pacman -Rns $orphans
-}
+alias rmorphan="pacman -Qdtq | xargs -r -o sudo pacman -Rns"
 
 function als() {
     local cmd=$(alias | sed "s/^alias //" | fzf --prompt="alias ❯ " --preview "echo {}" --reverse --height 25% | awk -F'=' '{print $2}' | tr -d "'")
