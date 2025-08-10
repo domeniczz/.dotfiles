@@ -1,10 +1,15 @@
 gg https://www.google.com
-sp https://www.startpage.com
-gh https://github.com
+disroot https://search.disroot.org
+
+github https://github.com
+codeberg https://codeberg.org
+
+wikipedia https://www.wikipedia.org
 aw https://wiki.archlinux.org/title/Main_page
 
-keep https://keep.google.com/u/0/#home
-ggm https://mail.google.com/mail/u/0/#inbox
+keep https://keep.google.com
+ggm https://mail.google.com
+ppm https://mail.proton.me
 
 yt https://www.youtube.com
 ytm https://music.youtube.com
@@ -13,11 +18,19 @@ reddit https://www.reddit.com
 twitter https://x.com/home
 hn https://news.ycombinator.com
 
+lc https://leetcode.com
+
 tr https://translate.google.com
 dl https://www.deepl.com/en/translator
+ktr https://translate.kagi.com
 
 chatgpt https://chatgpt.com
 claude https://claude.ai
-gemini https://gemini.google.com/app
+gemini https://gemini.google.com
 grok https://grok.com
 deepseek https://chat.deepseek.com
+
+wayback https://web.archive.org
+archive https://archive.today
+
+sync http://127.0.0.1:8384
