@@ -92,9 +92,14 @@ if (( FZF_SEARCH == 1 )); then
     fi
     PROGRAM=$(
         {
-            fd . /usr/bin --color=never --format="{/}";
-            fd . ~/.local/bin ~/.bin --color=never --format="{/}";
-        } | fzf --prompt="$FZF_PROMPT" --border=none
+            if command -v fd >/dev/null 2>&1; then
+                fd . /usr/bin --type x --follow --color=never --format="{/}" 2>/dev/null || true;
+                fd . ~/.local/bin ~/.bin --type x --follow --color=never --format="{/}" 2>/dev/null | sed 's/^/\x1b[33m/; s/$/\x1b[0m/' || true;
+            else
+                find /usr/bin -type f -follow -perm /111 -printf '%f\n' 2>/dev/null || true;
+                find ~/.local/bin ~/.bin -type f -follow -perm /111 -printf '%f\n' 2>/dev/null | sed 's/^/\x1b[33m/; s/$/\x1b[0m/' || true;
+            fi
+        } | fzf --ansi --prompt="$FZF_PROMPT" --border=none | sed 's/\x1b\[[0-9;]*m//g'
     ) || exit 0
 fi
 
