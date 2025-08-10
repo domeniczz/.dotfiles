@@ -1,21 +1,27 @@
 $include /etc/inputrc
 
 set editing-mode vi
+set keymap vi-insert
 
 "\e[A": history-search-backward
 "\e[B": history-search-forward
 
+Control-n: menu-complete
+Control-p: menu-complete-backward
+
 set completion-ignore-case on
+set completion-map-case on
+set completion-query-items 150
 set colored-completion-prefix on
 set menu-complete-display-prefix on
-set show-all-if-ambiguous on
 set colored-stats on
 set visible-stats on
-set mark-symlinked-directories on
+set show-all-if-ambiguous on
 set show-all-if-unmodified on
-set completion-map-case on
+set mark-symlinked-directories on
+set enable-bracketed-paste off
 set keyseq-timeout 5
 
 set show-mode-in-prompt on
-set vi-ins-mode-string "\1\e[2 q\2"
-set vi-cmd-mode-string "\1\e[4 q\2"
+set vi-ins-mode-string "\1\e[6 q\2"
+set vi-cmd-mode-string "\1\e[2 q\2"
