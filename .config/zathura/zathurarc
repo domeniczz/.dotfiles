@@ -2,82 +2,148 @@
 # Options
 # ------------------------------------------------------------------------------
 
-set font "Roboto 9"
-set statusbar-home-tilde true
+set font "Hack Nerd Font 9"
+
 set window-title-basename true
+set window-title-home-tilde true
+set statusbar-home-tilde true
+set statusbar-page-percent true
+
+set selection-clipboard "clipboard"
+set selection-notification false
+set highlighter-modifier "shift"
+
+set show-recent 15
+set show-directories true
+set n-completion-items 20
+
 set incremental-search true
+set nohlsearch false
+
 set scroll-wrap false
-set sandbox none
 
-# copy selection to system clipboard
-set selection-clipboard clipboard
-
-# enable incremental search
-set incremental-search true
-
-set smooth-scroll "true"
-
-# Recolor (dark mode)
-set recolor-darkcolor "#FFFFFF"
-set recolor-lightcolor "#000000"
-map <C-r> recolor
-
+set open-first-page false
 set adjust-open "best-fit"
-# View odd pages on the left side
 set first-page-column "1:1"
+set page-right-to-left false
 set pages-per-row 2
-set recolor false
+set page-padding 0
+set page-cache-size 20
 
-# Synctex (Ctrl + leftclick on pdf to go to relative place in latex source code in neovim)
+set jumplist-size 1000
+
+set database sqlite
+
 set synctex true
+set synctex-edit-modifier "ctrl"
 set synctex-editor-command "nvim --headless -c \"VimtexInverseSearch %{line} '%{input}'\""
+
+set guioptions "sv"
+
+set recolor false
+set recolor-keephue true
+set recolor-reverse-video false
 
 # ------------------------------------------------------------------------------
 # Mappings
 # ------------------------------------------------------------------------------
 
-map u reload
+map [normal] + zoom in
+map [normal] - zoom out
+map [normal] _ zoom out
+map [normal] = zoom original
+map [normal] <C-=> zoom in
+map [normal] <C--> zoom out
+map [normal] <C-0> zoom original
+map [normal] j scroll down
+map [normal] k scroll up
+map [normal] J navigate next
+map [normal] K navigate previous
+map [normal] r rotate rotate-cw
+map [normal] R rotate rotate-ccw
+map [normal] d toggle_page_mode
+map [normal] <C-o> jumplist backward
+map [normal] <C-i> jumplist forward
+map [normal] f follow
+map [normal] <C-r> recolor
+map [normal] <A-D> recolor
+map [normal] <C-n> toggle_statusbar
+map [normal] <C-m> toggle_inputbar
+map [normal] u reload
+map [normal] q quit
+map [normal] Q quit
 
-map = zoom in
-map - zoom out
-map <C-0> zoom original
+map [normal] <F11> toggle_fullscreen
+map [fullscreen] + zoom in
+map [fullscreen] - zoom out
+map [fullscreen] _ zoom out
+map [fullscreen] = zoom original
+map [fullscreen] <C-=> zoom in
+map [fullscreen] <C--> zoom out
+map [fullscreen] <C-0> zoom original
+map [fullscreen] j scroll down
+map [fullscreen] k scroll up
+map [fullscreen] J navigate next
+map [fullscreen] K navigate previous
+map [fullscreen] r rotate rotate-cw
+map [fullscreen] R rotate rotate-ccw
+map [fullscreen] d toggle_page_mode
+map [fullscreen] <C-o> jumplist backward
+map [fullscreen] <C-i> jumplist forward
+map [fullscreen] f follow
+map [fullscreen] <C-r> recolor
+map [fullscreen] <A-D> recolor
+map [fullscreen] <C-n> toggle_statusbar
+map [fullscreen] <C-m> toggle_inputbar
+map [fullscreen] u reload
+map [fullscreen] q quit
+map [fullscreen] Q quit
 
-# Adjust window
-map a adjust_window best-fit
-map s adjust_window width
-
-# Index mode
-map i toggle_index
+map [normal] i toggle_index
+map [fullscreen] i toggle_index
+map [index] i toggle_index
 map [index] q toggle_index
 map [index] n navigate_index down
-map [index] <C-n> navigate_index down
 map [index] p navigate_index up
-map [index] <C-p> navigate_index up
+map [index] l navigate_index expand
+map [index] h navigate_index collapse
+map [index] L navigate_index expand-all
+map [index] H navigate_index collapse-all
 map [index] zo navigate_index expand
 map [index] zc navigate_index collapse
-map [index] zm navigate_index collapse-all
 map [index] zr navigate_index expand-all
+map [index] zm navigate_index collapse-all
 
-# Rotate pages
-map r rotate rotate-cw
-map R rotate rotate-ccw
-
-# Toggle between one and multiple pages per row
-map d toggle_page_mode
-
-# Link following
-map f follow
-map F set show_link_destination true
-
-map <C-r> recolor
+map [normal] <F5> toggle_presentation
+map [presentation] j navigate next
+map [presentation] k navigate previous
 
 # ------------------------------------------------------------------------------
 # Colors
 # ------------------------------------------------------------------------------
 
-# Transparent background
 set default-bg rgba(0,0,0,0.8)
-set recolor-lightcolor rgba(0,0,0,0)
-# Highlight color
-set highlight-color "rgba(229,192,123,0.3)"
-set highlight-active-color "rgba(229,192,123,0.3)"
+
+set highlight-color "rgba(229,192,123,0.5)"
+set highlight-active-color "rgba(229,192,123,0.5)"
+
+set recolor-darkcolor "#ffffff"
+set recolor-lightcolor "#1e1e1e"
+
+set inputbar-bg "#333333"
+set inputbar-fg "#ffffff"
+
+set statusbar-bg "#333333"
+set statusbar-fg "#ffffff"
+
+set completion-bg "rgba(0,0,0,0)"
+set completion-fg "#ffffff"
+set completion-group-bg "#333333"
+set completion-group-fg "#ffffff"
+set completion-highlight-bg "#f0a000"
+set completion-highlight-fg "#000000"
+
+set index-bg "rgba(0,0,0,0)"
+set index-fg "#ffffff"
+set index-active-bg "#f0a000"
+set index-active-fg "#000000"
