@@ -1,10 +1,4 @@
-# If not running interactively, don't do anything
 [[ $- != *i* ]] && return
-
-HISTSIZE=2000
-HISTFILESIZE=100000
-HISTFILE=$XDG_DATA_HOME/.bash_history
-HISTCONTROL=ignoreboth
 
 shopt -s histappend
 shopt -s histverify
@@ -15,6 +9,13 @@ shopt -s globstar
 shopt -s checkwinsize
 shopt -s checkjobs
 shopt -s direxpand
+shopt -s extglob
+
+HISTFILE=$XDG_DATA_HOME/bash_history
+HISTSIZE=2000
+HISTFILESIZE=100000
+HISTCONTROL=ignoreboth
+HISTIGNORE="ls?(\ *):cd?(\ *):history?(\ *):[bf]g?(\ *):pwd:whoami:clear:exit"
 
 function git_branch_info {
     local ref=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
@@ -44,9 +45,8 @@ PROMPT_COMMAND=prompt_command
 
 ((INCOGNITO == 1)) && history -r && HISTFILE=/dev/null
 
-set -o vi
-
-source /usr/share/bash-completion/bash_completion
+[[ -f /usr/share/bash-completion/bash_completion ]] && \
+    source /usr/share/bash-completion/bash_completion
 
 source $XDG_CONFIG_HOME/shell/shellrc
 source $XDG_CONFIG_HOME/shell/alias
