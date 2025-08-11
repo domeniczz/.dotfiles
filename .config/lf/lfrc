@@ -13,16 +13,18 @@ set relativenumber
 set scrolloff 4
 set wrapscroll false
 set ratios '1:3:4'
+set icons true
 
 map Q :quit
-map D :delete
+map dd :trash
+map DD :delete
 map s shell
-# show the result of execution of previous commands
 map ` !true
 map m
-map mk :mkdir
 map f
+map mk :mkdir
 map ft :touch
+map i rename
 
 cmd trash %set -f; trash $fx
 
