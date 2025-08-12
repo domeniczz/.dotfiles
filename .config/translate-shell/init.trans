@@ -1,0 +1,10 @@
+{
+ :interactive     true
+ :verbose         true
+ :show-original   true
+ :view            true
+ :indent          4
+ :hl              "en"
+ :tl              ["zh-CN" "en"]
+ :engine          "google"
+}

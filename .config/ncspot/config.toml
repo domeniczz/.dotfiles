@@ -1,0 +1,26 @@
+use_nerdfont = true
+initial_screen = "library"
+volnorm = true
+notify = false
+shuffle = true
+repeat = "off"
+
+[keybindings]
+"F1" = "focus queue"
+"F2" = "focus search"
+"F3" = "focus library"
+"F4" = "focus cover"
+"Esc" = "back"
+"h" = "back"
+"l" = "open selected"
+"Ctrl+d" = "move down 20"
+"Ctrl+u" = "move up 20"
+"g" = "move top"
+"G" = "move bottom"
+"Shift+h" = "move left 1"
+"Shift+l" = "move right 1"
+"Space" = "playpause"
+"Ctrl+n" = "next"
+"Ctrl+p" = "previous"
+"t" = "playnext; move down 1"
+"Shift+q" = "quit"
