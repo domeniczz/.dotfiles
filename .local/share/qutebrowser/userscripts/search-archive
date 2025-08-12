@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+current_url="$QUTE_URL"
+
+archive_url="https://archive.today/newest/$current_url"
+
+echo "open $archive_url" >> "$QUTE_FIFO"
