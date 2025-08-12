@@ -1,3 +1,5 @@
 --theme=tokyonight_night
 --color=always
 --style=numbers
+--wrap=never
+--tabs=4
