@@ -12,14 +12,13 @@ export LC_ALL=C
 declare -gr INCLUDED_DIRS=(
     "/home"
     "/etc"
-    "/opt"
-    "/usr"
     "/var"
+    "/srv"
+    "/usr"
+    "/opt"
 )
 
 declare -gr EXCLUDED_DIRS_FD=(
-    "/proc"
-    "/sys"
     ".git"
     ".venv"
     "node_modules"
@@ -30,31 +29,39 @@ declare -gr EXCLUDED_DIRS_FD=(
 )
 
 declare -gr EXCLUDED_DIRS_FIND=(
-    "/proc"
-    "/sys"
     "*/\.git*"
     "*/\.venv*"
     "*/node_modules*"
     "*/__pycache__*"
     "*/\.cache/go*"
-    "*/\.cache/go-build*"
     "*/\.local/share/Trash*"
+)
+
+declare -gA OPENER_CONFIG=(
+    ["directory"]="tui:${FILE_MANAGER:-vifm}:single"
+    ["text"]="tui:nvim:batch"
+    ["document"]="gui:zathura:batch"
+    ["office"]="gui:libreoffice:batch"
+    ["image"]="gui:imv:batch"
+    ["video"]="gui:mpv:batch"
+    ["audio"]="gui:mpv:batch"
+    ["other"]="gui:xdg-open:single"
 )
 
 declare -gr INDEX_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/search"
 declare -gr INDEX_FILE="$INDEX_DIR/index"
 declare -gr PLAIN_INDEX_FILE="$INDEX_DIR/plain_index"
-declare -gr TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/search_XXXXXX")"
+declare -gr TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/search_XXXXXXXXXX")"
 declare -gr LOCK_FILE="${TMPDIR:-/tmp}/search.lock"
 
-declare -gr EXPLORER="${FILE_MANAGER:-vifm}"
-
 declare -g ENABLE_COLORS=1
+declare -g ENABLE_SINGLETON=1
 
 declare -g FIND_CMD=""
 
 declare -g NEEDS_INDEX_REBUILD=0
 declare -g FORCE_INDEX_REBUILD=0
+declare -g INDEX_ALL=0
 
 declare -g SEARCH_QUERY=""
 
@@ -78,8 +85,6 @@ else
     exit 1
 fi
 
-declare -gr SED="sed --posix"
-
 # ------------------------------------------------------------------------------
 # Parse arguments
 # ------------------------------------------------------------------------------
@@ -89,13 +94,16 @@ function print_usage() {
 Usage: search [OPTIONS]
 
 Search through the whole system with persistent index and perform actions
-(preview, open, delete) using an interactive fuzzy finder interface.
+(preview, open, delete) using an interactive fuzzy finder interface
 
 OPTIONS:
     -s, --search     Search query
     -c, --color      Enable colored output (default)
     -nc, --nocolor   Disable colored output
     -r, --rebuild    Force rebuild of the search index
+    -a, --all        Index literally all files
+    -o, --singleton  Run only one instance of the script
+    -m, --multi      Run multiple instances of the script
     -h, --help       Show this help message and exit
 
 INTERACTIVE KEYS:
@@ -111,28 +119,14 @@ EXAMPLES:
 EOF
 }
 
+ACTION_MODE=""
+ACTION_ITEMS=()
+
 while (( $# > 0 )); do
     case $1 in
         --)
             shift
             break
-            ;;
-        --color|-c)
-            ENABLE_COLORS=1
-            shift
-            ;;
-        --nocolor|-nc)
-            ENABLE_COLORS=0
-            shift
-            ;;
-        --rebuild|-r)
-            FORCE_INDEX_REBUILD=1
-            shift
-            ;;
-        --help|-h)
-            print_usage
-            exit 0
-            shift
             ;;
         --search=*|-s=*)
             SEARCH_QUERY="${1#*=}"
@@ -148,261 +142,68 @@ while (( $# > 0 )); do
                 exit 1
             fi
             ;;
+        --color|-c)
+            ENABLE_COLORS=1
+            shift
+            ;;
+        --nocolor|-nc)
+            ENABLE_COLORS=0
+            shift
+            ;;
+        --rebuild|-r)
+            FORCE_INDEX_REBUILD=1
+            shift
+            ;;
+        --all|-a)
+            INDEX_ALL=1
+            shift
+            ;;
+        --singleton|-o)
+            ENABLE_SINGLETON=1
+            shift
+            ;;
+        --multi|-m)
+            ENABLE_SINGLETON=0
+            shift
+            ;;
+        --help|-h)
+            print_usage
+            exit 0
+            shift
+            ;;
+        --action-rebuild)
+            ACTION_MODE="rebuild"
+            shift
+            ;;
+        --action-open)
+            ACTION_MODE="open"
+            shift
+            while (( $# > 0 )) && [[ "$1" != --* ]]; do
+                ACTION_ITEMS+=("$1")
+                shift
+            done
+            ;;
+        --action-open-parent)
+            ACTION_MODE="open-parent"
+            shift
+            while (( $# > 0 )) && [[ "$1" != --* ]]; do
+                ACTION_ITEMS+=("$1")
+                shift
+            done
+            ;;
+        --action-delete)
+            ACTION_MODE="delete"
+            shift
+            while (( $# > 0 )) && [[ "$1" != --* ]]; do
+                ACTION_ITEMS+=("$1")
+                shift
+            done
+            ;;
         *)
             shift
             ;;
     esac
 done
-
-# ------------------------------------------------------------------------------
-# Open item
-# ------------------------------------------------------------------------------
-
-function open_item() {
-    local item="$(parse_item "$1")" || return 0
-    local escaped_item=$(printf '%q' "$item")
-
-    if [[ -d "$item" ]]; then
-        tui_open "$EXPLORER $escaped_item"
-        return 0
-    fi
-
-    local mime_type=$(file --brief --mime-type "$item" || echo "unknown")
-    case "$mime_type" in
-        text/*)
-            tui_open "nvim $escaped_item"
-            ;;
-        application/json|application/xml|application/x-tex|application/toml|application/x-yaml)
-            tui_open "nvim $escaped_item"
-            ;;
-        application/javascript|application/x-sh|application/x-shellscript)
-            tui_open "nvim $escaped_item"
-            ;;
-        application/pdf|application/epub+zip)
-            if has_gui; then
-                gui_open "zathura $escaped_item"
-            else
-                tui_open "echo 'Loading file content...' && pdftotext $escaped_item - | less"
-            fi
-            ;;
-        inode/x-empty|application/x-empty|application/x-zerosize)
-            tui_open "nvim $escaped_item"
-            ;;
-        *)
-            if has_gui; then
-                gui_open "xdg-open $escaped_item"
-            else
-                echo "No gui support detected."
-                read -r -p "Open in $EXPLORER? (y/n): " confirm
-                if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
-                    open_parent_directory "$item"
-                fi
-            fi
-            ;;
-    esac
-}
-
-function open_parent_directory() {
-    local item="$(parse_item "$1")" || return 0
-    local escaped_item=$(printf '%q' "$item")
-
-    if [[ -d "$item" ]]; then
-        tui_open "$EXPLORER $escaped_item"
-    else
-        local parent_dir="${item%/*}"
-        tui_open "$EXPLORER $(printf '%q' "${parent_dir:-/}")"
-    fi
-}
-
-function parse_item() {
-    local item="$1"
-
-    if [[ ! -e "$item" && ! -L "$item" ]]; then
-        echo "Error: File or directory no longer exists: $item" >&2
-        read -r -p "Remove from index? (y/n): " confirm
-        if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
-            remove_from_index "$item" >&2
-            echo "Item removed from index." >&2
-            read -r -p "Press Enter to continue..." >&2
-        fi
-        return 1
-    fi
-
-    if [[ -L "$item" ]]; then
-        local target="$(readlink -f "$item")"
-        if [[ ! -e "$target" ]]; then
-            echo "Error: Symlink target does not exist: $item -> $target" >&2
-            read -r -p "Remove broken symlink? (y/n): " confirm
-            if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
-                delete_items "$item" >&2
-                echo "Item removed." >&2
-                read -r -p "Press Enter to continue..." >&2
-            fi
-            return 1
-        fi
-        echo "$target"
-        return 0
-    fi
-
-    echo "$item"
-    return 0
-}
-
-function gui_open() {
-    local cmd="$1"
-
-    if ! check_command_string "$cmd"; then
-        read -r -p "Press Enter to continue..."
-        return 0
-    fi
-
-    { LC_ALL="" sh -c "$cmd" >/dev/null 2>&1 & } || true
-}
-
-function tui_open() {
-    local cmd="$1"
-
-    if ! check_command_string "$cmd"; then
-        read -r -p "Press Enter to continue..."
-        return 0
-    fi
-
-    if [[ -n "${TMUX:-}" ]]; then
-        read -r win_name _ <<< "$cmd"
-        LC_ALL="" tmux new-window "$cmd"
-    elif [[ -n "${STY:-}" ]]; then
-        read -r win_name _ <<< "$cmd"
-        LC_ALL="" screen -S "$STY" -X screen "$cmd"
-    else
-        LC_ALL="" sh -c "$cmd"
-    fi
-}
-
-# ------------------------------------------------------------------------------
-# Remove item
-# ------------------------------------------------------------------------------
-
-function delete_items() {
-    (( $# == 0 )) && return 0
-
-    echo "Do you want to delete the following $# item(s)?"
-    printf "  - %s\n" "$@"
-
-    local confirm
-    read -r -p "Proceed with deletion? (y/n): " confirm
-
-    if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
-        local to_remove=()
-        local dirs_to_delete=()
-        local files_to_delete=()
-
-        for item in "$@"; do
-            if [[ ! -e "$item" ]]; then
-                echo "Warning: $item no longer exists, removing from index only."
-                to_remove+=("$item")
-            elif [[ -d "$item" && ! -L "$item" ]]; then
-                dirs_to_delete+=("$item")
-                to_remove+=("$item")
-                local nested=$(find_nested_entries "$item")
-                [[ -n "$nested" ]] && while IFS= read -r entry; do
-                    to_remove+=("$entry")
-                done <<< "$nested"
-            else
-                files_to_delete+=("$item")
-                to_remove+=("$item")
-            fi
-        done
-
-        echo "Removing files/directories..."
-        (( ${#files_to_delete[@]} > 0 )) && rm -f "${files_to_delete[@]}"
-        (( ${#dirs_to_delete[@]} > 0 )) && rm -rf "${dirs_to_delete[@]}"
-
-        if (( ${#to_remove[@]} > 0 )); then
-            local lines_before=$(wc -l < "$INDEX_FILE")
-            echo "Updating index..."
-            remove_from_index "${to_remove[@]}"
-            local lines_after=$(wc -l < "$INDEX_FILE")
-            if (( lines_before == lines_after )); then
-                echo "Nothing to update in index."
-            else
-                echo "Index updated."
-            fi
-            echo "Deletion completed."
-        fi
-
-        read -r -p "Press Enter to continue..."
-    else
-        echo "Deletion cancelled."
-    fi
-}
-
-function regex_escaping() {
-    local str="$1"
-    str="${str//\\/\\\\}"
-    str="${str//./\\.}"
-    str="${str//\*/\\*}"
-    str="${str//\[/\\[}"
-    str="${str//\]/\\]}"
-    str="${str//^/\\^}"
-    str="${str//\$/\\$}"
-    echo "$str"
-}
-
-function find_nested_entries() {
-    local dir="$1"
-    [[ "$dir" != */ ]] && dir="${dir}/"
-
-    local index=$(((ENABLE_COLORS == 0)) && echo "$INDEX_FILE" || echo "$PLAIN_INDEX_FILE")
-    local escaped_dir=$(regex_escaping "$dir")
-    $GREP --color=never "^$escaped_dir" "$index" || true
-}
-
-function remove_from_index() {
-    (( $# == 0 )) && return 0
-
-    local tmp_index_file="$TMP_DIR/index_filtered"
-    local tmp_plain_index_file="$TMP_DIR/plain_index_filtered"
-    local exclude_file="$TMP_DIR/exclude_list"
-
-    printf "%s\n" "$@" > "$exclude_file"
-
-    if (( ENABLE_COLORS == 0 )); then
-        if (( $# < 5000 )); then
-            $GREP --invert-match --fixed-strings --line-regexp --file "$exclude_file" "$INDEX_FILE" > "$tmp_index_file"
-        else
-            $AWK -v exclude_file="$exclude_file" '
-            BEGIN {
-                while ((getline line < exclude_file) > 0) {
-                    exclude[line] = 1
-                }
-                close(exclude_file)
-            }
-            !($0 in exclude)
-            ' "$INDEX_FILE" > "$tmp_index_file"
-        fi
-
-        mv "$tmp_index_file" "$INDEX_FILE"
-    else
-        $AWK -v exclude_file="$exclude_file" -v colored_file="$INDEX_FILE" '
-        BEGIN {
-            while ((getline line < exclude_file) > 0) {
-                exclude[line] = 1
-            }
-            close(exclude_file)
-        }
-        {
-            if ((getline colored < colored_file) > 0) {
-                if (!($0 in exclude)) {
-                    print $0 > "'$tmp_plain_index_file'"
-                    print colored > "'$tmp_index_file'"
-                }
-            }
-        }' "$PLAIN_INDEX_FILE"
-
-        mv "$tmp_index_file" "$INDEX_FILE"
-        mv "$tmp_plain_index_file" "$PLAIN_INDEX_FILE"
-    fi
-}
 
 # ------------------------------------------------------------------------------
 # Build index
@@ -411,8 +212,6 @@ function remove_from_index() {
 function build_index() {
     echo "Building index..."
     mkdir -p "$INDEX_DIR"
-
-    [[ -z "$FIND_CMD" ]] && construct_find_command
 
     if (( ENABLE_COLORS == 1 )); then
         eval "$FIND_CMD" | sort | tee "$INDEX_FILE" | \
@@ -465,6 +264,436 @@ function check_index() {
 }
 
 # ------------------------------------------------------------------------------
+# Open item
+# ------------------------------------------------------------------------------
+
+function open_items() {
+    local -a items=("$@")
+    (( ${#items[@]} == 0 )) && return 0
+
+    if (( ${#items[@]} > 1 )); then
+        if ! select_items_to_open items; then
+            return 0
+        fi
+    fi
+
+    local -A type_groups
+    for item in "${items[@]}"; do
+        local parsed_item="$(parse_item "$item")" || continue
+        local item_type="$(classify_item "$parsed_item")"
+
+        if [[ -n "${type_groups[$item_type]:-}" ]]; then
+            type_groups[$item_type]+=$'\n'"$parsed_item"
+        else
+            type_groups[$item_type]="$parsed_item"
+        fi
+    done
+
+    for item_type in "${!type_groups[@]}"; do
+        local -a group_items
+        IFS=$'\n' read -r -d '' -a group_items <<< "${type_groups[$item_type]}" || true
+        execute_open "$item_type" "${group_items[@]}"
+    done
+}
+
+function open_parents() {
+    local -a items=("$@")
+    (( ${#items[@]} == 0 )) && return 0
+
+    if (( ${#items[@]} > 1 )); then
+        if ! select_parents_to_open items; then
+            return 0
+        fi
+        for parent in "${items[@]}"; do
+            execute_open "directory" "$parent"
+        done
+    else
+        local parsed_item="$(parse_item "${items[0]}")" || return 0
+        local parent="$(dirname "$parsed_item")"
+        execute_open "directory" "$parent"
+    fi
+}
+
+function select_items_to_open() {
+    local -n items_ref=$1
+    local -a selected_items=()
+
+    echo "You have selected ${#items_ref[@]} items:"
+    local i
+    for (( i = 0; i < ${#items_ref[@]}; i++)); do
+        printf "  %2d. %s\n" $(( i + 1 )) "${items_ref[$i]}"
+    done
+    echo ""
+
+    choice=$(prompt_for_choice "Open all items? (y/s/q): " "ysq")
+
+    [[ "$choice" == "q" ]] && return 1
+
+    if [[ "$choice" == "y" ]]; then
+        selected_items=("${items_ref[@]}")
+    elif [[ "$choice" == "s" ]]; then
+        echo "Enter item numbers to open (e.g., '1 3 5' or '1-3 5'), or 'q' to quit:"
+        read -r selection
+
+        [[ "${selection,,}" == "q" ]] && return 1
+
+        for part in $selection; do
+            if [[ "$part" =~ ^[0-9]+$ ]]; then
+                local num="$part"
+                if (( num > 0 && num <= ${#items_ref[@]} )); then
+                    selected_items+=("${items_ref[$(( num - 1 ))]}")
+                fi
+            elif [[ "$part" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+                local start="${BASH_REMATCH[1]}"
+                local end="${BASH_REMATCH[2]}"
+                for (( j = start; j <= end && j <= ${#items_ref[@]}; j++)); do
+                    if (( j > 0 )); then
+                        selected_items+=("${items_ref[$(( j - 1 ))]}")
+                    fi
+                done
+            fi
+        done
+    fi
+
+    items_ref=("${selected_items[@]}")
+    return 0
+}
+
+function select_parents_to_open() {
+    local -n items_ref=$1
+    local -A parent_map
+    local -a unique_parents=()
+
+    local -a parents
+    readarray -t parents < <(dirname -- "${items_ref[@]}")
+    local i
+    for (( i = 0; i < ${#items_ref[@]}; i++ )); do
+        local parent="${parents[$i]}"
+        local item="${items_ref[$i]}"
+        if [[ -z "${parent_map[$parent]:-}" ]]; then
+            unique_parents+=("$parent")
+            parent_map[$parent]="$item"
+        else
+            parent_map[$parent]+=$'\n'"$item"
+        fi
+    done
+
+    echo "You have selected ${#items_ref[@]} items from ${#unique_parents[@]} directories:"
+    local i
+    for (( i = 0; i < ${#unique_parents[@]}; i++ )); do
+        local parent="${unique_parents[$i]}"
+        local count=$(echo -e "${parent_map[$parent]}" | wc -l)
+        if (( count > 1 )); then
+            printf "  %2d. %s (%d items)\n" $(( i + 1 )) "$parent" "$count"
+        else
+            printf "  %2d. %s\n" $(( i + 1 )) "$parent"
+        fi
+    done
+    echo ""
+
+    choice=$(prompt_for_choice "Open all directories? (y/s/q): " "ysq")
+
+    [[ "$choice" == "q" ]] && return 1
+
+    local -a selected_parents=()
+
+    if [[ "$choice" == "y" ]]; then
+        selected_parents=("${unique_parents[@]}")
+    elif [[ "$choice" == "s" ]]; then
+        echo "Enter item numbers to open (e.g., '1 3 5' or '1-3 5'), or 'q' to quit:"
+        read -r selection
+
+        [[ "${selection,,}" == "q" ]] && return 1
+
+        for part in $selection; do
+            if [[ "$part" =~ ^[0-9]+$ ]]; then
+                local num="$part"
+                if (( num > 0 && num <= ${#unique_parents[@]} )); then
+                    selected_parents+=("${unique_parents[$(( num - 1 ))]}")
+                fi
+            elif [[ "$part" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+                local start="${BASH_REMATCH[1]}"
+                local end="${BASH_REMATCH[2]}"
+                for (( j = start; j <= end && j <= ${#unique_parents[@]}; j++ )); do
+                    if (( j > 0 )); then
+                        selected_parents+=("${unique_parents[$(( j - 1 ))]}")
+                    fi
+                done
+            fi
+        done
+    fi
+
+    items_ref=("${selected_parents[@]}")
+    return 0
+}
+
+function parse_item() {
+    local item="$1"
+
+    if [[ ! -e "$item" && ! -L "$item" ]]; then
+        echo "Error: File or directory no longer exists: $item" >&2
+        read -r -p "Remove from index? (y/n): " confirm
+        if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
+            local to_remove=("$item")
+            append_nested_entries "$item" to_remove
+            delete_from_index "${to_remove[@]}" >&2
+            echo "Item(s) removed from index." >&2
+            read -r -p "Press Enter to continue..." >&2
+        fi
+        return 1
+    fi
+
+    if [[ -L "$item" ]]; then
+        local target="$(readlink -f "$item")"
+        if [[ ! -e "$target" ]]; then
+            echo "Error: Symlink target does not exist: $item -> $target" >&2
+            delete_item "$item" >&2
+            return 1
+        fi
+        echo "$target"
+        return 0
+    fi
+
+    echo "$item"
+    return 0
+}
+
+function classify_item() {
+    local item="$1"
+    if [[ -d "$item" ]]; then
+        echo "directory"
+        return 0
+    fi
+    local mime_type=$(file --brief --mime-type "$item" || echo "unknown")
+    case "$mime_type" in
+        text/*)
+            echo "text"
+            ;;
+        application/json|application/xml|application/x-tex|application/toml|application/x-yaml)
+            echo "text"
+            ;;
+        application/javascript|application/x-sh|application/x-shellscript)
+            echo "text"
+            ;;
+        inode/x-empty|application/x-empty|application/x-zerosize)
+            echo "text"
+            ;;
+        application/pdf|application/epub+zip)
+            echo "document"
+            ;;
+        application/*.opendocument.*|application/vnd.openxmlformats-officedocument.*|application/msword|application/vnd.ms-word*|application/vnd.ms-excel*|application/vnd.ms-powerpoint*)
+            echo "office"
+            ;;
+        image/*)
+            echo "image"
+            ;;
+        video/*|application/vnd.rn-realmedia)
+            echo "video"
+            ;;
+        audio/*)
+            echo "audio"
+            ;;
+        *)
+            echo "other"
+            ;;
+    esac
+}
+
+function execute_open() {
+    local item_type="$1"
+    shift
+    local -a items=("$@")
+
+    local config="${OPENER_CONFIG[$item_type]:-gui:xdg-open:single}"
+    IFS=':' read -r ui app multi <<< "$config"
+
+    app="$(eval echo "$app")"
+
+    if [[ "$ui" == "gui" ]] && ! check_gui; then
+        echo "No GUI support detected for $item_type files." >&2
+        return 1
+    fi
+
+    local app_name="${app%% *}"
+    if ! command -v "$app_name" >/dev/null 2>&1; then
+        echo "$app_name does not exist." >&2
+        read -r -p "Press Enter to continue..."
+        return 1
+    fi
+
+    if [[ "$multi" == "batch" ]]; then
+        local cmd="$app"
+        for item in "${items[@]}"; do
+            cmd+=" $(printf "%q" "$item")"
+        done
+        dispatch_command "$ui" "$cmd"
+    else
+        for item in "${items[@]}"; do
+            dispatch_command "$ui" "$app $(printf "%q" "$item")"
+        done
+    fi
+}
+
+function dispatch_command() {
+    local ui="$1"
+    local cmd="$2"
+
+    case "$ui" in
+        tui)
+            if [[ -n "${TMUX:-}" ]]; then
+                LC_ALL="" tmux new-window "$cmd"
+            elif [[ -n "${STY:-}" ]]; then
+                LC_ALL="" screen -S "$STY" -X screen "$cmd"
+            else
+                LC_ALL="" sh -c "$cmd"
+            fi
+            ;;
+        gui)
+            { LC_ALL="" sh -c "$cmd" >/dev/null 2>&1 & } || true
+            ;;
+    esac
+}
+
+# ------------------------------------------------------------------------------
+# Delete item
+# ------------------------------------------------------------------------------
+
+function delete_item() {
+    (( $# == 0 )) && return 0
+
+    echo "Do you want to delete the following $# item(s)?"
+    printf "  - %s\n" "$@"
+
+    local confirm
+    read -r -p "Proceed with deletion? (y/n): " confirm
+
+    if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
+        local to_remove=()
+        local dirs_to_delete=()
+        local files_to_delete=()
+
+        for item in "$@"; do
+            if [[ -L "$item" ]]; then
+                files_to_delete+=("$item")
+                to_remove+=("$item")
+                append_nested_entries "$item" to_remove
+            elif [[ ! -e "$item" ]]; then
+                echo "Warning: $item no longer exists, removing from index only."
+                to_remove+=("$item")
+                append_nested_entries "$item" to_remove
+            elif [[ -d "$item" ]]; then
+                dirs_to_delete+=("$item")
+                to_remove+=("$item")
+                append_nested_entries "$item" to_remove
+            else
+                files_to_delete+=("$item")
+                to_remove+=("$item")
+            fi
+        done
+
+        (( ${#files_to_delete[@]} > 0 || ${#dirs_to_delete[@]} > 0 )) && {
+            echo "Removing item(s)..."
+            (( ${#files_to_delete[@]} > 0 )) && rm -f "${files_to_delete[@]}"
+            (( ${#dirs_to_delete[@]} > 0 )) && rm -rf "${dirs_to_delete[@]}"
+        }
+
+        if (( ${#to_remove[@]} > 0 )); then
+            local lines_before=$(wc -l < "$INDEX_FILE")
+            echo "Updating index..."
+            delete_from_index "${to_remove[@]}"
+            local lines_after=$(wc -l < "$INDEX_FILE")
+            if (( lines_before == lines_after )); then
+                echo "Nothing to update in index."
+            else
+                echo "Index updated."
+            fi
+            echo "Deletion completed."
+        fi
+
+        read -r -p "Press Enter to continue..."
+    else
+        echo "Deletion cancelled."
+    fi
+}
+
+function regex_escaping() {
+    local str="$1"
+    str="${str//\\/\\\\}"
+    str="${str//./\\.}"
+    str="${str//\*/\\*}"
+    str="${str//\[/\\[}"
+    str="${str//\]/\\]}"
+    str="${str//^/\\^}"
+    str="${str//\$/\\$}"
+    echo "$str"
+}
+
+function find_nested_entries() {
+    local dir="$1"
+    [[ "$dir" != */ ]] && dir="${dir}/"
+
+    local index=$((( ENABLE_COLORS == 0 )) && echo "$INDEX_FILE" || echo "$PLAIN_INDEX_FILE")
+    local escaped_dir=$(regex_escaping "$dir")
+    $GREP --color=never "^$escaped_dir" "$index" || true
+}
+
+function append_nested_entries() {
+    local item="$1"
+    local -n arr_ref="$2"
+    local nested=$(find_nested_entries "$item")
+    [[ -n "$nested" ]] && while IFS= read -r entry; do
+        arr_ref+=("$entry")
+    done <<< "$nested"
+}
+
+function delete_from_index() {
+    (( $# == 0 )) && return 0
+
+    local tmp_index_file="$TMP_DIR/index_filtered"
+    local tmp_plain_index_file="$TMP_DIR/plain_index_filtered"
+    local exclude_file="$TMP_DIR/exclude_list"
+
+    printf "%s\n" "$@" > "$exclude_file"
+
+    if (( ENABLE_COLORS == 0 )); then
+        if (( $# < 5000 )); then
+            $GREP --invert-match --fixed-strings --line-regexp --file "$exclude_file" "$INDEX_FILE" > "$tmp_index_file"
+        else
+            $AWK '
+            BEGIN {
+                while ((getline line < "'$exclude_file'") > 0) {
+                    exclude[line] = 1
+                }
+                close("'$exclude_file'")
+            }
+            !($0 in exclude)
+            ' "$INDEX_FILE" > "$tmp_index_file"
+        fi
+
+        mv "$tmp_index_file" "$INDEX_FILE"
+    else
+        $AWK '
+        BEGIN {
+            while ((getline line < "'$exclude_file'") > 0) {
+                exclude[line] = 1
+            }
+            close("'$exclude_file'")
+        }
+        {
+            if ((getline colored < "'$INDEX_FILE'") > 0) {
+                if (!($0 in exclude)) {
+                    print $0 > "'$tmp_plain_index_file'"
+                    print colored > "'$tmp_index_file'"
+                }
+            }
+        }' "$PLAIN_INDEX_FILE"
+
+        mv "$tmp_index_file" "$INDEX_FILE"
+        mv "$tmp_plain_index_file" "$PLAIN_INDEX_FILE"
+    fi
+}
+
+# ------------------------------------------------------------------------------
 # Utils
 # ------------------------------------------------------------------------------
 
@@ -478,29 +707,37 @@ function construct_find_command() {
         else
             search_cmd+=" --color=always"
         fi
-        if (( ${#INCLUDED_DIRS[@]} > 0 )); then
-            for dir in "${INCLUDED_DIRS[@]}"; do
-                search_cmd+=" --search-path \"${dir}\""
-            done
-        else
+        if (( INDEX_ALL != 0 )); then
             search_cmd+=" --search-path /"
+        else
+            if (( ${#INCLUDED_DIRS[@]} > 0 )); then
+                for dir in "${INCLUDED_DIRS[@]}"; do
+                    search_cmd+=" --search-path \"${dir}\""
+                done
+            else
+                search_cmd+=" --search-path /"
+            fi
+            for dir in "${EXCLUDED_DIRS_FD[@]}"; do
+                search_cmd+=" --exclude \"${dir}\""
+            done
         fi
-        for dir in "${EXCLUDED_DIRS_FD[@]}"; do
-            search_cmd+=" --exclude \"${dir}\""
-        done
     else
         ENABLE_COLORS=0
         search_cmd="find -O2"
-        if (( ${#INCLUDED_DIRS[@]} > 0 )); then
-            for dir in "${INCLUDED_DIRS[@]}"; do
-                search_cmd+=" \"${dir}\""
-            done
-        else
+        if (( INDEX_ALL != 0 )); then
             search_cmd+=" /"
+        else
+            if (( ${#INCLUDED_DIRS[@]} > 0 )); then
+                for dir in "${INCLUDED_DIRS[@]}"; do
+                    search_cmd+=" \"${dir}\""
+                done
+            else
+                search_cmd+=" /"
+            fi
+            for dir in "${EXCLUDED_DIRS_FIND[@]}"; do
+                search_cmd+=" -path \"${dir}\" -prune -o"
+            done
         fi
-        for dir in "${EXCLUDED_DIRS_FIND[@]}"; do
-            search_cmd+=" -path \"${dir}\" -prune -o"
-        done
         search_cmd+=" -print"
     fi
 
@@ -508,17 +745,34 @@ function construct_find_command() {
     FIND_CMD="$search_cmd"
 }
 
+function prompt_for_choice() {
+    local prompt_text="$1"
+    local valid_chars="$2"
+    local choice
+
+    while true; do
+        read -r -p "$prompt_text" choice
+        choice="${choice,,}"
+        if (( ${#choice} == 1 )) && [[ "$valid_chars" == *"$choice"* ]]; then
+            echo "$choice"
+            return 0
+        fi
+        local display_opts=$(echo "$valid_chars" | sed 's/\(.\)/\1\//g; s/\/$//')
+        echo "Invalid input. Please enter: $display_opts" >&2
+    done
+}
+
 function select_command() {
     local commands=("$@")
 
     for cmd in "${commands[@]}"; do
         if check_command_string "$cmd"; then
-            printf '%s\n' "$cmd"
+            printf "%s\n" "$cmd"
             return 0
         fi
     done
 
-    printf '%s\n' "echo 'Cannot preview, command not exists'"
+    printf "%s\n" "echo 'Cannot preview, command not exists'"
 }
 
 function construct_fzf_preview_command() {
@@ -540,7 +794,7 @@ function construct_fzf_preview_command() {
         "7z l -ba {} | awk '{print \$1 \" \" \$2 \" - \" \$NF}' 2>/dev/null")
 
     local gzip_archive_cmd=$(select_command \
-        "7z l -ba {} | awk '{print \$1 \" \" \$2 \" - \" \$NF}'select_command 2>/dev/null" \
+        "7z l -ba {} | awk '{print \$1 \" \" \$2 \" - \" \$NF}' 2>/dev/null" \
         "gzip -l {}")
 
     local pdf_cmd=$(select_command \
@@ -558,7 +812,7 @@ function construct_fzf_preview_command() {
     local general_file_cmd=$(select_command \
         "file --brief {} 2>/dev/null")
 
-    printf '%s' "
+    printf "%s" "
         function preview_file_content() {
             local file_path=\"\$1\"
             file_info=\$(stat --format='size: %s bytes, last modified: %y' \"\$file_path\" 2>/dev/null | cut -d. -f1)
@@ -648,7 +902,7 @@ function check_command_string() {
     local in_double_quote=0
     local escaped=0
 
-    for ((i = 0; i < ${#cmd_string}; i++)); do
+    for (( i = 0; i < ${#cmd_string}; i++ )); do
         local char="${cmd_string:$i:1}"
 
         if (( escaped )); then
@@ -703,16 +957,16 @@ function check_command_string() {
     return 0
 }
 
-function has_gui() {
+function check_gui() {
     [[ -n "${WAYLAND_DISPLAY:-}" ]] || \
     [[ -n "${DISPLAY:-}" ]] || \
     [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]] || \
     [[ "${XDG_SESSION_TYPE:-}" == "x11" ]]
 }
 
-function ensure_single_instance() {
+function running_instance_check() {
     exec 200>"$LOCK_FILE"
-    if ! flock -n 200; then
+    if (( ENABLE_SINGLETON == 1 )) && ! flock -n 200; then
         echo "Another instance of the script is already running." >&2
         read -r -p "Press Enter to continue..."
         exit 1
@@ -725,94 +979,90 @@ function ensure_single_instance() {
 
 function cleanup() {
     [[ -d "$TMP_DIR" ]] && rm -rf "$TMP_DIR" || true
+    [[ -e "$LOCK_FILE" ]] && rm -f "$LOCK_FILE" || true
 
     if command -v fd >/dev/null 2>&1; then
-        fd --type d '^search_' "${TMPDIR:-/tmp}" --max-depth 1 --changed-before 30min --exec rm -rf '{}' ';' 2>/dev/null || true
+        fd --type d --regex '^search_[a-zA-Z0-9]{10}$' "${TMPDIR:-/tmp}" --max-depth 1 --exec rm -rf '{}' ';' 2>/dev/null || true
     else
-        find "${TMPDIR:-/tmp}" -maxdepth 1 -type d -name "search_*" -mmin +30 -exec rm -rf '{}' \; 2>/dev/null || true
+        find "${TMPDIR:-/tmp}" -maxdepth 1 -type d -regextype posix-extended -regex ".*/search_[a-zA-Z0-9]{10}" -exec rm -rf '{}' \; 2>/dev/null || true
     fi
 }
 
 trap cleanup EXIT INT TERM QUIT PIPE
 
 # ------------------------------------------------------------------------------
+# Action handler for fzf execute
+# ------------------------------------------------------------------------------
+
+function action_handler() {
+    case "$ACTION_MODE" in
+        rebuild)
+            construct_find_command
+            build_index
+            print_separator
+            ;;
+        open)
+            open_items "${ACTION_ITEMS[@]}"
+            (( ${#ACTION_ITEMS[@]} > 1 )) && print_separator
+            ;;
+        open-parent)
+            open_parents "${ACTION_ITEMS[@]}"
+            (( ${#ACTION_ITEMS[@]} > 1 )) && print_separator
+            ;;
+        delete)
+            delete_item "${ACTION_ITEMS[@]}"
+            print_separator
+            ;;
+    esac
+}
+
+function print_separator() {
+    echo "------------------------------------------------------------"
+}
+
+if [[ -n "$ACTION_MODE" ]]; then
+    action_handler
+    exit 0
+fi
+
+# ------------------------------------------------------------------------------
 # Main function
 # ------------------------------------------------------------------------------
 
 function main() {
-    ensure_single_instance
+    running_instance_check
 
     local preview_cmd="$(construct_fzf_preview_command)"
 
+    construct_find_command
     check_index
-    (( NEEDS_INDEX_REBUILD )) && build_index
+    (( NEEDS_INDEX_REBUILD )) && build_index && print_separator
 
-    local query_string="$SEARCH_QUERY"
+    local self="$(readlink -f "$0")"
 
-    while true; do
-        local fzf_output=$(cat "$INDEX_FILE" | \
-            fzf --ansi --no-cycle --border=none --multi --algo=v2 \
-                --query="$query_string" --print-query \
-                --preview="$preview_cmd" --preview-window '50%' \
-                --expect=ctrl-x,ctrl-r,ctrl-o,enter,f1,f9 \
-                --footer='Enter: open, Ctrl-o: open parent, Ctrl-x / F9: delete, Ctrl-r: rebuild index, F1: help' \
-                --bind 'focus:transform-header:stat --printf="%A %U:%G" {}' \
-            || echo "")
-
-        [[ -z "$fzf_output" ]] && return 0
-
-        query_string="${fzf_output%%$'\n'*}"
-        fzf_output="${fzf_output#*$'\n'}"
-        local key_pressed="${fzf_output%%$'\n'*}"
-        if [[ "$fzf_output" == *$'\n'* ]]; then
-            local items_selected="${fzf_output#*$'\n'}"
-        else
-            local items_selected=""
-        fi
-
-        local item_array=()
-        [[ -n "$items_selected" ]] && while IFS= read -r line; do
-            [[ -n "$line" ]] && item_array+=("$line")
-        done <<< "$items_selected"
-
-        if (( ${#item_array[@]} == 0 )); then
-            echo "Nothing selected. No action taken."
-            read -r -p "Press Enter to continue..."
-            continue
-        fi
-
-        case "$key_pressed" in
-            ctrl-r)
-                build_index
-                ;;
-            ctrl-x|f9)
-                delete_items "${item_array[@]}"
-                ;;
-            ctrl-o)
-                if (( ${#item_array[@]} == 1 )); then
-                    open_parent_directory "${item_array[0]}"
-                else
-                    echo "Multiple items selected. No action taken."
-                    read -r -p "Press Enter to continue..."
-                fi
-                ;;
-            enter)
-                if (( ${#item_array[@]} == 1 )); then
-                    open_item "${item_array[0]}"
-                else
-                    echo "Multiple items selected. No action taken."
-                    read -r -p "Press Enter to continue..."
-                fi
-                ;;
-            f1)
-                print_usage
-                echo ""
-                read -r -p "Press Enter to continue..."
-                ;;
-        esac
-
-        echo ""
-    done
+    fzf --ansi --smart-case --tabstop=4 --no-cycle --border=none --footer-border=none --multi --highlight-line \
+        --query="$SEARCH_QUERY" \
+        --preview="$preview_cmd" --preview-window 'right,50%,border-left,nocycle,nowrap' \
+        --prompt='❯ ' \
+        --footer='Enter: open, Ctrl-o: open parent, Ctrl-x / F9: delete, Ctrl-r: rebuild index, F1: help' \
+        --bind='focus:transform-header:stat --printf="%A %U:%G" {} || echo "---"' \
+        --bind='Esc:ignore' \
+        --bind='Ctrl-q:abort,Ctrl-c:abort' \
+        --bind='Ctrl-n:down,Ctrl-p:up' \
+        --bind='Ctrl-e:offset-down,Ctrl-y:offset-up' \
+        --bind='Ctrl-d:half-page-down,Ctrl-u:half-page-up' \
+        --bind='Ctrl-f:page-down,Ctrl-b:page-up' \
+        --bind='Ctrl-j:preview-half-page-down,Ctrl-k:preview-half-page-up' \
+        --bind='Ctrl-/:toggle-preview' \
+        --bind='Ctrl-s:deselect-all' \
+        --bind="Enter:execute($self --action-open {+})" \
+        --bind="Ctrl-o:execute($self --action-open-parent {+})" \
+        --bind="Ctrl-x:execute($self --action-delete {+})+reload(cat $INDEX_FILE)" \
+        --bind="F9:execute($self --action-delete {+})+reload(cat $INDEX_FILE)" \
+        --bind="Ctrl-r:execute($self --action-rebuild)+reload(cat $INDEX_FILE)" \
+        --bind="Alt-r:reload(cat $INDEX_FILE)" \
+        --bind="F1:preview($self --help)" \
+        < "$INDEX_FILE"
 }
 
 main
