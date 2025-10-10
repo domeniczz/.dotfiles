@@ -1001,6 +1001,7 @@ kubeconfig                 󱃾
 *.nfo                      󰋼
 *.app                      󰋼
 *.plist                    󰋼
+*.entitlements             󰋼
 *.manifest                 󰋼
 *.webmanifest              󰋼
 *.idl                      
@@ -1183,11 +1184,11 @@ kubeconfig                 󱃾
 *.gv                       󰇟
 *.dot                      󰇟
 *.pcx                      󱦹
-*.odg                      󱦹
 *.sketch                   󱦹
 *.kra                      󱦹
 *.cdr                      󱦹
 *.odg                      󱦹
+*.otg                      󱦹
 *.fodg                     󱦹
 *.xcf                      
 *.fig                      
@@ -1347,6 +1348,7 @@ kubeconfig                 󱃾
 *.db                       󰆼
 *.db3                      󰆼
 *.dbf                      󰆼
+*.fdb                      󰆼
 *.ldb                      󰆼
 *.pdb                      󰆼
 *.rdb                      󰆼
@@ -1577,7 +1579,6 @@ kubeconfig                 󱃾
 *.tpp                      
 *.ipp                      
 *.inl                      
-*.m                        
 *.mm                       
 *.cu                       
 *.cuh                      
@@ -1687,6 +1688,8 @@ kubeconfig                 󱃾
 *.vy                       
 *.ahk                      
 *.applescript              
+*.scpt                     
+*.scptd                    
 *.graphql                  󰡷
 *.gql                      󰡷
 *.nix                      󱄅
@@ -1748,6 +1751,8 @@ kubeconfig                 󱃾
 *.pony                     󰅴
 *.gleam                    󰅴
 *.ps                       󰅴
+*.nsh                      󰅴
+*.nsi                      󰅴
 *.wgsl                     󰘷
 *.hlsl                     󰘷
 *.glsl                     󰘷
