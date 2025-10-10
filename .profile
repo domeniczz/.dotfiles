@@ -82,3 +82,6 @@ case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
     *) PATH="$HOME/.local/bin:$PATH" ;;
 esac
+
+PATH="$PATH:$HOME/Programs/anaconda3/bin"
+PATH="$PATH:$HOME/Programs/miniconda3/bin"
