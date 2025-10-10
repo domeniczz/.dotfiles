@@ -10,23 +10,24 @@ setopt extended_glob
 HISTFILE=$XDG_DATA_HOME/zsh_history
 HISTSIZE=2000
 SAVEHIST=100000
-HISTORY_IGNORE="(ls#( *)#|cd#( *)#|history#( *)#|[bf]g#( *)#|pwd|whoami|clear|exit)"
+HISTORY_IGNORE="(ls|cd|history|[bf]g|pwd|whoami|clear|exit)"
 KEYTIMEOUT=5
 LISTMAX=150
 
 function git_branch_info() {
     local ref=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
     [[ -z "$ref" ]] && ref=$(git describe --tags --always 2>/dev/null)
-    [[ -n "$ref" ]] && echo "%K{#006532}%F{#f0f0f0} $ref %f%k"
+    [[ -n "$ref" ]] && echo "%K{#006532}%F{#ffffff} $ref %f%k"
 }
 
-PROMPT_INCOGNITO="%K{#1b527e}%F{#f0f0f0} incognito %f%k"
-PROMPT_USER="%K{#3a4055}%F{#f0f0f0} %n "
-PROMPT_DIR="%K{#4c566a} %3~ %f%k"
-PROMPT_GIT='$(git_branch_info)'
+[[ "${SHELL##*/}" != "zsh" ]] && PROMPT_SHELL_NAME="%K{#4c566a}%F{#fffff} zsh %f%k"
+PROMPT_INCOGNITO="%K{#1b527e}%F{#ffffff} incognito %f%k"
+PROMPT_USER="%K{#3a4055}%F{#ffffff} %n "
+PROMPT_DIR="%K{#4c566a}%F{#ffffff} %3~ %f%k"
+PROMPT_GIT="$(git_branch_info)"
 PROMPT_SYMBOL=" ❯ "
 
-PROMPT="$PROMPT_USER$PROMPT_DIR$PROMPT_GIT$PROMPT_SYMBOL"
+PROMPT="$PROMPT_SHELL_NAME$PROMPT_USER$PROMPT_DIR$PROMPT_GIT$PROMPT_SYMBOL"
 
 ((INCOGNITO == 1)) && SAVEHIST=0 && PROMPT="$PROMPT_INCOGNITO$PROMPT"
 
