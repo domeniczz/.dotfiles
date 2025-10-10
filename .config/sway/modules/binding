@@ -6,8 +6,6 @@ set $right l
 
 set $terminal footclient
 set $browser qutebrowser
-set $filemanager thunar
-set $filesearcher fsearch
 set $passwordmanager keepassxc
 
 # ------------------------------------------------------------------------------
@@ -15,9 +13,7 @@ set $passwordmanager keepassxc
 # ------------------------------------------------------------------------------
 
 bindsym --no-repeat $mod+Return exec $terminal
-bindsym --no-repeat $mod+f exec $filemanager
 bindsym --no-repeat $mod+b exec 'if pgrep --exact "$(basename $browser)" >/dev/null; then swaymsg "[app_id=\".*$(basename $browser).*\"] focus"; else $browser; fi'
-bindsym --no-repeat Alt+Space exec $filesearcher
 bindsym --no-repeat $mod+Shift+p exec $passwordmanager
 
 bindsym --no-repeat $mod+d exec bash launchmenu.sh

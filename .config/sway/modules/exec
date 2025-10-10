@@ -6,8 +6,7 @@ exec mako &
 exec wl-paste --watch cliphist store
 exec fcitx5 -d
 exec foot --server
-exec mkfifo /tmp/volume-wob-pipe && tail --follow /tmp/volume-wob-pipe | wob
-exec mihomo-party
+exec sh -c 'rm -f /tmp/volume-wob-pipe && mkfifo /tmp/volume-wob-pipe && tail -f /tmp/volume-wob-pipe | wob'
 
 exec sh -c 'sleep 0.5 && swaymsg "workspace 2; exec $terminal"'
 
