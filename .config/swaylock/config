@@ -3,8 +3,9 @@ ignore-empty-password
 show-failed-attempts
 indicator-caps-lock
 indicator-idle-visible
-indicator-radius=100
+indicator-radius=200
 indicator-thickness=12
+font-size=100
 scaling=fill
 image=$HOME/Pictures/wallpapers/lockscreen.jpg
 
