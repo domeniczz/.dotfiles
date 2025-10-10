@@ -19,26 +19,26 @@ if command -v tmux >/dev/null 2>&1 && [[ -z "$TMUX" ]]; then
 fi
 
 if command -v fd >/dev/null 2>&1; then
-    export FZF_DEFAULT_COMMAND="command fd --type file --hidden --exclude .git --exclude node_modules --exclude .venv"
-    export FZF_ALT_C_COMMAND="command fd --type directory --hidden --exclude .git --exclude node_modules --exclude .venv"
+    export FZF_DEFAULT_COMMAND="fd --type file --hidden --exclude .git --exclude node_modules --exclude .venv"
+    export FZF_ALT_C_COMMAND="fd --type directory --hidden --exclude .git --exclude node_modules --exclude .venv"
 elif command -v find >/dev/null 2>&1; then
-    export FZF_DEFAULT_COMMAND="command find -type f ! -path '*/\.*git*' ! -path '*/\.venv*' ! -path '*/node_modules*'"
-    export FZF_ALT_C_COMMAND="command find -type d ! -path '*/\.*git*' ! -path '*/\.venv*' ! -path '*/node_modules*'"
+    export FZF_DEFAULT_COMMAND="find -type f ! -path '*/\.*git*' ! -path '*/\.venv*' ! -path '*/node_modules*'"
+    export FZF_ALT_C_COMMAND="find -type d ! -path '*/\.*git*' ! -path '*/\.venv*' ! -path '*/node_modules*'"
 fi
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_CTRL_T_OPTS="--reverse --height=60% --preview 'command bat --line-range :200 {}' --walker-skip .git,node_modules"
-export FZF_CTRL_R_OPTS="--reverse --height 25% --scroll-off=0 --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'"
-export FZF_ALT_C_OPTS="--reverse --height=60% --preview 'command tree -C -L1 {} | head -200'"
+export FZF_CTRL_T_OPTS="--reverse --height=60% --preview 'bat --line-range :200 {}' --walker-skip .git,.venv,node_modules"
+export FZF_CTRL_R_OPTS="--reverse --height 25% --scroll-off=0"
+export FZF_ALT_C_OPTS="--reverse --height=60% --preview 'tree -C -L1 {} | head -200'"
 # - The first argument to the function is the name of the command.
 # - You should make sure to pass the rest of the arguments to fzf.
 _fzf_comprun() {
     local command=$1
     shift
     case "$command" in
-        cd)           fzf --preview "command eza --tree --level=2 --color=always {} | head -200" "$@" ;;
+        cd)           fzf --preview "eza --tree --level=2 --color=always {} | head -200" "$@" ;;
         export|unset) fzf --preview "eval 'echo $'{}" "$@" ;;
         ssh)          fzf --preview "dig {}" "$@" ;;
-        *)            fzf --preview "command bat --line-range :200 {}" "$@" ;;
+        *)            fzf --preview "bat --line-range :200 {}" "$@" ;;
     esac
 }
 # Repo: https://github.com/junegunn/fzf-git.sh
@@ -76,7 +76,7 @@ function nvminit() {
 function yazicd() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
     yazi "$@" --cwd-file="$tmp"
-    if cwd="$(command cat -- "$tmp")" && [[ -n "$cwd" ]] && [[ "$cwd" != "$PWD" ]]; then
+    if cwd="$(cat -- "$tmp")" && [[ -n "$cwd" ]] && [[ "$cwd" != "$PWD" ]]; then
         builtin cd -- "$cwd"
     fi
     rm -f -- "$tmp"
@@ -84,7 +84,7 @@ function yazicd() {
 
 # Change current working directory when exiting Vifm
 function vifmcd() {
-    local dst="$(command vifm --choose-dir - "$@")"
+    local dst="$(vifm --choose-dir - "$@")"
     if [[ -z "$dst" ]]; then
         echo 'Directory picking cancelled/failed'
         return 1
