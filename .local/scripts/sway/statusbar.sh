@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+# set -euo pipefail
 
 # ------------------------------------------------------------------------------
 # Sway window manager status bar
@@ -12,7 +12,7 @@ set -euo pipefail
 
 declare -gr BATTERY_CRITICAL_THRESHOLD=25
 
-declare -g REFRESH_INTERVAL=1
+declare -g REFRESH_INTERVAL=0.2
 
 # Nerd font icons
 declare -gr battery_icons=("󰂃" "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹")
@@ -20,6 +20,7 @@ declare -gr battery_charging_icons=("󰢟" "󰢜" "󰂆" "󰂇" "󰂈" "󰢝" "�
 declare -gr volume_icons=("󰖁" "󰕿" "󰖀" "󰕾")
 declare -gr brightness_icons=("󰃞" "󰃟" "󰃠")
 declare -gr wifi_icons=("󰖪" "󰖩")
+declare -gr ethernet_icon="󰈀"
 declare -gr bluetooth_icons=("󰂲" "󰂱")
 declare -gr internet_speed_icons=("" "")
 declare -gr cpu_usage_icon=""
@@ -35,13 +36,27 @@ declare -g PREV_CPU_STATS=""
 declare -A FUNC_OUTPUTS
 
 declare -gr CPU_STAT_PATH="/proc/stat"
-declare -gr BAT_PATH="/sys/class/power_supply/BAT0/capacity"
 
-for path in /sys/class/power_supply/{AC,ADP,ACAD}*/online; do
-    [[ -f "$path" ]] && { declare -gr AC_PATH=$path; break; }
+for path in /sys/class/power_supply/BAT*; do
+    [[ -d "$path" ]] || continue
+    capacity_file="$path/capacity"
+    present_file="$path/present"
+    [[ -f "$capacity_file" ]] || continue
+    if [[ -f "$present_file" ]]; then
+        (( $(cat "$present_file" 2>/dev/null || echo "0") == 1 )) || continue
+    fi
+    declare -gr BAT_PATH="$capacity_file"
+    break
 done
 
-for path in /sys/class/backlight/*/actual_brightness; do
+for path in /sys/class/power_supply/{AC,ADP,ACAD}*/online; do
+    [[ -f "$path" ]] && {
+        declare -gr AC_PATH=$path
+        break
+    }
+done
+
+for path in /sys/class/backlight/*/brightness; do
     [[ -f "$path" ]] && {
         declare -gr BACKLIGHT_PATH=$path
         declare -gr BACKLIGHT_MAX_PATH="${path%/*}/max_brightness"
@@ -49,35 +64,7 @@ for path in /sys/class/backlight/*/actual_brightness; do
     }
 done
 
-# ------------------------------------------------------------------------------
-# Traps
-# ------------------------------------------------------------------------------
-
-function log_error() {
-    local log_file="/tmp/statusbar.log"
-    local line="${BASH_LINENO[0]}"
-    local source="${BASH_SOURCE[1]:-$0}"
-    local command="${BASH_COMMAND}"
-    local exit_code=$?
-    printf "[%s] ERROR (code: %d): '%s' failed at %s:%s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$exit_code" "$command" "$source" "$line" >> "$log_file"
-    if [[ "$command" =~ \$\{?[a-zA-Z_][a-zA-Z0-9_]*(\[\])?\}? ]]; then
-        printf "[%s] Hint: Possible unbound variable (-u)\n" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log_file"
-    elif [[ "$command" == *"|"* ]]; then
-        printf "[%s] Hint: Command contains a pipe, check pipefail (-o pipefail)\n" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log_file"
-    fi
-}
-
-trap log_error ERR
-
-function cleanup() {
-    if [[ -n "$IFACE_MONITOR_PID" && -e /proc/$IFACE_MONITOR_PID ]]; then
-        kill $IFACE_MONITOR_PID 2>/dev/null
-    fi
-    rm -f "$WIFI_NAME_FILE" "$NETWORK_INTERFACE_FILE"
-    exit 0
-}
-
-trap cleanup EXIT SIGINT SIGTERM
+declare -g CACHE_BACKLIGHT_MAX="$(cat "$BACKLIGHT_MAX_PATH" || echo "255")"
 
 # ------------------------------------------------------------------------------
 # Monitor network interface & connection changes
@@ -112,10 +99,10 @@ function monitor_active_interfaces() {
         local found_up_iface=false
         for iface in "${NETWORK_INTERFACES[@]}"; do
             [[ ! -f "/sys/class/net/${iface}/operstate" ]] && continue
-            state=$(timeout 0.2s cat "/sys/class/net/${iface}/operstate" || echo "err")
+            state=$(cat "/sys/class/net/${iface}/operstate" || echo "err")
             if [[ "$state" == "up" ]]; then
                 echo "${iface}" > $NETWORK_INTERFACE_FILE
-                current_network_conn=$(timeout 0.2s nmcli --terse --fields NAME connection show --active | head -n1 || echo "err")
+                current_network_conn=$(nmcli --terse --fields NAME connection show --active | head -n1 || echo "err")
                 echo "$current_network_conn" > "$WIFI_NAME_FILE"
                 if [[ "$iface" != "$prev_iface" ]]; then
                     prev_iface="$iface"
@@ -141,20 +128,20 @@ IFACE_MONITOR_PID=$!
 # ------------------------------------------------------------------------------
 
 function send_battery_alert() {
-    timeout 0.2s notify-send \
+    notify-send \
         --urgency=critical \
         --app-name="Battery Monitor" \
-        --category="device.warning" \
         "Critical Battery Alert" \
         "Battery level is below ${BATTERY_CRITICAL_THRESHOLD}%\nPlease charge immediately!" \
         || true
     }
 
 function get_battery() {
+    [[ -z "${BAT_PATH:-}" ]] && return
     local battery_pct battery_color ac_state icon
     local battery_color="#ffffff"
-    battery_pct=$(timeout 0.2s cat "$BAT_PATH" 2>/dev/null || echo "0")
-    ac_state=$(timeout 0.2s cat "$AC_PATH" 2>/dev/null || echo "0")
+    battery_pct=$(cat "$BAT_PATH" 2>/dev/null || echo "0")
+    ac_state=$(cat "$AC_PATH" 2>/dev/null || echo "0")
     if (( ac_state == 1 )); then
         icon=${battery_charging_icons[$((battery_pct/10))]}
     else
@@ -174,8 +161,8 @@ function get_battery() {
 
 function get_volume() {
     local volume_info volume_pct icon icon_index
-    volume_pct=$(timeout 0.2s pactl get-sink-volume @DEFAULT_SINK@ | sed -n '/Volume:/{s/.*\/[[:space:]]*\([0-9]\+\)%.*/\1/p;q}' || echo "0")
-    volume_is_mute=$(timeout 0.2s pactl get-sink-mute @DEFAULT_SINK@ | cut -d' ' -f2 || echo "yes")
+    volume_pct=$(pactl get-sink-volume @DEFAULT_SINK@ | sed -n '/Volume:/{s/.*\/[[:space:]]*\([0-9]\+\)%.*/\1/p;q}' || echo "0")
+    volume_is_mute=$(pactl get-sink-mute @DEFAULT_SINK@ | cut -d' ' -f2 || echo "yes")
     if [[ $volume_is_mute == "yes" ]]; then
         icon_index=0
     else
@@ -186,37 +173,44 @@ function get_volume() {
 }
 
 function get_brightness() {
+    [[ -z "${BACKLIGHT_PATH:-}" ]] && return
     local brightness_pct icon
-    current_brightness=$(timeout 0.2s cat "$BACKLIGHT_PATH" || echo "0")
-    max_brightness=$(timeout 0.2s cat "$BACKLIGHT_MAX_PATH" || echo "0")
-    brightness_pct=$(( current_brightness * 100 / max_brightness ))
+    current_brightness=$(cat "$BACKLIGHT_PATH" || echo "0")
+    brightness_pct=$(( (current_brightness * 100 + CACHE_BACKLIGHT_MAX / 2) / CACHE_BACKLIGHT_MAX ))
     icon=${brightness_icons[$(( (brightness_pct * 3 - 1) / 100 ))]}
     FUNC_OUTPUTS[brightness]="{\"name\":\"brightness\",\"full_text\":\"$icon $brightness_pct%\"},"
 }
 
-function get_wifi() {
-    local wifi_name
-    [[ -f "$WIFI_NAME_FILE" ]] && wifi_name=$(timeout 0.2s cat "$WIFI_NAME_FILE" || echo "err")
-    if [[ -z "$wifi_name" || "$wifi_name" == "lo" ]]; then
+function get_internet() {
+    local conn_name icon
+    local active_interface
+    [[ -f "$NETWORK_INTERFACE_FILE" ]] && active_interface=$(cat "$NETWORK_INTERFACE_FILE" || echo "")
+    [[ -f "$WIFI_NAME_FILE" ]] && conn_name=$(cat "$WIFI_NAME_FILE" || echo "")
+    if [[ -z "$active_interface" || -z "$conn_name" ]]; then
         icon=${wifi_icons[0]}
-    else
-        icon=${wifi_icons[1]}
+        FUNC_OUTPUTS[internet]="{\"name\":\"internet\",\"full_text\":\"$icon Disconnected\"},"
+        return
     fi
-    FUNC_OUTPUTS[wifi]="{\"name\":\"wifi\",\"full_text\":\"$icon $wifi_name\"},"
+    if [[ -d "/sys/class/net/$active_interface/wireless" ]]; then
+        icon=${wifi_icons[1]}
+    else
+        icon=$ethernet_icon
+    fi
+    FUNC_OUTPUTS[internet]="{\"name\":\"internet\",\"full_text\":\"$icon $conn_name\"},"
 }
 
 function get_bluetooth() {
     local bluetooth_device icon
     local bluetooth_device_text=""
-    BLUETOOTH_COUNT=$(timeout 0.2s bluetoothctl devices Connected | wc -l || echo "-1")
-    (( BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT )) && timeout 0.2s playerctl pause || true
+    BLUETOOTH_COUNT=$(bluetoothctl devices Connected | grep --fixed-strings --color=never 'Device ' | wc -l || echo "-1")
+    (( BLUETOOTH_COUNT < BLUETOOTH_PREV_COUNT )) && playerctl pause || true
     BLUETOOTH_PREV_COUNT=$BLUETOOTH_COUNT
     if (( BLUETOOTH_COUNT > 0 )); then
         icon=${bluetooth_icons[1]}
         while IFS= read -r device; do
             [[ -n "$bluetooth_device_text" ]] && bluetooth_device_text+=" "
             bluetooth_device_text+="$icon $device"
-        done < <(timeout 0.2s bluetoothctl devices Connected | cut -d' ' -f3- || echo "err")
+        done < <(bluetoothctl devices Connected | grep --fixed-strings --color=never 'Device ' | cut -d' ' -f3- || echo "err")
     else
         icon=${bluetooth_icons[0]}
         bluetooth_device_text="$icon "
@@ -230,10 +224,10 @@ function get_internet_speed() {
     local time_diff=$(( current_time - PREV_SPEED_TIME ))
     (( time_diff < 1 )) && return
     local active_interface
-    [[ -f "$NETWORK_INTERFACE_FILE" ]] && active_interface=$(timeout 0.2s cat "$NETWORK_INTERFACE_FILE" || echo "err")
+    [[ -f "$NETWORK_INTERFACE_FILE" ]] && active_interface=$(cat "$NETWORK_INTERFACE_FILE" || echo "err")
     if [[ -n "$active_interface" ]]; then
-        local rx_bytes=$(timeout 0.2s cat "/sys/class/net/$active_interface/statistics/rx_bytes" || echo "0")
-        local tx_bytes=$(timeout 0.2s cat "/sys/class/net/$active_interface/statistics/tx_bytes" || echo "0")
+        local rx_bytes=$(cat "/sys/class/net/$active_interface/statistics/rx_bytes" || echo "0")
+        local tx_bytes=$(cat "/sys/class/net/$active_interface/statistics/tx_bytes" || echo "0")
         if (( PREV_RX_BYTES > 0 )); then
             local rx_speed=$(( (rx_bytes - PREV_RX_BYTES) / time_diff ))
             local tx_speed=$(( (tx_bytes - PREV_TX_BYTES) / time_diff ))
@@ -277,6 +271,17 @@ function get_cpu_usage() {
     FUNC_OUTPUTS[cpu]="{\"name\":\"cpu\",\"full_text\":\"${cpu_usage_text}\"},"
 }
 
+function get_active_window() {
+    local window_name
+    window_name=$(swaymsg -t get_tree 2>/dev/null | jq -r 'first(.. | objects | select(.focused==true)).name // empty' 2>/dev/null || echo "")
+    if [[ -n "$window_name" ]]; then
+        (( ${#window_name} > 60 )) && window_name="${window_name:0:57}..."
+        FUNC_OUTPUTS[active_window]="{\"name\":\"active_window\",\"full_text\":\"$window_name\"},"
+    else
+        FUNC_OUTPUTS[active_window]=""
+    fi
+}
+
 function get_date() {
     FUNC_OUTPUTS[date]="{\"name\":\"date\",\"full_text\":\"$(date "+%a %F %H:%M:%S")\"},"
 }
@@ -299,32 +304,102 @@ function format_network_speed() {
 }
 
 # ------------------------------------------------------------------------------
-# Main loop
+# Traps
+# ------------------------------------------------------------------------------
+
+function log_error() {
+    local log_file="/tmp/statusbar.log"
+    local line="${BASH_LINENO[0]}"
+    local source="${BASH_SOURCE[1]:-$0}"
+    local command="${BASH_COMMAND}"
+    local exit_code=$?
+    printf "[%s] ERROR (code: %d): '%s' failed at %s:%s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$exit_code" "$command" "$source" "$line" >> "$log_file"
+    if [[ "$command" =~ \$\{?[a-zA-Z_][a-zA-Z0-9_]*(\[\])?\}? ]]; then
+        printf "[%s] Hint: Possible unbound variable (-u)\n" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log_file"
+    elif [[ "$command" == *"|"* ]]; then
+        printf "[%s] Hint: Command contains a pipe, check pipefail (-o pipefail)\n" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log_file"
+    fi
+}
+
+trap log_error ERR
+
+function log_abort() {
+    local log_file="/tmp/statusbar.log"
+    local line="${BASH_LINENO[0]}"
+    local source="${BASH_SOURCE[1]:-$0}"
+    local command="${BASH_COMMAND}"
+    printf "[%s] SIGNAL: abort received during '%s' at %s:%s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$command" "$source" "$line" >> "$log_file"
+    printf "[%s] Process terminating due to signal abort\n" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log_file"
+}
+
+trap log_abort ABRT
+
+function cleanup() {
+    if [[ -n "$IFACE_MONITOR_PID" && -e /proc/$IFACE_MONITOR_PID ]]; then
+        kill $IFACE_MONITOR_PID 2>/dev/null
+    fi
+    rm -f "$WIFI_NAME_FILE" "$NETWORK_INTERFACE_FILE"
+    exit 0
+}
+
+trap cleanup EXIT INT TERM QUIT PIPE
+
+# ------------------------------------------------------------------------------
+# Main function
 # ------------------------------------------------------------------------------
 
 echo '{"version":1,"click_events":false}'
 echo '[[],'
 
-while true; do
-    if [[ -n "$IFACE_MONITOR_PID" && ! -e /proc/$IFACE_MONITOR_PID ]]; then
-        cleanup
-        monitor_active_interfaces &
-        IFACE_MONITOR_PID=$!
-    fi
+function main() {
+    local iteration_count=0
 
-    for func in get_volume get_date get_bluetooth get_wifi get_battery get_brightness get_internet_speed get_cpu_usage; do
+    local -a funcs=(
+        "get_date"
+        "get_volume"
+        "get_bluetooth"
+        "get_internet"
+        "get_battery"
+        "get_brightness"
+        "get_internet_speed"
+        "get_cpu_usage"
+        "get_active_window"
+    )
+
+    for func in "${funcs[@]}"; do
         $func || true
     done
+    while true; do
+        if [[ -n "$IFACE_MONITOR_PID" && ! -e /proc/$IFACE_MONITOR_PID ]]; then
+            cleanup
+            monitor_active_interfaces &
+            IFACE_MONITOR_PID=$!
+        fi
 
-    printf '[%s%s%s%s%s%s%s%s],' \
-        "${FUNC_OUTPUTS[internet_speed]:-}" \
-        "${FUNC_OUTPUTS[cpu]:-}" \
-        "${FUNC_OUTPUTS[bluetooth]:-}" \
-        "${FUNC_OUTPUTS[wifi]:-}" \
-        "${FUNC_OUTPUTS[brightness]:-}" \
-        "${FUNC_OUTPUTS[volume]:-}" \
-        "${FUNC_OUTPUTS[battery]:-}" \
-        "${FUNC_OUTPUTS[date]:-}"
+        for func in "${funcs[@]}"; do
+            if [[ "$func" == "get_active_window" ]]; then
+                $func || true
+            elif [[ "$func" == "get_battery" ]] && (( iteration_count % 10 == 0 )); then
+                $func || true
+            elif (( iteration_count % 5 == 0 )); then
+                $func || true
+            fi
+        done
 
-    sleep $REFRESH_INTERVAL
-done
+        printf '[%s%s%s%s%s%s%s%s%s],' \
+            "${FUNC_OUTPUTS[active_window]:-}" \
+            "${FUNC_OUTPUTS[internet_speed]:-}" \
+            "${FUNC_OUTPUTS[cpu]:-}" \
+            "${FUNC_OUTPUTS[bluetooth]:-}" \
+            "${FUNC_OUTPUTS[internet]:-}" \
+            "${FUNC_OUTPUTS[brightness]:-}" \
+            "${FUNC_OUTPUTS[volume]:-}" \
+            "${FUNC_OUTPUTS[battery]:-}" \
+            "${FUNC_OUTPUTS[date]:-}"
+
+        (( iteration_count++ ))
+        sleep $REFRESH_INTERVAL
+    done
+}
+
+main
