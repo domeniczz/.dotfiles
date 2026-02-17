@@ -523,13 +523,19 @@ function execute_open() {
 
     if [[ "$multi" == "batch" ]]; then
         local cmd="$app"
+        local cwd=""
         for item in "${items[@]}"; do
             cmd+=" $(printf "%q" "$item")"
+            if [[ -z "$cwd" ]]; then
+                [[ -d "$item" ]] && cwd="$item" || cwd="$(dirname "$item")"
+            fi
         done
-        dispatch_command "$ui" "$cmd"
+        dispatch_command "$ui" "$cmd" "$cwd"
     else
         for item in "${items[@]}"; do
-            dispatch_command "$ui" "$app $(printf "%q" "$item")"
+            local cwd
+            [[ -d "$item" ]] && cwd="$item" || cwd="$(dirname "$item")"
+            dispatch_command "$ui" "$app $(printf "%q" "$item")" "$cwd"
         done
     fi
 }
@@ -537,9 +543,13 @@ function execute_open() {
 function dispatch_command() {
     local ui="$1"
     local cmd="$2"
+    local cwd="${3:-}"
 
     case "$ui" in
         tui)
+            if [[ -n "$cwd" ]]; then
+                cmd="cd $(printf %q "$cwd") && $cmd"
+            fi
             if [[ -n "${TMUX:-}" ]]; then
                 LC_ALL="" tmux new-window "$cmd"
             elif [[ -n "${STY:-}" ]]; then
@@ -641,9 +651,11 @@ function append_nested_entries() {
     local item="$1"
     local -n arr_ref="$2"
     local nested=$(find_nested_entries "$item")
-    [[ -n "$nested" ]] && while IFS= read -r entry; do
-        arr_ref+=("$entry")
-    done <<< "$nested"
+    if [[ -n "$nested" ]]; then
+        while IFS= read -r entry; do
+            arr_ref+=("$entry")
+        done <<< "$nested"
+    fi
 }
 
 function delete_from_index() {
