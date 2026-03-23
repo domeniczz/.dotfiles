@@ -1,0 +1,11 @@
+{
+  // Skills to install and keep updated.
+  // Run /update-skills to sync.
+  "skills": [
+    { "source": "anthropics/skills", "path": "skills/docx" },
+    { "source": "anthropics/skills", "path": "skills/pptx" },
+    { "source": "anthropics/skills", "path": "skills/xlsx" },
+    { "source": "anthropics/skills", "path": "skills/pdf" },
+    { "source": "anthropics/skills", "path": "skills/skill-creator" }
+  ]
+}
