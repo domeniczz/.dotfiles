@@ -51,6 +51,7 @@ set viminfofile=$XDG_DATA_HOME/vim/viminfo
 "   Ps = 6  -> steady bar (xterm).
 let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
+autocmd VimEnter * silent! !printf '\e[2 q'
 
 " ------------------------------------------------------------------------------
 " Netrw
