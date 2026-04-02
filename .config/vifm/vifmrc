@@ -201,6 +201,7 @@ nnoremap <silent> ft :touch<Space>
 
 nnoremap <silent> ff :filter<Space>
 nnoremap <silent> fn :filter!<Space>
+nnoremap <silent> fr :filter<CR>
 
 " Grep string under current directory and open the match with nvim
 nnoremap <silent> <C-s> :gd<Space>
@@ -325,13 +326,16 @@ mark x $HOME/Downloads/ downloads
 " ------------------------------------------------------------------------------
 
 " Text
-filetype {*.sql,*.desktop,*.service,*.target},<text/*,application/x-sh,application/x-shellscript,application/javascript,application/toml,application/json,application/xml,application/yaml>
+filetype {*.sql,*.desktop,*.service,*.target,*.jsonc},<text/*,application/x-sh,application/x-shellscript,application/javascript,application/toml,application/json,application/xml,application/yaml>
       \ nvim %f, vim %f, nvim --clean %f, vim --clean %f
 filextype {*.htm,*.html,*.xhtml},<text/html>
       \ nvim %f, vim %f, nvim --clean %f, vim --clean %f, qutebrowser %f %i &, firefox %f %i &
 fileviewer {*.htm,*.html},<text/html> w3m %f
-fileviewer <text/*,application/x-sh,application/x-shellscript,application/javascript,application/toml,application/json,application/xml,application/yaml>
+fileviewer <text/*,application/x-sh,application/x-shellscript,application/javascript,application/toml,application/xml,application/yaml>
       \ bat --color=always --style=plain --paging=never --wrap=never --line-range=:200 %c
+fileviewer {*.json,*.jsonc},<application/json>
+      \ bat --color=always --style=plain --language json --paging=never --wrap=never --line-range=:200 <(jq . --monochrome-output --raw-output %c 2>/dev/null || cat %c),
+      \ jq . --monochrome-output --raw-output %c 2>/dev/null || cat %c
 
 " Empty file
 filetype <inode/x-empty,application/x-empty,application/x-zerosize> nvim %f, vim %f, nvim --clean %f, vim --clean %f
@@ -351,19 +355,19 @@ fileviewer <image/gif> identify %c, #ueberzug#image_no_cache %px %py %pw %ph %pc
 fileviewer <image/*> identify %c, #ueberzug#image %px %py %pw %ph %pc #ueberzug#clear
 
 " Pdf
-filextype {*.pdf},<application/pdf> zathura %f %i &, zathura-sandbox %f %i &
-fileviewer {*.pdf},<application/pdf> pdftotext -nopgbrk %c -, #ueberzug#pdf %px %py %pw %ph %pc #ueberzug#clear
+filextype {*.pdf,*.xps},<application/pdf,application/vnd.ms-xpsdocument> zathura %f %i &, zathura-sandbox %f %i &
+fileviewer {*.pdf,*.xps},<application/pdf,application/vnd.ms-xpsdocument> pdftotext -nopgbrk %c -, #ueberzug#pdf %px %py %pw %ph %pc #ueberzug#clear
 
 " Epub
 filextype {*.ebup},<application/epub+zip> zathura %f %i &, zathura-sandbox %f %i &
 fileviewer {*.ebup},<application/epub+zip> epub2txt %c -, #ueberzug#epub %px %py %pw %ph %pc #ueberzug#clear
 
 " Office
-filetype {*.odt,*.odp,*.dos,*.doc,*.docx,*.xls,*.xlsx,*.pptx,*.ppt},<application/.*opendocument.*,application/vnd.openxmlformats-officedocument.*,application/msword,application/vnd.ms-excel>
+filetype {*.odt,*.odp,*.dos,*.doc,*.docx,*.xls,*.xlsx,*.pptx,*.ppt},<application/*.opendocument.*,application/vnd.openxmlformats-officedocument.*,application/msword,application/vnd.ms-word*,application/vnd.ms-excel*,application/vnd.ms-powerpoint*>
       \ libreoffice %f %i &
 fileviewer {*.docx},<application/vnd.openxmlformats-officedocument.*> docx2txt %c -
 fileviewer {*.doc},<application/msword> catdoc %c
-fileviewer <application/.*opendocument.*> catdoc %c
+fileviewer <application/*.opendocument.*> catdoc %c
 
 " Zip
 filetype <application/zip,application/java-archive>
@@ -422,7 +426,7 @@ fileviewer {*.7z},<application/x-7z-compressed>
 
 " Iso
 filetype {*.iso},<application/x-iso.*> FUSE_MOUNT|fuseiso %SOURCE_FILE %DESTINATION_DIR
-filetype {*.iso},<application/x-iso.*> iso-info %c
+fileviewer {*.iso},<application/x-iso.*> iso-info %c
 
 " Database
 filetype {*.sqlite,*.sqlite3},<application/vnd.sqlite3> visidata %c
