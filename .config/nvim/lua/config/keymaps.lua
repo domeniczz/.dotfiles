@@ -22,6 +22,8 @@ map({ "n", "i", "v", "x" }, "<Right>", "<Nop>", { noremap = true, silent = true 
 -- Open vim file explorer newrw
 -- map("n", "<leader>pv", vim.cmd.Ex, { noremap = true, silent = true })
 
+map("n", "<C-w>b", ":split<CR>", { noremap = true, silent = true, desc = "Split window horizontally" })
+
 -- Navigate thorugh items in quickfix list
 map("n", "<M-j>", "<CMD>cnext<CR>", { noremap = true, silent = true })
 map("n", "<M-k>", "<CMD>cprev<CR>", { noremap = true, silent = true })
@@ -81,8 +83,8 @@ map({ "n", "v" }, "<leader>[", "<CMD>%y+<CR>", { noremap = true, silent = true }
 map("n", "<leader>vs", "<CMD>vertical split<CR>", { noremap = true, silent = true })
 map("n", "<leader>vn", "<CMD>vertical new<CR>", { noremap = true, silent = true })
 
-map("n", "<leader>ls", "<CMD>LspStart<CR>", { noremap = true, silent = true })
-map("n", "<leader>lx", "<CMD>LspStop<CR>", { noremap = true, silent = true })
+map("n", "<leader>ls", "<CMD>LspStart<CR>", { noremap = true, silent = true, desc = "Enable LSP servers" })
+map("n", "<leader>lx", "<CMD>LspStop<CR>", { noremap = true, silent = true, desc = "Stop LSP servers" })
 map("n", "<leader>vrr", vim.lsp.buf.references, { noremap = true, silent = true })
 map("n", "<leader>vrn", vim.lsp.buf.rename, { noremap = true, silent = true })
 

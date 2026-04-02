@@ -165,7 +165,7 @@ return {
           previewer = "builtin",
         },
         grep = {
-          cmd = "rg --line-number --column --no-heading --color=always --smart-case",
+          rg_opts = "--line-number --column --no-heading --color=always --smart-case --regexp",
           hidden = true,
           rg_glob = true,
           glob_flag = "--iglob",

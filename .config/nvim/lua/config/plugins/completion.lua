@@ -44,6 +44,12 @@ return {
               end,
             },
           },
+          copilot = {
+            name = "Copilot",
+            module = "blink-cmp-copilot",
+            score_offset = 100,
+            async = true,
+          },
         },
       },
       completion = {

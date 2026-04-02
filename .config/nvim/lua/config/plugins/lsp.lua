@@ -62,7 +62,6 @@ return {
                   async = false,
                   timeout_ms = 500,
                   bufnr = args.buf,
-                  id = client.id,
                 })
               end
             })
@@ -91,10 +90,8 @@ return {
 
       vim.lsp.set_log_level("ERROR")
 
-      local lspconfig = require("lspconfig")
-
-      lspconfig.lua_ls.setup({
-        autostart = false,
+      -- Use vim.lsp.config() to define configs (nvim-lspconfig provides defaults)
+      vim.lsp.config("lua_ls", {
         capabilities = capabilities,
         settings = {
           Lua = {
@@ -116,15 +113,37 @@ return {
         },
       })
 
-      lspconfig.pyright.setup({
-        autostart = false,
+      vim.lsp.config("pyright", {
         capabilities = capabilities,
       })
 
-      lspconfig.rust_analyzer.setup({
-        autostart = false,
+      vim.lsp.config("rust_analyzer", {
         capabilities = capabilities,
       })
+
+      local servers = {
+        "lua_ls",
+        "pyright",
+        "rust_analyzer",
+      }
+
+      vim.api.nvim_create_user_command("LspStart", function()
+        vim.lsp.enable(servers)
+      end, { desc = "Enable LSP servers" })
+
+      vim.api.nvim_create_user_command("LspStop", function()
+        for _, client in ipairs(vim.lsp.get_clients({ bufnr = 0 })) do
+          vim.lsp.enable(client.name, false)
+          client:stop(2000)
+        end
+      end, { desc = "Stop LSP servers" })
+
+      vim.api.nvim_create_user_command("LspRestart", function()
+        for _, client in ipairs(vim.lsp.get_clients({ bufnr = 0 })) do
+          vim.lsp.enable(client.name, false)
+          vim.lsp.enable(client.name)
+        end
+      end, { desc = "Restart LSP servers" })
     end,
   },
 }

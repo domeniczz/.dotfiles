@@ -36,6 +36,8 @@ opt.numberwidth = 2
 opt.hlsearch = true
 opt.incsearch = true
 
+opt.virtualedit = "block"
+
 -- Highlight current cursor line / column
 -- Configured with autocmd instead
 -- opt.cursorline = true

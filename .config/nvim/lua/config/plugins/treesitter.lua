@@ -1,7 +1,7 @@
 return {
   {
     "nvim-treesitter/nvim-treesitter",
-    branch = 'master',
+    branch = "master",
     enabled = true,
     event = "VeryLazy",
     priority = 1000,
