@@ -51,17 +51,26 @@ declare -gA OPENER_CONFIG=(
 declare -gr INDEX_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/search"
 declare -gr INDEX_FILE="$INDEX_DIR/index"
 declare -gr PLAIN_INDEX_FILE="$INDEX_DIR/plain_index"
-declare -gr TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/search_XXXXXXXXXX")"
 declare -gr LOCK_FILE="${TMPDIR:-/tmp}/search.lock"
+declare -gr RELOAD_FLAG="$INDEX_DIR/.needs_reload"
+declare -gr SOCKET_FILE="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/search-server.sock"
+declare -gr PID_FILE="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/search-server.pid"
+declare -gr FZF_LISTEN_SOCK="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/search-fzf.sock"
+
+declare -g TMP_DIR=""
+declare -g SERVER_MODE=""
 
 declare -g ENABLE_COLORS=1
 declare -g ENABLE_SINGLETON=1
+declare -g SEARCH_CLEAR_STATE_ON_DETACH=1
 
 declare -g FIND_CMD=""
 
 declare -g NEEDS_INDEX_REBUILD=0
 declare -g FORCE_INDEX_REBUILD=0
 declare -g INDEX_ALL=0
+
+declare -gr RESOLVE_SYMLINK=0
 
 declare -g SEARCH_QUERY=""
 
@@ -97,25 +106,31 @@ Search through the whole system with persistent index and perform actions
 (preview, open, delete) using an interactive fuzzy finder interface
 
 OPTIONS:
-    -s, --search     Search query
-    -c, --color      Enable colored output (default)
-    -nc, --nocolor   Disable colored output
-    -r, --rebuild    Force rebuild of the search index
-    -a, --all        Index literally all files
-    -o, --singleton  Run only one instance of the script
-    -m, --multi      Run multiple instances of the script
-    -h, --help       Show this help message and exit
+    -s, --search       Search query
+    -c, --color        Enable colored output (default)
+    -nc, --nocolor     Disable colored output
+    -r, --rebuild      Force rebuild of the search index
+    -a, --all          Index literally all files
+    -o, --singleton    Run only one instance of the script
+    -m, --multi        Run multiple instances of the script
+    -d, --daemon       Start search server (pre-warms and run in background)
+    -q, --stop         Stop the search server
+    -R, --restart      Restart the search server
+    -S, --status       Show search server status
+    -h, --help         Show this help message and exit
 
 INTERACTIVE KEYS:
-    Enter            Open selected item(s)
-    Ctrl-o           Open parent directory of selected item
-    Ctrl-x / F9      Delete selected item(s)
-    Ctrl-Shift-r     Rebuild search index
+    Enter              Open selected item(s)
+    Ctrl-o             Open parent directory of selected item
+    Ctrl-x / F9        Delete selected item(s)
+    Ctrl-r             Rebuild search index
+    Ctrl-q             Disconnect from server (server mode only)
 
 EXAMPLES:
     search
     search --rebuild
     search --nocolor
+    search --server
 EOF
 }
 
@@ -166,9 +181,28 @@ while (( $# > 0 )); do
             ENABLE_SINGLETON=0
             shift
             ;;
+        --daemon|-d)
+            SERVER_MODE="start"
+            shift
+            ;;
+        --stop|-q)
+            SERVER_MODE="stop"
+            shift
+            ;;
+        --restart|-R)
+            SERVER_MODE="restart"
+            shift
+            ;;
+        --status|-S)
+            SERVER_MODE="status"
+            shift
+            ;;
         --help|-h)
             print_usage
             exit 0
+            ;;
+        --server-run)
+            SERVER_MODE="run"
             shift
             ;;
         --action-rebuild)
@@ -213,19 +247,11 @@ function build_index() {
     echo "Building index..."
     mkdir -p "$INDEX_DIR"
 
-    if (( ENABLE_COLORS == 1 )); then
+    if (( ENABLE_COLORS )); then
         eval "$FIND_CMD" | sort | tee "$INDEX_FILE" | \
-        $AWK '
-        BEGIN {
-            ANSI_REGEX = "\033\\[[0-9;]*m"
-        }
-        {
-            line = $0
-            gsub(ANSI_REGEX, "", line)
-            print line
-        }
-        ' > "$PLAIN_INDEX_FILE"
+        $AWK '{ gsub("\033\\[[0-9;]*m", ""); print }' > "$PLAIN_INDEX_FILE" || true
     else
+        rm -f "$PLAIN_INDEX_FILE"
         eval "$FIND_CMD" | sort > "$INDEX_FILE" || true
     fi
 
@@ -239,28 +265,21 @@ function check_index() {
         NEEDS_INDEX_REBUILD=1
         return 0
     fi
-    if (( ENABLE_COLORS != 0 )); then
-        if [[ ! -f "$PLAIN_INDEX_FILE" ]] || [[ ! -f "$INDEX_FILE" ]]; then
-            NEEDS_INDEX_REBUILD=1
-            return 0
-        fi
-        if (( $(wc -l < "$INDEX_FILE") != $(wc -l < "$PLAIN_INDEX_FILE") )); then
-            NEEDS_INDEX_REBUILD=1
-            return 0
-        fi
-        if ! $GREP --quiet --color=never $'\033\\[[0-9;]*m' "$INDEX_FILE"; then
+    if [[ ! -f "$INDEX_FILE" ]]; then
+        NEEDS_INDEX_REBUILD=1
+        return 0
+    fi
+    if (( ENABLE_COLORS )); then
+        if [[ ! -f "$PLAIN_INDEX_FILE" ]] \
+            || (( $(wc -l < "$INDEX_FILE") != $(wc -l < "$PLAIN_INDEX_FILE") )) \
+            || ! $GREP --quiet --color=never $'\033\\[[0-9;]*m' "$INDEX_FILE"; then
             NEEDS_INDEX_REBUILD=1
         fi
     else
-        if [[ ! -f "$INDEX_FILE" ]]; then
-            NEEDS_INDEX_REBUILD=1
-            return 0
-        fi
         if $GREP --quiet --color=never $'\033\\[[0-9;]*m' "$INDEX_FILE"; then
             NEEDS_INDEX_REBUILD=1
         fi
     fi
-    return 0
 }
 
 # ------------------------------------------------------------------------------
@@ -272,14 +291,29 @@ function open_items() {
     (( ${#items[@]} == 0 )) && return 0
 
     if (( ${#items[@]} > 1 )); then
+        HAS_OUTPUT=1
         if ! select_items_to_open items; then
             return 0
         fi
     fi
 
-    local -A type_groups
+    local -a existing=()
+    local -a stale=()
     for item in "${items[@]}"; do
-        local parsed_item="$(parse_item "$item")" || continue
+        if [[ -e "$item" || -L "$item" ]]; then
+            existing+=("$item")
+        else
+            stale+=("$item")
+        fi
+    done
+
+    (( ${#stale[@]} > 0 )) && remove_stale_entries "${stale[@]}"
+    (( ${#existing[@]} == 0 )) && return 0
+
+    local -A type_groups
+    for item in "${existing[@]}"; do
+        local parsed_item
+        parsed_item="$(parse_item "$item")" || continue
         local item_type="$(classify_item "$parsed_item")"
 
         if [[ -n "${type_groups[$item_type]:-}" ]]; then
@@ -300,18 +334,67 @@ function open_parents() {
     local -a items=("$@")
     (( ${#items[@]} == 0 )) && return 0
 
+    if (( RESOLVE_SYMLINK )); then
+        local -a resolved=()
+        for item in "${items[@]}"; do
+            if [[ -L "$item" ]]; then
+                local target="$(readlink -f "$item")"
+                [[ -e "$target" ]] && item="$target"
+            fi
+            resolved+=("$item")
+        done
+        items=("${resolved[@]}")
+    fi
+
+    local -a parents=()
     if (( ${#items[@]} > 1 )); then
+        HAS_OUTPUT=1
         if ! select_parents_to_open items; then
             return 0
         fi
-        for parent in "${items[@]}"; do
-            execute_open "directory" "$parent"
-        done
+        parents=("${items[@]}")
     else
-        local parsed_item="$(parse_item "${items[0]}")" || return 0
-        local parent="$(dirname "$parsed_item")"
-        execute_open "directory" "$parent"
+        parents=("$(dirname "${items[0]}")")
     fi
+
+    local -a existing=()
+    local -a stale=()
+    for parent in "${parents[@]}"; do
+        if [[ -e "$parent" ]]; then
+            existing+=("$parent")
+        else
+            stale+=("$parent")
+        fi
+    done
+
+    (( ${#stale[@]} > 0 )) && remove_stale_entries "${stale[@]}"
+
+    for parent in "${existing[@]}"; do
+        execute_open "directory" "$parent"
+    done
+}
+
+function parse_number_selection() {
+    local -n source_ref=$1
+    local -n result_ref=$2
+    local max=${#source_ref[@]}
+
+    echo "Enter item numbers to open (e.g., '1 3 5' or '1-3 5'), or 'q' to quit:"
+    read -r selection
+    [[ "${selection,,}" == "q" ]] && return 1
+
+    for part in $selection; do
+        if [[ "$part" =~ ^[0-9]+$ ]]; then
+            if (( part > 0 && part <= max )); then
+                result_ref+=("${source_ref[$(( part - 1 ))]}")
+            fi
+        elif [[ "$part" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+            local start="${BASH_REMATCH[1]}" end="${BASH_REMATCH[2]}"
+            for (( j = start; j <= end && j <= max; j++ )); do
+                (( j > 0 )) && result_ref+=("${source_ref[$(( j - 1 ))]}")
+            done
+        fi
+    done
 }
 
 function select_items_to_open() {
@@ -325,34 +408,14 @@ function select_items_to_open() {
     done
     echo ""
 
+    local choice
     choice=$(prompt_for_choice "Open all items? (y/s/q): " "ysq")
-
     [[ "$choice" == "q" ]] && return 1
 
     if [[ "$choice" == "y" ]]; then
         selected_items=("${items_ref[@]}")
     elif [[ "$choice" == "s" ]]; then
-        echo "Enter item numbers to open (e.g., '1 3 5' or '1-3 5'), or 'q' to quit:"
-        read -r selection
-
-        [[ "${selection,,}" == "q" ]] && return 1
-
-        for part in $selection; do
-            if [[ "$part" =~ ^[0-9]+$ ]]; then
-                local num="$part"
-                if (( num > 0 && num <= ${#items_ref[@]} )); then
-                    selected_items+=("${items_ref[$(( num - 1 ))]}")
-                fi
-            elif [[ "$part" =~ ^([0-9]+)-([0-9]+)$ ]]; then
-                local start="${BASH_REMATCH[1]}"
-                local end="${BASH_REMATCH[2]}"
-                for (( j = start; j <= end && j <= ${#items_ref[@]}; j++)); do
-                    if (( j > 0 )); then
-                        selected_items+=("${items_ref[$(( j - 1 ))]}")
-                    fi
-                done
-            fi
-        done
+        parse_number_selection items_ref selected_items || return 1
     fi
 
     items_ref=("${selected_items[@]}")
@@ -379,10 +442,9 @@ function select_parents_to_open() {
     done
 
     echo "You have selected ${#items_ref[@]} items from ${#unique_parents[@]} directories:"
-    local i
     for (( i = 0; i < ${#unique_parents[@]}; i++ )); do
         local parent="${unique_parents[$i]}"
-        local count=$(echo -e "${parent_map[$parent]}" | wc -l)
+        local count=$(echo "${parent_map[$parent]}" | wc -l)
         if (( count > 1 )); then
             printf "  %2d. %s (%d items)\n" $(( i + 1 )) "$parent" "$count"
         else
@@ -391,8 +453,8 @@ function select_parents_to_open() {
     done
     echo ""
 
+    local choice
     choice=$(prompt_for_choice "Open all directories? (y/s/q): " "ysq")
-
     [[ "$choice" == "q" ]] && return 1
 
     local -a selected_parents=()
@@ -400,57 +462,33 @@ function select_parents_to_open() {
     if [[ "$choice" == "y" ]]; then
         selected_parents=("${unique_parents[@]}")
     elif [[ "$choice" == "s" ]]; then
-        echo "Enter item numbers to open (e.g., '1 3 5' or '1-3 5'), or 'q' to quit:"
-        read -r selection
-
-        [[ "${selection,,}" == "q" ]] && return 1
-
-        for part in $selection; do
-            if [[ "$part" =~ ^[0-9]+$ ]]; then
-                local num="$part"
-                if (( num > 0 && num <= ${#unique_parents[@]} )); then
-                    selected_parents+=("${unique_parents[$(( num - 1 ))]}")
-                fi
-            elif [[ "$part" =~ ^([0-9]+)-([0-9]+)$ ]]; then
-                local start="${BASH_REMATCH[1]}"
-                local end="${BASH_REMATCH[2]}"
-                for (( j = start; j <= end && j <= ${#unique_parents[@]}; j++ )); do
-                    if (( j > 0 )); then
-                        selected_parents+=("${unique_parents[$(( j - 1 ))]}")
-                    fi
-                done
-            fi
-        done
+        parse_number_selection unique_parents selected_parents || return 1
     fi
 
     items_ref=("${selected_parents[@]}")
     return 0
 }
 
+function mark_index_changed() {
+    touch "$RELOAD_FLAG"
+}
+
 function parse_item() {
     local item="$1"
-
-    if [[ ! -e "$item" && ! -L "$item" ]]; then
-        echo "Error: File or directory no longer exists: $item" >&2
-        read -r -p "Remove from index? (y/n): " confirm
-        if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
-            local to_remove=("$item")
-            append_nested_entries "$item" to_remove
-            delete_from_index "${to_remove[@]}" >&2
-            echo "Item(s) removed from index." >&2
-            read -r -p "Press Enter to continue..." >&2
-        fi
-        return 1
-    fi
 
     if [[ -L "$item" ]]; then
         local target="$(readlink -f "$item")"
         if [[ ! -e "$target" ]]; then
             echo "Error: Symlink target does not exist: $item -> $target" >&2
             delete_item "$item" >&2
+            HAS_OUTPUT=1
             return 1
         fi
-        echo "$target"
+        if (( RESOLVE_SYMLINK )); then
+            echo "$target"
+        else
+            echo "$item"
+        fi
         return 0
     fi
 
@@ -458,24 +496,35 @@ function parse_item() {
     return 0
 }
 
+function remove_stale_entries() {
+    (( $# == 0 )) && return 0
+    HAS_OUTPUT=1
+    echo "The following item(s) no longer exist:"
+    printf "  - %s\n" "$@"
+    echo ""
+    local confirm
+    read -r -p "Remove from index? (y/n): " confirm
+    if [[ "${confirm:-n}" =~ ^[Yy]$ ]]; then
+        local to_remove=("$@")
+        for item in "$@"; do
+            append_nested_entries "$item" to_remove
+        done
+        delete_from_index "${to_remove[@]}"
+        mark_index_changed
+        echo "Item(s) removed from index."
+    fi
+}
+
 function classify_item() {
     local item="$1"
+    [[ -L "$item" ]] && item="$(readlink -f "$item")"
     if [[ -d "$item" ]]; then
         echo "directory"
         return 0
     fi
     local mime_type=$(file --brief --mime-type "$item" || echo "unknown")
     case "$mime_type" in
-        text/*)
-            echo "text"
-            ;;
-        application/json|application/xml|application/x-tex|application/toml|application/x-yaml)
-            echo "text"
-            ;;
-        application/javascript|application/x-sh|application/x-shellscript)
-            echo "text"
-            ;;
-        inode/x-empty|application/x-empty|application/x-zerosize)
+        text/*|application/json|application/xml|application/x-tex|application/toml|application/x-yaml|application/javascript|application/x-sh|application/x-shellscript|inode/x-empty|application/x-empty|application/x-zerosize)
             echo "text"
             ;;
         application/pdf|application/epub+zip)
@@ -506,8 +555,6 @@ function execute_open() {
 
     local config="${OPENER_CONFIG[$item_type]:-gui:xdg-open:single}"
     IFS=':' read -r ui app multi <<< "$config"
-
-    app="$(eval echo "$app")"
 
     if [[ "$ui" == "gui" ]] && ! check_gui; then
         echo "No GUI support detected for $item_type files." >&2
@@ -583,21 +630,18 @@ function delete_item() {
         local files_to_delete=()
 
         for item in "$@"; do
+            to_remove+=("$item")
             if [[ -L "$item" ]]; then
                 files_to_delete+=("$item")
-                to_remove+=("$item")
                 append_nested_entries "$item" to_remove
             elif [[ ! -e "$item" ]]; then
                 echo "Warning: $item no longer exists, removing from index only."
-                to_remove+=("$item")
                 append_nested_entries "$item" to_remove
             elif [[ -d "$item" ]]; then
                 dirs_to_delete+=("$item")
-                to_remove+=("$item")
                 append_nested_entries "$item" to_remove
             else
                 files_to_delete+=("$item")
-                to_remove+=("$item")
             fi
         done
 
@@ -612,10 +656,11 @@ function delete_item() {
             echo "Updating index..."
             delete_from_index "${to_remove[@]}"
             local lines_after=$(wc -l < "$INDEX_FILE")
-            if (( lines_before == lines_after )); then
-                echo "Nothing to update in index."
-            else
+            if (( lines_before != lines_after )); then
+                mark_index_changed
                 echo "Index updated."
+            else
+                echo "Nothing to update in index."
             fi
             echo "Deletion completed."
         fi
@@ -626,25 +671,12 @@ function delete_item() {
     fi
 }
 
-function regex_escaping() {
-    local str="$1"
-    str="${str//\\/\\\\}"
-    str="${str//./\\.}"
-    str="${str//\*/\\*}"
-    str="${str//\[/\\[}"
-    str="${str//\]/\\]}"
-    str="${str//^/\\^}"
-    str="${str//\$/\\$}"
-    echo "$str"
-}
-
 function find_nested_entries() {
     local dir="$1"
     [[ "$dir" != */ ]] && dir="${dir}/"
-
-    local index=$((( ENABLE_COLORS == 0 )) && echo "$INDEX_FILE" || echo "$PLAIN_INDEX_FILE")
-    local escaped_dir=$(regex_escaping "$dir")
-    $GREP --color=never "^$escaped_dir" "$index" || true
+    local index="$INDEX_FILE"
+    (( ENABLE_COLORS )) && index="$PLAIN_INDEX_FILE"
+    $AWK -v prefix="$dir" 'substr($0, 1, length(prefix)) == prefix' "$index"
 }
 
 function append_nested_entries() {
@@ -661,15 +693,16 @@ function append_nested_entries() {
 function delete_from_index() {
     (( $# == 0 )) && return 0
 
+    [[ -z "$TMP_DIR" ]] && TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/search_XXXXXXXXXX")"
     local tmp_index_file="$TMP_DIR/index_filtered"
     local tmp_plain_index_file="$TMP_DIR/plain_index_filtered"
     local exclude_file="$TMP_DIR/exclude_list"
 
     printf "%s\n" "$@" > "$exclude_file"
 
-    if (( ENABLE_COLORS == 0 )); then
+    if (( ! ENABLE_COLORS )); then
         if (( $# < 5000 )); then
-            $GREP --invert-match --fixed-strings --line-regexp --file "$exclude_file" "$INDEX_FILE" > "$tmp_index_file"
+            $GREP --invert-match --fixed-strings --line-regexp --file "$exclude_file" "$INDEX_FILE" > "$tmp_index_file" || true
         else
             $AWK '
             BEGIN {
@@ -714,7 +747,7 @@ function construct_find_command() {
 
     if command -v fd >/dev/null 2>&1; then
         search_cmd="fd '' --hidden --no-ignore --absolute-path"
-        if (( ENABLE_COLORS == 0 )); then
+        if (( ! ENABLE_COLORS )); then
             search_cmd+=" --color=never"
         else
             search_cmd+=" --color=always"
@@ -722,13 +755,9 @@ function construct_find_command() {
         if (( INDEX_ALL != 0 )); then
             search_cmd+=" --search-path /"
         else
-            if (( ${#INCLUDED_DIRS[@]} > 0 )); then
-                for dir in "${INCLUDED_DIRS[@]}"; do
-                    search_cmd+=" --search-path \"${dir}\""
-                done
-            else
-                search_cmd+=" --search-path /"
-            fi
+            for dir in "${INCLUDED_DIRS[@]}"; do
+                search_cmd+=" --search-path \"${dir}\""
+            done
             for dir in "${EXCLUDED_DIRS_FD[@]}"; do
                 search_cmd+=" --exclude \"${dir}\""
             done
@@ -739,13 +768,9 @@ function construct_find_command() {
         if (( INDEX_ALL != 0 )); then
             search_cmd+=" /"
         else
-            if (( ${#INCLUDED_DIRS[@]} > 0 )); then
-                for dir in "${INCLUDED_DIRS[@]}"; do
-                    search_cmd+=" \"${dir}\""
-                done
-            else
-                search_cmd+=" /"
-            fi
+            for dir in "${INCLUDED_DIRS[@]}"; do
+                search_cmd+=" \"${dir}\""
+            done
             for dir in "${EXCLUDED_DIRS_FIND[@]}"; do
                 search_cmd+=" -path \"${dir}\" -prune -o"
             done
@@ -775,9 +800,7 @@ function prompt_for_choice() {
 }
 
 function select_command() {
-    local commands=("$@")
-
-    for cmd in "${commands[@]}"; do
+    for cmd in "$@"; do
         if check_command_string "$cmd"; then
             printf "%s\n" "$cmd"
             return 0
@@ -794,12 +817,16 @@ function construct_fzf_preview_command() {
 
     local html_cmd=$(select_command \
         "w3m -dump -X -M -T text/html -no-mouse -no-graph -no-cookie {}" \
-        "bat --color=always --style=plain --line-range=:200 {} 2>/dev/null" \
+        "bat --color=always --style=plain --paging=never --wrap=never --line-range=:200 {} 2>/dev/null" \
         "cat {} 2>/dev/null")
 
     local text_cmd=$(select_command \
-        "bat --color=always --style=plain --line-range=:200 {} 2>/dev/null" \
+        "bat --color=always --style=plain --paging=never --wrap=never --line-range=:200 {} 2>/dev/null" \
         "cat {} 2>/dev/null")
+
+    local json_cmd=$(select_command \
+        "bat --color=always --style=plain --language json --paging=never --wrap=never --line-range=:200 <(jq . --monochrome-output --raw-output {} 2>/dev/null || cat {})" \
+        "jq . --monochrome-output --raw-output {} 2>/dev/null || cat {}")
 
     local general_archive_cmd=$(select_command \
         "bsdtar -tvf {} | awk '{print \$6 \" \" \$7 \" \" \$8 \" - \" \$NF}' 2>/dev/null" \
@@ -834,8 +861,11 @@ function construct_fzf_preview_command() {
                 text/html)
                     $html_cmd
                     ;;
-                text/*|application/json|application/xml|application/javascript|application/x-sh|application/x-shellscript|application/x-tex|application/toml|application/x-yaml)
+                text/*|application/xml|application/javascript|application/x-sh|application/x-shellscript|application/x-tex|application/toml|application/x-yaml)
                     $text_cmd
+                    ;;
+                application/json)
+                    $json_cmd
                     ;;
                 application/zip|application/java-archive|application/x-rar|application/x-7z-compressed|application/x-tar|application/x-gzip|application/x-bzip2|application/x-xz|application/zstd)
                     $general_archive_cmd
@@ -969,6 +999,62 @@ function check_command_string() {
     return 0
 }
 
+function run_fzf() {
+    local mode="$1"
+
+    local preview_cmd="$(construct_fzf_preview_command)"
+    local self="$(readlink -f "$0")"
+    (( ENABLE_COLORS == 0 )) && self+=" --nocolor"
+
+    local reload="+transform([[ -f $RELOAD_FLAG ]] && rm -f $RELOAD_FLAG && echo 'reload:cat $INDEX_FILE')"
+
+    local -a args=(
+        --ansi --smart-case --tabstop=4 --no-cycle --border=none --footer-border=none --multi --highlight-line
+        --preview="$preview_cmd" --preview-window='right,50%,border-left,nocycle,nowrap'
+        --prompt='❯ '
+        --bind='focus:transform-header:stat --printf="%A %U:%G" {} || echo "---"'
+        --bind='Esc:ignore'
+        --bind='Ctrl-n:down,Ctrl-p:up'
+        --bind='Ctrl-e:offset-down,Ctrl-y:offset-up'
+        --bind='Ctrl-d:half-page-down,Ctrl-u:half-page-up'
+        --bind='Ctrl-f:page-down,Ctrl-b:page-up'
+        --bind='Ctrl-j:preview-half-page-down,Ctrl-k:preview-half-page-up'
+        --bind='Ctrl-/:toggle-preview'
+        --bind='Ctrl-s:deselect-all'
+        --bind="Enter:execute($self --action-open {+})$reload"
+        --bind="Ctrl-o:execute($self --action-open-parent {+})$reload"
+        --bind="Ctrl-x:execute($self --action-delete {+})$reload"
+        --bind="F9:execute($self --action-delete {+})$reload"
+        --bind="Ctrl-r:execute($self --action-rebuild)+reload(cat $INDEX_FILE)"
+        --bind="Alt-r:reload(cat $INDEX_FILE)"
+        --bind="F1:preview($self --help)"
+    )
+
+    if [[ "$mode" == "server" ]]; then
+        rm -f "$FZF_LISTEN_SOCK"
+        args+=(
+            --listen "$FZF_LISTEN_SOCK"
+            --footer='Enter: open, Ctrl-o: open parent, Ctrl-x / F9: delete, Ctrl-r: rebuild index, Ctrl-q: disconnect'
+            --bind='Ctrl-q:abort'
+            --bind='Ctrl-c:clear-query'
+        )
+    else
+        args+=(
+            --query="$SEARCH_QUERY"
+            --footer='Enter: open, Ctrl-o: open parent, Ctrl-x / F9: delete, Ctrl-r: rebuild index, F1: help'
+            --bind='Ctrl-q:abort,Ctrl-c:abort'
+        )
+    fi
+
+    fzf "${args[@]}" < "$INDEX_FILE"
+}
+
+function get_detach_reset_action() {
+    if (( SEARCH_CLEAR_STATE_ON_DETACH )); then
+        printf '%s' 'change-query()+clear-selection+first'
+    fi
+}
+
 function check_gui() {
     [[ -n "${WAYLAND_DISPLAY:-}" ]] || \
     [[ -n "${DISPLAY:-}" ]] || \
@@ -990,13 +1076,15 @@ function running_instance_check() {
 # ------------------------------------------------------------------------------
 
 function cleanup() {
-    [[ -d "$TMP_DIR" ]] && rm -rf "$TMP_DIR" || true
-    [[ -e "$LOCK_FILE" ]] && rm -f "$LOCK_FILE" || true
-
-    if command -v fd >/dev/null 2>&1; then
-        fd --type d --regex '^search_[a-zA-Z0-9]{10}$' "${TMPDIR:-/tmp}" --max-depth 1 --exec rm -rf '{}' ';' 2>/dev/null || true
-    else
-        find "${TMPDIR:-/tmp}" -maxdepth 1 -type d -regextype posix-extended -regex ".*/search_[a-zA-Z0-9]{10}" -exec rm -rf '{}' \; 2>/dev/null || true
+    [[ -n "$TMP_DIR" ]] && rm -rf "$TMP_DIR"
+    # Only the main process should clean up shared resources
+    if [[ -z "$ACTION_MODE" ]] && [[ "$SERVER_MODE" != "run" ]]; then
+        rm -f "$LOCK_FILE" "$RELOAD_FLAG"
+        if command -v fd >/dev/null 2>&1; then
+            fd --type d --regex '^search_[a-zA-Z0-9]{10}$' "${TMPDIR:-/tmp}" --max-depth 1 --exec rm -rf '{}' ';' 2>/dev/null || true
+        else
+            find "${TMPDIR:-/tmp}" -maxdepth 1 -type d -regextype posix-extended -regex ".*/search_[a-zA-Z0-9]{10}" -exec rm -rf '{}' \; 2>/dev/null || true
+        fi
     fi
 }
 
@@ -1007,6 +1095,7 @@ trap cleanup EXIT INT TERM QUIT PIPE
 # ------------------------------------------------------------------------------
 
 function action_handler() {
+    HAS_OUTPUT=0
     case "$ACTION_MODE" in
         rebuild)
             construct_find_command
@@ -1015,11 +1104,11 @@ function action_handler() {
             ;;
         open)
             open_items "${ACTION_ITEMS[@]}"
-            (( ${#ACTION_ITEMS[@]} > 1 )) && print_separator
+            (( HAS_OUTPUT )) && print_separator
             ;;
         open-parent)
             open_parents "${ACTION_ITEMS[@]}"
-            (( ${#ACTION_ITEMS[@]} > 1 )) && print_separator
+            (( HAS_OUTPUT )) && print_separator
             ;;
         delete)
             delete_item "${ACTION_ITEMS[@]}"
@@ -1038,43 +1127,116 @@ if [[ -n "$ACTION_MODE" ]]; then
 fi
 
 # ------------------------------------------------------------------------------
+# Server mode
+# ------------------------------------------------------------------------------
+
+function server_is_running() {
+    local pid
+    [[ -S "$SOCKET_FILE" ]] && [[ -f "$PID_FILE" ]] && read -r pid < "$PID_FILE" && kill -0 "$pid" 2>/dev/null
+}
+
+function server_start() {
+    if server_is_running; then
+        echo "Server already running." >&2
+        return 0
+    fi
+    if ! command -v abduco >/dev/null 2>&1; then
+        echo "abduco is required for server mode. Install: pacman -S abduco" >&2
+        return 1
+    fi
+    construct_find_command
+    check_index
+    (( NEEDS_INDEX_REBUILD )) && build_index
+    rm -f "$SOCKET_FILE"
+    local -a cmd=("$(readlink -f "$0")" --server-run)
+    (( ENABLE_COLORS == 0 )) && cmd+=(--nocolor)
+    abduco -n "$SOCKET_FILE" "${cmd[@]}"
+    echo "Search server started."
+}
+
+function server_stop() {
+    if [[ -f "$PID_FILE" ]]; then
+        local pid abduco_pid
+        { read -r pid; read -r abduco_pid; } < "$PID_FILE" || true
+        if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
+            kill "$pid" 2>/dev/null || true
+            [[ -n "${abduco_pid:-}" ]] && kill "$abduco_pid" 2>/dev/null || true
+            rm -f "$PID_FILE" "$SOCKET_FILE"
+            echo "Search server stopped."
+            return
+        fi
+    fi
+    rm -f "$PID_FILE" "$SOCKET_FILE"
+    echo "No server running."
+}
+
+function server_restart() {
+    server_stop
+    server_start
+}
+
+function server_status() {
+    if server_is_running; then
+        local pid
+        read -r pid < "$PID_FILE"
+        echo "Server: running (PID $pid)"
+        echo "Socket: $SOCKET_FILE"
+    else
+        echo "Server: not running"
+    fi
+    if [[ -f "$INDEX_FILE" ]]; then
+        local count
+        count=$(wc -l < "$INDEX_FILE")
+        local mod
+        mod=$(stat --format='%y' "$INDEX_FILE" 2>/dev/null | cut -d. -f1)
+        echo "Index:  $count entries ($INDEX_FILE)"
+        echo "Built:  $mod"
+    else
+        echo "Index:  not built"
+    fi
+}
+
+function server_run() {
+    printf '%s\n%s\n' "$$" "$PPID" > "$PID_FILE"
+    trap - TERM
+    trap 'rm -f "$PID_FILE" "$FZF_LISTEN_SOCK"; [[ -n "$TMP_DIR" ]] && rm -rf "$TMP_DIR"' EXIT
+    construct_find_command
+    check_index
+    (( NEEDS_INDEX_REBUILD )) && build_index
+    rm -f "$RELOAD_FLAG"
+    while true; do
+        run_fzf "server" || true
+        sleep 0.1
+    done
+}
+
+case "$SERVER_MODE" in
+    start)   server_start;   exit $? ;;
+    stop)    server_stop;    exit 0 ;;
+    restart) server_restart; exit $? ;;
+    status)  server_status;  exit 0 ;;
+    run)     server_run;     exit 0 ;;
+esac
+
+# ------------------------------------------------------------------------------
 # Main function
 # ------------------------------------------------------------------------------
 
 function main() {
+    if server_is_running; then
+        abduco -e ^q -a "$SOCKET_FILE" || true
+        local detach_reset_action="$(get_detach_reset_action)"
+        if [[ -n "$detach_reset_action" ]] && [[ -S "$FZF_LISTEN_SOCK" ]]; then
+            curl --unix-socket "$FZF_LISTEN_SOCK" -s -X POST localhost -d "$detach_reset_action" 2>/dev/null || true
+        fi
+        exit 0
+    fi
     running_instance_check
-
-    local preview_cmd="$(construct_fzf_preview_command)"
-
     construct_find_command
     check_index
-    (( NEEDS_INDEX_REBUILD )) && build_index && print_separator
-
-    local self="$(readlink -f "$0")"
-
-    fzf --ansi --smart-case --tabstop=4 --no-cycle --border=none --footer-border=none --multi --highlight-line \
-        --query="$SEARCH_QUERY" \
-        --preview="$preview_cmd" --preview-window 'right,50%,border-left,nocycle,nowrap' \
-        --prompt='❯ ' \
-        --footer='Enter: open, Ctrl-o: open parent, Ctrl-x / F9: delete, Ctrl-r: rebuild index, F1: help' \
-        --bind='focus:transform-header:stat --printf="%A %U:%G" {} || echo "---"' \
-        --bind='Esc:ignore' \
-        --bind='Ctrl-q:abort,Ctrl-c:abort' \
-        --bind='Ctrl-n:down,Ctrl-p:up' \
-        --bind='Ctrl-e:offset-down,Ctrl-y:offset-up' \
-        --bind='Ctrl-d:half-page-down,Ctrl-u:half-page-up' \
-        --bind='Ctrl-f:page-down,Ctrl-b:page-up' \
-        --bind='Ctrl-j:preview-half-page-down,Ctrl-k:preview-half-page-up' \
-        --bind='Ctrl-/:toggle-preview' \
-        --bind='Ctrl-s:deselect-all' \
-        --bind="Enter:execute($self --action-open {+})" \
-        --bind="Ctrl-o:execute($self --action-open-parent {+})" \
-        --bind="Ctrl-x:execute($self --action-delete {+})+reload(cat $INDEX_FILE)" \
-        --bind="F9:execute($self --action-delete {+})+reload(cat $INDEX_FILE)" \
-        --bind="Ctrl-r:execute($self --action-rebuild)+reload(cat $INDEX_FILE)" \
-        --bind="Alt-r:reload(cat $INDEX_FILE)" \
-        --bind="F1:preview($self --help)" \
-        < "$INDEX_FILE"
+    (( NEEDS_INDEX_REBUILD )) && { build_index; print_separator; }
+    rm -f "$RELOAD_FLAG"
+    run_fzf "main"
 }
 
 main
