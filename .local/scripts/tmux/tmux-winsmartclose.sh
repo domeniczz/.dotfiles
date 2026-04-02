@@ -6,33 +6,47 @@ set -euo pipefail
 # Don't close tmux session when closing the last window
 # ------------------------------------------------------------------------------
 
-current_win_pane_count=$(tmux display-message -p '#{window_panes}')
-if tmux list-panes -F '#{pane_current_command}' | grep -Eq "^vim|nvim|nano$"; then
-    editor_running=true
-else
-    editor_running=false
+editors='^(vi|vim|nvim|emacs|nano|micro|helix|kakoune)$'
+
+win_panes=$(tmux display-message -p '#{window_panes}')
+cur_cmd=$(tmux display-message -p '#{pane_current_command}')
+cur_pid=$(tmux display-message -p '#{pane_pid}')
+
+editor_running=false
+if tmux list-panes -F '#{pane_current_command}' | grep -Eq "$editors"; then
+	editor_running=true
 fi
 
-if (( current_win_pane_count > 1 )) || $editor_running; then
-    if (( current_win_pane_count > 1 )); then
-        if $editor_running; then
-            prompt="Close window with $current_win_pane_count panes and vim/nvim running? (y/n)"
-        else
-            prompt="Close window with $current_win_pane_count panes? (y/n)"
-        fi
-    else
-        prompt="Close window with vim/nvim running? (y/n)"
+bg_process_running=false
+for pane_pid in $(tmux list-panes -F '#{pane_pid}'); do
+	if ps -o pid= --ppid "$pane_pid" | grep -q .; then
+		bg_process_running=true
+		break
+	fi
+done
+
+only_editor_running=false
+if (( win_panes == 1 )) && [[ $cur_cmd =~ $editors ]]; then
+	if (( $(ps -o pid= --ppid "$cur_pid" | wc -l) == 1 )); then
+		only_editor_running=true
+	fi
+fi
+
+if (( win_panes > 1 )) || $editor_running || $bg_process_running; then
+    reasons=()
+    (( win_panes > 1 )) && reasons+=("$win_panes panes")
+    $editor_running && reasons+=("editor running")
+    $bg_process_running && ! $only_editor_running && reasons+=("background process(es)")
+    prompt="Close window"
+    if ((${#reasons[@]})); then
+        separator=" with "
+        for r in "${reasons[@]}"; do
+            prompt+="$separator$r"
+            separator=" and "
+        done
     fi
-    tmux confirm-before -p "$prompt" \
-        "if-shell 'test \$(tmux display-message -p \"#{session_windows}\") -eq 1' \
-            'new-window ; kill-window -t !' \
-            'kill-window'" || true
+    prompt+="? (y/n)"
+    tmux confirm-before -p "$prompt" "if -F '#{==:#{session_windows},1}' 'new-window; kill-window -t !' 'kill-window'" || true
 else
-    current_session_win_count=$(tmux display-message -p '#{session_windows}')
-    if (( current_session_win_count == 1 )); then
-        tmux new-window
-        tmux kill-window -t !
-    else
-        tmux kill-window
-    fi
+    tmux if -F '#{==:#{session_windows},1}' 'new-window; kill-window -t !' 'kill-window'
 fi
