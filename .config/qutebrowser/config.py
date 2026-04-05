@@ -125,7 +125,7 @@ c.input.mouse.rocker_gestures = False
 c.input.partial_timeout = 0
 c.input.spatial_navigation = False
 
-c.keyhint.delay = 100
+c.keyhint.delay = 200
 c.keyhint.radius = 5
 
 c.logging.level.console = 'critical'
@@ -139,17 +139,30 @@ c.new_instance_open_target_window = 'last-focused'
 c.prompt.filebrowser = True
 c.prompt.radius = 5
 
-# Be careful with this, you should know what you are doing
 c.qt.args = [
     # 'use-gl=desktop',
+    # 'use-gl=egl',
     'use-gl=angle',
+    # 'use-angle=vulkan',
     'ignore-gpu-blocklist',
+    'disable-gpu-driver-bug-workaround',
+    'enable-gpu-compositing',
+    'enable-viz-display-compositor',
+    'enable-hardware-overlays',
     'enable-gpu-rasterization',
-    'enable-unsafe-webgpu',
+    'enable-oop-rasterization',
+    'enable-zero-copy',
     'enable-native-gpu-memory-buffers',
     'enable-accelerated-2d-canvas',
+    'enable–accelerated–video–decode',
+    'enable-accelerated-vpx-decode',
+    'enable-gpu-memory-buffer-video-frames',
     'num-raster-threads=4',
-    'enable-oop-rasterization',
+    'enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,EnableLazyLoadImageForInvisiblePage,HeavyAdPrivacyMitigations',
+    # 'enable-features=Vulkan,DefaultANGLEVulkan,VulkanFromANGLE',
+    'enable-unsafe-webgpu',
+    'enable-quic',
+    'enable-parallel-downloading',
 ]
 c.qt.chromium.experimental_web_platform_features = 'auto'
 c.qt.chromium.low_end_device_mode = 'auto'
@@ -157,8 +170,8 @@ c.qt.chromium.process_model = 'process-per-site-instance'
 c.qt.chromium.sandboxing = 'enable-all'
 c.qt.force_platform = 'wayland'
 c.qt.force_software_rendering = 'none'
+c.qt.workarounds.disable_accelerated_2d_canvas = 'never'
 c.qt.highdpi = True
-c.qt.workarounds.disable_accelerated_2d_canvas = 'auto'
 
 c.scrolling.bar = 'overlay'
 c.scrolling.smooth = False
@@ -278,7 +291,7 @@ c.content.fullscreen.window = False
 c.content.headers.accept_language = 'en-US,en;q=0.9'
 c.content.headers.do_not_track = False
 c.content.headers.referer = 'same-domain'
-c.content.headers.user_agent = 'Mozilla/5.0 ({os_info}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
+c.content.headers.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'
 c.content.site_specific_quirks.enabled = True
 c.content.persistent_storage = 'ask'
 c.content.register_protocol_handler = 'ask'
@@ -288,12 +301,13 @@ c.content.webrtc_ip_handling_policy = 'default-public-interface-only'
 c.content.hyperlink_auditing = False
 c.content.xss_auditing = False
 
+c.content.proxy = 'system'
+
 c.content.plugins = False
 c.content.pdfjs = False
 c.content.images = True
 c.content.print_element_backgrounds = True
 c.content.prefers_reduced_motion = True
-c.content.proxy = 'system'
 
 c.content.javascript.alert = True
 c.content.javascript.can_open_tabs_automatically = False
