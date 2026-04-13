@@ -46,9 +46,20 @@ zle -N bracketed-paste bracketed-paste-magic
 # source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
 # source "$ZSH_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-[[ -f /usr/share/zsh-antidote/antidote.zsh ]] && \
-    source /usr/share/zsh-antidote/antidote.zsh && \
-    antidote load ${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}/zsh_plugins.txt
+zsh_plugins_dir=${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}
+zsh_plugins_txt="$zsh_plugins_dir/zsh_plugins.txt"
+zsh_plugins_zsh="$zsh_plugins_dir/zsh_plugins.zsh"
+
+if [[ -f /usr/share/zsh-antidote/antidote.zsh ]] && [[ -f "$zsh_plugins_txt" ]]; then
+    if [[ ! -f "$zsh_plugins_zsh" || "$zsh_plugins_txt" -nt "$zsh_plugins_zsh" ]]; then
+        (
+            source /usr/share/zsh-antidote/antidote.zsh
+            zstyle ':antidote:static' zcompile 'yes'
+            antidote bundle <"$zsh_plugins_txt" >|"$zsh_plugins_zsh"
+        )
+    fi
+    source "$zsh_plugins_zsh"
+fi
 
 # Create a zkbd compatible hash for terminfo key mapping
 typeset -g -A key
