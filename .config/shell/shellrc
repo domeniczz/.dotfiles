@@ -8,7 +8,7 @@ eval "$(zoxide init $(ps -p $$ -o comm=))"
 # eval "$(starship init $(ps -p $$ -o comm=))"
 
 # Attach to tmux only when not attached yet
-if command -v tmux >/dev/null 2>&1 && [[ -z "$TMUX" ]]; then
+if command -v tmux >/dev/null 2>&1 && [[ -z "$TMUX" ]] && (( SHLVL == 1 )); then
     if ! tmux ls &> /dev/null; then
         tmux new-session -s general
     else
