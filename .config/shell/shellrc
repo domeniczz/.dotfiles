@@ -91,3 +91,44 @@ function vifmcd() {
     fi
     cd "$dst"
 }
+
+# Unmount and power off a USB drive
+function unmount() {
+    local disks count disk choice mounted dev
+    local size_model mounts
+    if ! command -v lsblk >/dev/null 2>&1 || ! command -v udisksctl >/dev/null 2>&1; then
+        echo "Requires lsblk and udisksctl"
+        return 1
+    fi
+    disks="$(lsblk -dpnr -o NAME,TYPE,TRAN | awk '$2 == "disk" && $3 == "usb" { print $1 }')"
+    if [[ -z "$disks" ]]; then
+        echo "No USB drives found"
+        return 1
+    fi
+    count="$(printf '%s\n' "$disks" | wc -l | tr -d '[:space:]')"
+    if (( count == 1 )); then
+        disk="$disks"
+    else
+        if ! command -v fzf >/dev/null 2>&1; then
+            echo "Multiple USB drives found, but fzf is not installed"
+            printf '%s\n' "$disks"
+            return 1
+        fi
+        choice="$(
+            while IFS= read -r disk; do
+                size_model="$(lsblk -dnro SIZE,MODEL "$disk")"
+                mounts="$(lsblk -nrpo MOUNTPOINT "$disk" | awk 'NF { out = out (out ? ", " : "") $0 } END { print out }')"
+                [[ -n "$mounts" ]] || mounts="not mounted"
+                printf '%s\t%s\t%s\n' "$disk" "$size_model" "$mounts"
+            done <<< "$disks" | fzf --prompt='USB drive> ' --height=40% --reverse
+        )"
+        [[ -n "$choice" ]] || return 1
+        disk="${choice%%$'\t'*}"
+    fi
+    mounted="$(lsblk -rpn -o NAME,MOUNTPOINT "$disk" | awk '$2 != "" { print $1 }')"
+    while IFS= read -r dev; do
+        [[ -n "$dev" ]] || continue
+        udisksctl unmount -b "$dev" || return 1
+    done <<< "$mounted"
+    udisksctl power-off -b "$disk"
+}
