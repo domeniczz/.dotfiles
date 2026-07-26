@@ -41,6 +41,7 @@ ProgramData/            󱁿
 tmp/                    󰪻
 temp/                   󰪻
 lost+found/             󱞊
+LOST.DIR/               󱞊
 home/                   󱂵
 main/                   󱂵
 start/                  󱂵
@@ -65,6 +66,11 @@ bin/                    󰴉
 sbin/                   󰴉
 .bin/                   󰴉
 .sbin/                  󰴉
+x32/                    󰻠
+x64/                    󰻠
+x86_64/                 󰻠
+x86-64/                 󰻠
+x86/                    󰻟
 ~                       󱂵
 .local/                 󱂷
 .cache/                 󱂷
@@ -150,6 +156,8 @@ Sound/                  󱍙
 Sounds/                 󱍙
 Voice/                  󱍙
 Voices/                 󱍙
+Ringtone/               󱍙
+Ringtones/              󱍙
 Mail/                   󰛮
 Mails/                  󰛮
 Email/                  󰛮
@@ -179,6 +187,7 @@ repositories/           
 repo/                   
 repos/                  
 Clones/                 
+manpages/               󱔗
 man/                    󱔗
 man0/                   󱔗
 man1/                   󱔗
@@ -403,6 +412,7 @@ lists/                  
 help/                   󰋗
 helper/                 󰋗
 helpers/                󰋗
+faq/                    󰋗
 info/                   󰋼
 skill/                  󰛨
 skills/                 󰛨
@@ -560,12 +570,14 @@ shared/                 
 common/                 
 custom/                 󰮊
 cutoms/                 󰮊
+reference/              
+references/             
+ref/                    
+refs/                   
 book/                   
 books/                  
 bibliography/           
 bibliographies/         
-reference/              
-references/             
 resource/               
 resources/              
 asset/                  
@@ -702,6 +714,9 @@ scala/                  
 haskell/                
 .wasm/                  
 wasm/                   
+wasi/                   
+wasm32/                 
+wasm64/                 
 .apollo/                󰬈
 apollo/                 󰬈
 apollo-client/          󰬈
@@ -881,6 +896,9 @@ feature/                
 features/               
 feat/                   
 feats/                  
+deprecated/             󱟂
+deprecation/            󱟂
+deprecations/           󱟂
 test/                   
 tests/                  
 testing/                
@@ -1038,6 +1056,8 @@ nginx/                  
 vscode/                 󰨞
 "code - oss/"           󰨞
 "Code - OSS/"           󰨞
+.sublime/               
+sublime/                
 .wine/                  󰍖
 wine/                   󰍖
 .cloudflare/            
@@ -1192,6 +1212,7 @@ nushell/                
 elvish/                 
 xonsh/                  
 readline/               󰘎
+psreadline/             󰘎
 fcitx/                  󰼭
 fcitx5/                 󰼭
 keepass/                󰯄
@@ -1354,6 +1375,8 @@ MSTeams/                󰊻
 *log.old                             󰮆
 *.xsession-errors                    󰮆
 *.xsession-errors.old                󰮆
+*.zcompdump                          󰆻
+*zcompdump                           󰆻
 *readme                              
 *README                              
 *faq                                 󰋗
@@ -1410,6 +1433,30 @@ MSTeams/                󰊻
 *security.txt                        󰒃
 *Security.txt                        󰒃
 *SECURITY.txt                        󰒃
+*deprecated                          󱟂
+*Deprecated                          󱟂
+*DEPRECATED                          󱟂
+*deprecated.md                       󱟂
+*Deprecated.md                       󱟂
+*DEPRECATED.md                       󱟂
+*deprecated.rst                      󱟂
+*Deprecated.rst                      󱟂
+*DEPRECATED.rst                      󱟂
+*deprecated.txt                      󱟂
+*Deprecated.txt                      󱟂
+*DEPRECATED.txt                      󱟂
+*deprecation                         󱟂
+*Deprecation                         󱟂
+*DEPRECATION                         󱟂
+*deprecation.md                      󱟂
+*Deprecation.md                      󱟂
+*DEPRECATION.md                      󱟂
+*deprecation.rst                     󱟂
+*Deprecation.rst                     󱟂
+*DEPRECATION.rst                     󱟂
+*deprecation.txt                     󱟂
+*Deprecation.txt                     󱟂
+*DEPRECATION.txt                     󱟂
 *authors                             󰀎
 *Authors                             󰀎
 *AUTHORS                             󰀎
@@ -2648,6 +2695,7 @@ jest-preset.mjs                      
 *.type1            
 *.woff             
 *.woff2            
+*.glyph            
 
 *.3fr              
 *.apng             
@@ -3223,6 +3271,7 @@ jest-preset.mjs                      
 *.ssh              󰴽
 *.torrent          󰛴
 *.magnet           󰛴
+*.zsync            󰛴
 *.rss              
 *.atom             
 *.cat              󰭳
@@ -3285,6 +3334,7 @@ jest-preset.mjs                      
 *.hex              󱊧
 *.out              󱀱
 *.mod              󰐱
+*.mod16            󰐱
 *.lock             󱧉
 *.lck              󱧉
 *.list             󰉹
@@ -3300,6 +3350,7 @@ jest-preset.mjs                      
 *.dvc              󰊢
 *.diff             󰆊
 *.patch            󰆊
+*.blockmap         󰆊
 *.cocci            󰆊
 *.wy               󰆊
 *.wy1              󰆊
@@ -3321,6 +3372,7 @@ jest-preset.mjs                      
 *.fifo             󰟥
 *.sys              󰣖
 *.drv              󰣖
+*.drv16            󰣖
 *.vxd              󰣖
 *.dext             󰣖
 *.kext             󰣖
@@ -3421,6 +3473,7 @@ jest-preset.mjs                      
 *.gpl              
 *.pal              
 *.fig              
+*.indd             
 *.blend            
 *.blend1           
 *.blend2           
@@ -3597,6 +3650,7 @@ jest-preset.mjs                      
 *.vsmproj          󰒪
 *.net              
 *.exe              
+*.exe16            
 *.msi              
 *.msix             
 *.msp              
