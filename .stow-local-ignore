@@ -30,6 +30,8 @@ CVS
 ^fcitx5$
 ^keepassxc.ini$
 
+^Brewfile$
+
 .+~          # emacs backup files
 \#.*\#       # emacs autosave files
 
