@@ -69,8 +69,8 @@ return {
       vim.treesitter.language.register("templ", "templ")
 
       -- Set fold method to use treesitter expression
-      vim.opt.foldmethod = "expr"
-      vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
+      -- vim.opt.foldmethod = "expr"
+      -- vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
     end,
   },
   {
