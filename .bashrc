@@ -18,9 +18,11 @@ HISTCONTROL=ignoreboth
 HISTIGNORE="ls:cd:history:[bf]g:pwd:whoami:clear:exit"
 
 function git_branch_info {
-    local ref=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
-    [[ -z "$ref" ]] && ref=$(git describe --tags --always 2>/dev/null)
-    [[ -n "$ref" ]] && echo -n "\e[48;2;0;101;50m\e[38;2;255;255;255m $ref \e[0m"
+    local ref
+    ref=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) ||
+        ref="@ $(git rev-parse --quiet --short=8 HEAD 2>/dev/null)" ||
+        return
+    printf '\e[48;2;0;101;50m\e[38;2;255;255;255m %s \e[0m' "$ref"
 }
 
 function prompt_command {

@@ -15,16 +15,18 @@ KEYTIMEOUT=5
 LISTMAX=150
 
 function git_branch_info() {
-    local ref=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
-    [[ -z "$ref" ]] && ref=$(git describe --tags --always 2>/dev/null)
-    [[ -n "$ref" ]] && echo "%K{#006532}%F{#ffffff} $ref %f%k"
+    local ref
+    ref=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) ||
+        ref="@ $(git rev-parse --quiet --short=6 HEAD 2>/dev/null)" ||
+        return
+    print -r -- "%K{#006532}%F{#ffffff} $ref %f%k"
 }
 
 [[ "${SHELL##*/}" != "zsh" ]] && PROMPT_SHELL_NAME="%K{#4c566a}%F{#fffff} zsh %f%k"
 PROMPT_INCOGNITO="%K{#1b527e}%F{#ffffff} incognito %f%k"
 PROMPT_USER="%K{#3a4055}%F{#ffffff} %n "
 PROMPT_DIR="%K{#4c566a}%F{#ffffff} %3~ %f%k"
-PROMPT_GIT="$(git_branch_info)"
+PROMPT_GIT='$(git_branch_info)'
 PROMPT_SYMBOL=" ❯ "
 
 PROMPT="$PROMPT_SHELL_NAME$PROMPT_USER$PROMPT_DIR$PROMPT_GIT$PROMPT_SYMBOL"
