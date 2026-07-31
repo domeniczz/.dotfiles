@@ -1,0 +1,64 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": "notify",
+  "plugin": [
+    // "superpowers@git+https://github.com/obra/superpowers.git",
+    "@tarquinen/opencode-dcp@latest",
+    "@dietrichgebert/ponytail"
+  ],
+  "watcher": {
+    "ignore": [
+      ".git/",
+      "node_modules/",
+      "dist/",
+      "pycache/",
+      ".venv/",
+      "venv/",
+      ".pytest_cache/",
+      ".vscode/",
+      ".idea/"
+    ]
+  },
+  "permission": {
+    "read": {
+      ".env": "allow",
+      ".env.*": "allow",
+      ".env-*": "allow"
+    },
+    "external_directory": "allow",
+    "edit": {
+      "~/Library/**": "deny",
+      "/System/**": "deny",
+      "/usr/**": "deny",
+      "/etc/**": "deny",
+      "/var/**": "deny",
+      "/bin/**": "deny",
+      "/sbin/**": "deny",
+      "/opt/**": "deny",
+      "/Library/**": "deny",
+      "~/.ssh/**": "deny",
+      "~/.gnupg/**": "deny",
+      "~/.aws/**": "deny",
+      "~/.config/**": "ask"
+    },
+    "bash": {
+      "sudo *": "deny",
+      "rm -rf /": "deny",
+      "rm -rf /*": "deny",
+      "rm -rf ~": "deny",
+      "rm -rf ~/*": "deny",
+      "brew install *": "ask",
+      "brew uninstall *": "ask",
+      "npm install *": "ask",
+      "npm install -g *": "ask",
+      "pip install *": "ask",
+      "pip3 install *": "ask",
+      "cargo install *": "ask",
+      "go install *": "ask",
+      "git commit *": "ask",
+      "git push *": "ask",
+      "git merge *": "ask",
+      "git rebase *": "ask"
+    }
+  }
+}

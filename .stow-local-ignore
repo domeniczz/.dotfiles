@@ -30,6 +30,8 @@ CVS
 ^fcitx5$
 ^keepassxc.ini$
 
+^opencode.jsonc?$
+
 ^Brewfile$
 
 .+~          # emacs backup files
