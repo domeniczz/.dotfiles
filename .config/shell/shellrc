@@ -76,10 +76,11 @@ function condainit() {
 # Initialize nvm efficiently
 export NVM_DIR="$HOME/.nvm"
 [[ -s "$NVM_DIR/nvm.sh" ]] || NVM_DIR="$HOME/.local/share/nvm"
-_nvm_version=$(<"$NVM_DIR/alias/default")
-_nvm_version=${_nvm_version#v}
-export PATH="$NVM_DIR/versions/node/v$_nvm_version/bin:$PATH"
-unset _nvm_version
+[[ -s "$NVM_DIR/alias/default" ]] && {
+  _nvm_version=$(<"$NVM_DIR/alias/default")
+  export PATH="$NVM_DIR/versions/node/v${_nvm_version#v}/bin:$PATH"
+  unset _nvm_version
+}
 _nvm_completion="$NVM_DIR/bash_completion"
 [ -s "$_nvm_completion" ] || _nvm_completion="${HOMEBREW_PREFIX-}/opt/nvm/etc/bash_completion.d/nvm"
 if [ -n "${ZSH_VERSION-}" ]; then
