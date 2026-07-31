@@ -5,7 +5,7 @@ setopt append_history inc_append_history share_history extended_history
 setopt hist_ignore_dups hist_ignore_all_dups hist_expire_dups_first
 setopt hist_ignore_space hist_reduce_blanks hist_verify
 setopt autocd check_jobs
-setopt extended_glob
+# setopt extended_glob
 
 HISTFILE=$XDG_DATA_HOME/zsh_history
 HISTSIZE=2000
@@ -48,20 +48,29 @@ zle -N bracketed-paste bracketed-paste-magic
 # source "$ZSH_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
 # source "$ZSH_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-zsh_plugins_dir=${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}
+zsh_plugins_dir=${XDG_CONFIG_HOME:-$HOME/.config}/zsh
 zsh_plugins_txt="$zsh_plugins_dir/zsh_plugins.txt"
 zsh_plugins_zsh="$zsh_plugins_dir/zsh_plugins.zsh"
 
-if [[ -f /usr/share/zsh-antidote/antidote.zsh ]] && [[ -f "$zsh_plugins_txt" ]]; then
+for antidote_path in \
+    /usr/share/zsh-antidote/antidote.zsh \
+    /opt/homebrew/opt/antidote/share/antidote/antidote.zsh \
+    /usr/local/opt/antidote/share/antidote/antidote.zsh \
+    "$HOME/.antidote/antidote.zsh"
+do
+    [[ -r "$antidote_path" ]] && break
+done
+if [[ -r "$antidote_path" && -r "$zsh_plugins_txt" ]]; then
     if [[ ! -f "$zsh_plugins_zsh" || "$zsh_plugins_txt" -nt "$zsh_plugins_zsh" ]]; then
         (
-            source /usr/share/zsh-antidote/antidote.zsh
+            source "$antidote_path"
             zstyle ':antidote:static' zcompile 'yes'
             antidote bundle <"$zsh_plugins_txt" >|"$zsh_plugins_zsh"
         )
     fi
     source "$zsh_plugins_zsh"
 fi
+unset antidote_path
 
 # Create a zkbd compatible hash for terminfo key mapping
 typeset -g -A key
@@ -88,7 +97,7 @@ bindkey "^P" history-beginning-search-backward
 bindkey "^N" history-beginning-search-forward
 
 function zle-line-init {
-    echo -ne '\e[5 q'
+    echo -ne '\e[4 q'
 }
 zle -N zle-line-init
 
@@ -98,7 +107,7 @@ function zle-keymap-select {
             echo -ne '\e[2 q'
             ;;
         viins|main)
-            echo -ne '\e[5 q'
+            echo -ne '\e[4 q'
             ;;
     esac
 }
