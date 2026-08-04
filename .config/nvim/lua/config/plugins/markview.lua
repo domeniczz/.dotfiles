@@ -10,14 +10,14 @@ return {
     "Markview",
   },
   config = function()
+    require("markview").setup({
+      preview = {
+        enable = false,
+      },
+    })
     vim.api.nvim_create_autocmd("User", {
       pattern = "MarkviewAttach",
-      callback = function(event)
-        require("markview").setup({
-          preview = {
-            enable = false,
-          },
-        })
+      callback = function()
         vim.keymap.set("n", "<leader>mv", "<CMD>Markview toggle<CR>", { desc = "Markview: toggle preview for buffer" })
       end
     })

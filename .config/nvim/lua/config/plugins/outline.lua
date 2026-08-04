@@ -52,9 +52,8 @@ return {
       end,
     })
     vim.keymap.set("n", "<leader>A", "<CMD>AerialToggle<CR>", { desc = "Aerial: toggle view" })
-
-    vim.keymap.set("n", "<leader>fA", function()
-      require("telescope").extensions.aerial.aerial()
-    end, { desc = "Telescope: search outline symbols" })
+    -- vim.keymap.set("n", "<leader>fA", function()
+    --   require("telescope").extensions.aerial.aerial()
+    -- end, { desc = "Telescope: search outline symbols" })
   end,
 }

@@ -29,7 +29,11 @@ return {
     "CopilotToggle",
   },
   config = function()
-    require("copilot").setup({})
+    -- suggestion/panel off: completions come through blink-cmp-copilot source only
+    require("copilot").setup({
+      suggestion = { enabled = false },
+      panel = { enabled = false },
+    })
     -- add_to_blink_cmp_source()
 
     vim.api.nvim_create_user_command("CopilotToggle", function()

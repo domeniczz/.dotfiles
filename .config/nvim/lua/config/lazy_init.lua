@@ -30,6 +30,9 @@ require("lazy").setup({
     notify = false,
     frequency = 21600,
   },
+  rocks = {
+    enabled = false,
+  },
   performance = {
     cache = {
       enabled = true,

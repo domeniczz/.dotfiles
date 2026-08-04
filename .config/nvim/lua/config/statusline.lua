@@ -121,23 +121,6 @@ local function update_git_file_status_cache()
     return ""
   end
 
-  local branch_name = ""
-  local git_branch_cmd = { "git", "-C", git_root, "--no-optional-locks", "branch", "--show-current" }
-  local branch_res = vim.fn.systemlist(git_branch_cmd)
-  if vim.v.shell_error == 0 then
-    if branch_res and #branch_res > 0 then
-      branch_name = branch_res[1]
-    else
-      local git_hash_cmd = { "git", "-C", git_root, "--no-optional-locks", "rev-parse", "--short", "HEAD" }
-      local hash_res = vim.fn.systemlist(git_hash_cmd)
-      if hash_res and #hash_res > 0 and vim.v.shell_error == 0 then
-        branch_name = hash_res[1]
-      else
-        branch_name = "detached"
-      end
-    end
-  end
-
   local relative_file_path = ""
   local abs_file_path = vim.fs.normalize(resolved_file_path)
   if vim.startswith(abs_file_path, git_root .. "/") then
@@ -146,12 +129,28 @@ local function update_git_file_status_cache()
     relative_file_path = vim.fn.fnamemodify(resolved_file_path, ":t")
   end
 
-  local git_status = ""
-  local git_status_cmd = { "git", "-C", git_root, "--no-optional-locks", "status",
-    "--porcelain=v1", "--untracked-files=all", "--ignored=matching", "--", relative_file_path }
-  local git_status_res = vim.fn.systemlist(git_status_cmd)
-  if branch_res and #branch_res > 0 and vim.v.shell_error == 0 then
-    git_status = git_status_res[1]
+  local branch_name = ""
+  local git_status
+  -- ponytail: single call for branch + file status; --branch puts "## <branch>" on line 1.
+  -- LC_ALL=C pins git output to English so the header parsing is locale-proof.
+  local git_cmd = { "git", "-C", git_root, "--no-optional-locks", "status",
+    "--porcelain=v1", "--branch", "--untracked-files=all", "--ignored=matching", "--", relative_file_path }
+  local ok, proc = pcall(vim.system, git_cmd, { env = { LC_ALL = "C" } })
+  if not ok then
+    cache.git_file_status[bufnr] = ""
+    return ""
+  end
+  local res = proc:wait()
+  local git_res = res.code == 0 and vim.split(res.stdout or "", "\n", { trimempty = true }) or nil
+  if git_res and git_res[1] and git_res[1]:sub(1, 3) == "## " then
+    local branch_info = (git_res[1]:sub(4)):gsub("^No commits yet on ", "")
+    if branch_info == "HEAD (no branch)" then
+      local hash = vim.trim(vim.system({ "git", "-C", git_root, "--no-optional-locks", "rev-parse", "--short", "HEAD" }):wait().stdout or "")
+      branch_name = hash ~= "" and hash or "detached"
+    else
+      branch_name = branch_info:match("^(.-)%.%.%.") or branch_info
+    end
+    git_status = git_res[2]
   end
 
   local icon, status_text
@@ -329,7 +328,7 @@ function M.setup()
   local augroup = vim.api.nvim_create_augroup("_nvim_user_statusline_ac_", { clear = true })
   local autocmd = vim.api.nvim_create_autocmd
 
-  autocmd({ "BufReadPost", "BufWritePost", "FileChangedShellPost" }, {
+  autocmd({ "BufReadPost", "BufWritePost", "FileChangedShellPost", "FocusGained" }, {
     group = augroup,
     callback = function()
       if should_show_git_status() then

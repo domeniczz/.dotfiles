@@ -19,7 +19,6 @@ return {
           sidebars = "transparent",
           floats = "transparent",
         },
-        hide_inactive_statusline = true,
         dim_inactive = true,
         lualine_bold = true,
         on_colors = function(colors)

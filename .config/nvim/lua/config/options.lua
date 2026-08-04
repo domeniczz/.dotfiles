@@ -112,5 +112,4 @@ opt.cmdheight = 1
 opt.laststatus = 3
 opt.shell = "zsh"
 opt.path:append({ "**" }) -- search file into subdirectories
-opt.wildmenu = on
 opt.wildignore:append({ "*/node_modules/*" })

@@ -9,7 +9,7 @@ function M.get_current_file_size()
   if filepath == "" then
     return 0, false
   end
-  local ok, stats = pcall(vim.loop.fs_stat, filepath)
+  local ok, stats = pcall(vim.uv.fs_stat, filepath)
   if ok and stats then
     return stats.size
   end
@@ -21,7 +21,7 @@ function M.is_current_large_file(max_filesize, prompt)
   if filepath == "" then
     return false
   end
-  local ok, stats = pcall(vim.loop.fs_stat, vim.fn.expand("%"))
+  local ok, stats = pcall(vim.uv.fs_stat, filepath)
   if ok and stats and stats.size > max_filesize then
     vim.notify(
       prompt or string.format("File larger than %sKB", max_filesize / 1024),
@@ -368,7 +368,7 @@ function M.smart_buffer_close(user_opts)
       local has_no_name = vim.api.nvim_buf_get_name(current_buf) == ""
       if has_no_name then
         local filename = vim.fn.input("Enter filename: ", vim.fn.getcwd() .. "/", "file")
-        if filename ~= "" and filename ~= default_dir then
+        if filename ~= "" then
           vim.cmd(string.format("silent! write %s", vim.fn.fnameescape(filename)))
         else
           vim.notify("Save cancelled, buffer not saved.", vim.log.levels.WARN)

@@ -6,7 +6,7 @@ return {
     build = ":TSUpdate",
     cond = function()
       local max_filesize = vim.g.max_filesize
-      local ok, stats = pcall(vim.loop.fs_stat, vim.fn.expand("%"))
+      local ok, stats = pcall(vim.uv.fs_stat, vim.fn.expand("%"))
       if ok and stats and stats.size > max_filesize then
         return false
       end
@@ -24,13 +24,16 @@ return {
         "bash",
         "html",
         "templ",
+        "python",
+        "rust",
+        "latex",
       })
 
       -- highlighting is now core Neovim: vim.treesitter.start() per filetype.
       -- core ftplugins already start it for lua, markdown and help (vimdoc),
       -- so only start when not already active.
       vim.api.nvim_create_autocmd("FileType", {
-        pattern = { "c", "vim", "javascript", "sh", "bash", "html", "templ", "lua", "markdown", "help" },
+        pattern = { "c", "vim", "javascript", "sh", "bash", "html", "templ", "lua", "markdown", "help", "python", "rust", "tex" },
         callback = function(args)
           local max_filesize = vim.g.max_filesize
           if require("config.utils").is_current_large_file(
@@ -42,7 +45,8 @@ return {
             return
           end
           if not vim.b[args.buf].ts_highlight then
-            vim.treesitter.start()
+            -- pcall so a missing/still-installing parser falls back to regex syntax
+            pcall(vim.treesitter.start)
           end
         end,
       })

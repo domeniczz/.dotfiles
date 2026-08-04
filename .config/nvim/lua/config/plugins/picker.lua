@@ -129,7 +129,6 @@ return {
   },
   {
     "ibhagwan/fzf-lua",
-    version = "*",
     enabled = true,
     event = "VeryLazy",
     dependencies = {

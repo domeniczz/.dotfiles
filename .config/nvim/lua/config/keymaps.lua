@@ -6,13 +6,14 @@ vim.g.maplocalleader = " "
 
 local map = vim.keymap.set
 
--- When line wrapping is enabled
-if vim.opt.wrap:get() then
-  map("n", "<Up>", "gk", { noremap = true, silent = true })
-  map("n", "<Down>", "gj", { noremap = true, silent = true })
-  map("i", "<Up>", "<C-o>gk", { noremap = true, silent = true })
-  map("i", "<Down>", "<C-o>gj", { noremap = true, silent = true })
-end
+-- -- When line wrapping is enabled
+-- -- Dead while the <Nop> maps below exist; kept in case arrows get re-enabled
+-- if vim.opt.wrap:get() then
+--   map("n", "<Up>", "gk", { noremap = true, silent = true })
+--   map("n", "<Down>", "gj", { noremap = true, silent = true })
+--   map("i", "<Up>", "<C-o>gk", { noremap = true, silent = true })
+--   map("i", "<Down>", "<C-o>gj", { noremap = true, silent = true })
+-- end
 
 map({ "n", "i", "v", "x" }, "<Up>", "<Nop>", { noremap = true, silent = true })
 map({ "n", "i", "v", "x" }, "<Down>", "<Nop>", { noremap = true, silent = true })
@@ -64,9 +65,6 @@ map("n", "Y", "y$", { noremap = true, silent = true })
 -- Delete into black hole register
 map({ "n", "v" }, "<leader>d", [["_d]], { noremap = true, silent = true })
 
--- Quickfix list navigation
-map("n", "<C-k>", "<CMD>cnext<CR>zz", { noremap = true, silent = true })
-map("n", "<C-j>", "<CMD>cprev<CR>zz", { noremap = true, silent = true })
 map("n", "<leader>k", "<CMD>lnext<CR>zz", { noremap = true, silent = true })
 map("n", "<leader>j", "<CMD>lprev<CR>zz", { noremap = true, silent = true })
 

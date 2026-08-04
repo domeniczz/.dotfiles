@@ -68,6 +68,9 @@ autocmd("FileType", {
 autocmd("BufWritePre", {
   group = augroup("trim_trailing_empty_lines"),
   callback = function()
+    if not vim.bo.modifiable then
+      return
+    end
     local max_lines = 10000
     if vim.api.nvim_buf_line_count(0) > max_lines then
       vim.notify(
@@ -83,7 +86,7 @@ autocmd("BufWritePre", {
     vim.cmd([[keeppatterns %s/\($\n\s*\)\+\%$//e]])
     vim.fn.setreg("/", saved_search)
     local last_line = vim.api.nvim_buf_line_count(0)
-    local new_line = math.min(cursor_pos[1], last_line)
+    local new_line = math.max(1, math.min(cursor_pos[1], last_line))
     vim.api.nvim_win_set_cursor(0, { new_line, cursor_pos[2] })
   end,
 })
