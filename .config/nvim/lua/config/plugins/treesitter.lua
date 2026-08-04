@@ -1,16 +1,9 @@
 return {
   {
     "nvim-treesitter/nvim-treesitter",
-    branch = "master",
-    enabled = true,
-    event = "VeryLazy",
-    priority = 1000,
+    branch = "main",
+    lazy = false,
     build = ":TSUpdate",
-    cmd = {
-      "TSInstall",
-      "TSUpdate",
-      "TSUpdateSync",
-    },
     cond = function()
       local max_filesize = vim.g.max_filesize
       local ok, stats = pcall(vim.loop.fs_stat, vim.fn.expand("%"))
@@ -20,57 +13,43 @@ return {
       return true
     end,
     config = function()
-      require("nvim-treesitter.configs").setup({
-        ensure_installed = { "c", "lua", "vim", "vimdoc", "markdown", "javascript", "bash", "html" },
-        ignore_install = { "latex" },
-        sync_install = false,
-        auto_install = true,
-        indent = {
-          enable = true,
-        },
-        highlight = {
-          enable = true,
-          use_languagetree = true,
-          additional_vim_regex_highlighting = false,
-          disable = function(lang)
-            local disabled_languages = {
-              latex = true,
-            }
-            if disabled_languages[lang] then return true end
-            local max_filesize = vim.g.max_filesize
-            return require('config.utils').is_current_large_file(
-              max_filesize,
-              string.format("Treesitter disabled - file larger than %sKB", max_filesize / 1024)
-            )
-          end,
-        },
-        indent = {
-          enable = true,
-        },
-        incremental_selection = {
-          enable = false,
-          keymaps = {
-            init_selection = "<CR>",
-            scope_incremental = "<CR>",
-            node_incremental = "<CR>",
-            node_decremental = "<BS>",
-          },
-        },
+      -- replaces ensure_installed; async no-op for parsers already installed
+      require("nvim-treesitter").install({
+        "c",
+        "lua",
+        "vim",
+        "vimdoc",
+        "markdown",
+        "javascript",
+        "bash",
+        "html",
+        "templ",
       })
 
-      local treesitter_parser_config = require("nvim-treesitter.parsers").get_parser_configs()
-      treesitter_parser_config.templ = {
-        install_info = {
-          url = "https://github.com/vrischmann/tree-sitter-templ.git",
-          files = { "src/parser.c", "src/scanner.c" },
-          branch = "master",
-        },
-      }
-      vim.treesitter.language.register("templ", "templ")
+      -- highlighting is now core Neovim: vim.treesitter.start() per filetype.
+      -- core ftplugins already start it for lua, markdown and help (vimdoc),
+      -- so only start when not already active.
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = { "c", "vim", "javascript", "sh", "bash", "html", "templ", "lua", "markdown", "help" },
+        callback = function(args)
+          local max_filesize = vim.g.max_filesize
+          if require("config.utils").is_current_large_file(
+            max_filesize,
+            string.format("Treesitter disabled - file larger than %sKB", max_filesize / 1024)
+          ) then
+            -- also stops the highlighter core ftplugins may have started
+            pcall(vim.treesitter.stop)
+            return
+          end
+          if not vim.b[args.buf].ts_highlight then
+            vim.treesitter.start()
+          end
+        end,
+      })
 
       -- Set fold method to use treesitter expression
       -- vim.opt.foldmethod = "expr"
-      -- vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
+      -- vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
     end,
   },
   {
