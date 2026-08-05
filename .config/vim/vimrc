@@ -5,14 +5,17 @@
 let g:netrw_home = $XDG_DATA_HOME."/vim"
 
 syntax on
+filetype plugin indent on
 set autoread
+set hidden
 set number
 set relativenumber
 set cursorline
-" set wildmenu
-" set wildmode=longest:list,full
 " set autoindent " Minimal automatic indenting for any filetype.
 set backspace=indent,eol,start " Intuitive backspace behavior.
+
+set nolist
+set listchars=space:·,tab:>-,trail:·,nbsp:+,eol:↵
 
 set tabstop=4
 set softtabstop=4
@@ -21,6 +24,8 @@ set expandtab
 
 set hlsearch
 set incsearch
+set ignorecase
+set smartcase
 
 set wrap
 set whichwrap+=<,>,[,]
@@ -30,15 +35,30 @@ set ttimeoutlen=20
 set timeoutlen=400
 set path+=**
 set wildmenu
+set wildmode=longest:full,full
+set synmaxcol=400
+
+set smoothscroll
+set linebreak
+set breakindent
+set splitkeep=screen
+set jumpoptions=stack
+set mouse=a
+set splitright splitbelow
 
 if has('clipboard')
   set clipboard=unnamedplus
 endif
 
-set undodir=$HOME/.vim/undodir
+set undodir=$XDG_DATA_HOME/vim/undo//
 set undofile
 
 set viminfofile=$XDG_DATA_HOME/vim/viminfo
+
+call mkdir($XDG_DATA_HOME.'/vim/undo', 'p')
+
+" % jumps across if/else/endif, HTML tags
+packadd! matchit
 
 " Use a line cursor within insert mode and a block cursor everywhere else.
 " Reference chart of values:
@@ -51,7 +71,7 @@ set viminfofile=$XDG_DATA_HOME/vim/viminfo
 "   Ps = 6  -> steady bar (xterm).
 let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
-autocmd VimEnter * silent! !printf '\e[2 q'
+let &t_te .= "\e[2 q"
 
 " ------------------------------------------------------------------------------
 " Netrw
@@ -72,7 +92,6 @@ let g:netrw_hide=1
 " Key mappings
 " ------------------------------------------------------------------------------
 
-nnoremap <silent> Q <nop>
 nnoremap <silent> Q :call KillBufferOrCloseWindow()<CR>
 
 " ------------------------------------------------------------------------------
@@ -98,7 +117,7 @@ augroup END
 " ------------------------------------------------------------------------------
 
 " Allow files to be saved as root when forgetting to start vim using sudo
-command W :execute ':silent! write !sudo tee % >/dev/null' | :edit!
+command! W :execute ':silent! write !sudo tee %:S >/dev/null' | :edit!
 
 function! KillBufferOrCloseWindow()
   " Exit if in command window (access with q: or Q)
@@ -106,7 +125,6 @@ function! KillBufferOrCloseWindow()
     quit
     return
   endif
-  let l:curwin = winnr()
   let l:curbuf = bufnr('%')
   " Handle multiple windows showing current buffer
   if len(win_findbuf(l:curbuf)) > 1
@@ -116,14 +134,14 @@ function! KillBufferOrCloseWindow()
   " Check if there are other valid buffers
   let l:has_valid_buffer = 0
   for buf in getbufinfo()
-    if buf.listed && buf.bufnr != l:curbuf && buflisted(buf.bufnr)
+    if buf.listed && buf.bufnr != l:curbuf
       let l:has_valid_buffer = 1
       break
     endif
   endfor
   let l:should_quit = !l:has_valid_buffer
   let l:ft = &filetype
-  if l:ft ==# "fugitive" || l:ft ==# "netrw"
+  if l:ft ==# "netrw"
     bdelete
     return
   endif
@@ -138,7 +156,7 @@ function! KillBufferOrCloseWindow()
         endif
       endif
       try
-        execute 'silent! write ' . fnameescape(l:filename)
+        execute 'write ' . fnameescape(l:filename)
       catch
         echoerr "Failed to save buffer: " . v:exception
         return
