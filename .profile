@@ -85,3 +85,6 @@ esac
 
 PATH="$PATH:$HOME/Programs/anaconda3/bin"
 PATH="$PATH:$HOME/Programs/miniconda3/bin"
+
+# Use GNU utils on macos by default
+export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
