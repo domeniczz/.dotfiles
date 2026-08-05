@@ -70,7 +70,6 @@ local cache = {
   git_file_status = {},
   lsp_status = {},
   lsp_diagnostics = {},
-  plugin_updates = "",
 }
 
 -- -----------------------------------------------------------------------------
@@ -131,8 +130,8 @@ local function update_git_file_status_cache()
 
   local branch_name = ""
   local git_status
-  -- ponytail: single call for branch + file status; --branch puts "## <branch>" on line 1.
-  -- LC_ALL=C pins git output to English so the header parsing is locale-proof.
+  -- Single call for branch + file status
+  -- LC_ALL=C pins git output to English so the header parsing is locale-proof
   local git_cmd = { "git", "-C", git_root, "--no-optional-locks", "status",
     "--porcelain=v1", "--branch", "--untracked-files=all", "--ignored=matching", "--", relative_file_path }
   local ok, proc = pcall(vim.system, git_cmd, { env = { LC_ALL = "C" } })
@@ -256,9 +255,13 @@ end
 -- Available plugin updates
 -- -----------------------------------------------------------------------------
 
+-- Read lazy.status live (O(1) table read) instead of caching behind
+-- User events — startup fast_check fires no event, so the cache went stale.
 local function get_available_plugin_updates()
-  local updates = cache.plugin_updates
-  return updates and updates ~= "" and string.format("[%s]", updates) or ""
+  local ok, lazy_status = pcall(require, "lazy.status")
+  if not ok then return "" end
+  local updates = lazy_status.updates()
+  return updates and string.format("[%s]", updates) or ""
 end
 
 -- -----------------------------------------------------------------------------
@@ -352,15 +355,6 @@ function M.setup()
     group = augroup,
     callback = function()
       update_lsp_diagnostics_cache()
-      vim.cmd("redrawstatus")
-    end,
-  })
-
-  autocmd("User", {
-    group = augroup,
-    pattern = { "LazySync", "LazyInstall", "LazyUpdate", "LazyCheck" },
-    callback = function()
-      cache.plugin_updates = require("lazy.status").updates() or ""
       vim.cmd("redrawstatus")
     end,
   })

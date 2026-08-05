@@ -25,6 +25,10 @@ map({ "n", "i", "v", "x" }, "<Right>", "<Nop>", { noremap = true, silent = true 
 
 map("n", "<C-w>b", ":split<CR>", { noremap = true, silent = true, desc = "Split window horizontally" })
 
+-- map("n", "<Esc>", "<CMD>nohlsearch<CR>", { noremap = true, silent = true })
+
+map('n', '<leader>tl', '<CMD>set list!<CR>', { noremap = true, silent = true, desc = 'Toggle invisible chars' })
+
 -- Navigate thorugh items in quickfix list
 map("n", "<M-j>", "<CMD>cnext<CR>", { noremap = true, silent = true })
 map("n", "<M-k>", "<CMD>cprev<CR>", { noremap = true, silent = true })

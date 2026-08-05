@@ -54,7 +54,7 @@ return {
         callback = function(args)
           local client = vim.lsp.get_client_by_id(args.data.client_id)
           if not client then return end
-          if client.supports_method("textDocument/formatting") then
+          if client:supports_method("textDocument/formatting") then
             -- per-buffer group so re-attach/LspRestart doesn't stack duplicate autocmds
             local group = vim.api.nvim_create_augroup("lsp_format_" .. args.buf, { clear = true })
             vim.api.nvim_create_autocmd("BufWritePre", {

@@ -179,7 +179,7 @@ return {
           ["--smart-case"] = true,
         },
         winopts = {
-          height = 0.7,
+          height = 1.0,
           width = 1.0,
         },
         previewers = {

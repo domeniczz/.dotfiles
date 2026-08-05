@@ -36,6 +36,9 @@ opt.numberwidth = 2
 opt.hlsearch = true
 opt.incsearch = true
 
+opt.list = false
+opt.listchars = { space = '·', tab = '>-', trail = '·', nbsp = '+', eol = '↵' }
+
 opt.virtualedit = "block"
 
 -- Highlight current cursor line / column
