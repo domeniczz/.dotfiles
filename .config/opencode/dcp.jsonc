@@ -1,8 +1,19 @@
 {
   "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
-  "compress": {
-    "permission": "allow",
-    "maxContextLimit": 180000,
-    "minContextLimit": 50000,
+  "enabled": true,
+  "debug": false,
+  // Manual mode: tools only run when explicitly triggered via /dcp commands
+  "manualMode": {
+    "enabled": false,
+    // When true, automatic cleanup (deduplication, purgeErrors) still runs even in manual mode
+    "automaticStrategies": true
   },
+  "compress": {
+    // Permission mode: "allow" (no prompt), "ask" (prompt), "deny" (tool not registered)
+    "permission": "allow",
+    "maxContextLimit": 250000,
+    "minContextLimit": 100000,
+    "protectTags": false,
+    "protectUserMessages": false
+  }
 }
