@@ -37,6 +37,8 @@ sg     # SETGID
 System/                 
 System32/               
 SysWOW64/               
+Runtime/                
+runtime/                
 ProgramData/            󱁿
 tmp/                    󰪻
 temp/                   󰪻
@@ -554,6 +556,8 @@ mappings/               󰝹
 database/               
 databases/              
 db/                     
+sqlite/                 
+sqlite3/                
 data/                   
 sql/                    
 dataset/                
@@ -591,6 +595,7 @@ changelog/              󰇂
 changelogs/             󰇂
 versions/               
 labels/                 󱍵
+.metadata/              󱐎
 metadata/               󱐎
 metainfo/               󱐎
 page/                   
@@ -775,7 +780,9 @@ sites/                  
 browser/                
 browsers/               
 core/                   
+cores/                  
 kernel/                 
+kernels/                
 cpu/                    
 http/                   󰿘
 https/                  󰿘
@@ -1085,8 +1092,9 @@ opencode/               󰵰
 winget/                 
 scoop/                  
 chocolatey/             
-homebrew/               
 macports/               
+.brew/                  
+homebrew/               
 pacman/                 󰣇
 pacman.d/               󰣇
 yay/                    󰣇
@@ -1215,6 +1223,8 @@ readline/               󰘎
 psreadline/             󰘎
 fcitx/                  󰼭
 fcitx5/                 󰼭
+keychain/               󰯄
+keychains/              󰯄
 keepass/                󰯄
 keepassxc/              󰯄
 bitwarden/              󰯄
@@ -1324,6 +1334,7 @@ MSTeams/                󰊻
 *user-dirs.locale                    
 *.DS_Store                           
 *DS_Store                            
+*.localized                          
 *fzfrc                               
 *ripgreprc                           
 *nanorc                              
@@ -1505,6 +1516,14 @@ MSTeams/                󰊻
 *changelog.txt                       󰇂
 *ChangeLog.txt                       󰇂
 *CHANGELOG.txt                       󰇂
+*changes                             󰇂
+*CHANGES                             󰇂
+*changes.md                          󰇂
+*CHANGES.md                          󰇂
+*changes.rst                         󰇂
+*CHANGES.rst                         󰇂
+*changes.txt                         󰇂
+*CHANGES.txt                         󰇂
 *news                                󰇂
 *NEWS                                󰇂
 *news.md                             󰇂
@@ -1697,6 +1716,8 @@ MSTeams/                󰊻
 *skills.md                           󰛨
 *SKILL.md                            󰛨
 *SKILLS.md                           󰛨
+*metadata                            󱐎
+*METADATA                            󱐎
 *manifest.mf                         󰋼
 *MANIFEST.MF                         󰋼
 *.mailmap                            󰺻
@@ -2717,6 +2738,7 @@ jest-preset.mjs                      
 *.dng              
 *.drf              
 *.eip              
+*.emf              
 *.eps              
 *.erf              
 *.exr              
@@ -2994,10 +3016,14 @@ jest-preset.mjs                      
 *.AppImage.zs-old  󰏔
 *.bundle           󰏔
 *.framework        󰏔
+*.xpc              󰏔
+*.appex            󱧕
+*.axbundle         󱧕
 
 *.jar              󰏓
 *.war              󰏓
 *.ear              󰏓
+*.car              󰏓
 *.egg              󰏓
 *.pyz              󰏓
 *.whl              󰏓
@@ -3194,6 +3220,7 @@ jest-preset.mjs                      
 *.nfo              󰋼
 *.app              󰋼
 *.plist            󰋼
+*.appexpt          󰋼
 *.entitlements     󰋼
 *.manifest         󰋼
 *.webmanifest      󰋼
@@ -3202,6 +3229,7 @@ jest-preset.mjs                      
 *.pp               
 *.aux              󰓻
 *.pid              
+*.schema           
 *.idl              
 *.aidl             
 *.avdl             
@@ -3223,6 +3251,7 @@ jest-preset.mjs                      
 *.config           󰒓
 *.cfg              󰒓
 *.cnf              󰒓
+*.default          󰒓
 *.ecf              󰒓
 *.ini              󰒓
 *.inf              󰒓
@@ -3304,6 +3333,7 @@ jest-preset.mjs                      
 *.kdb              󱅞
 *.kdbx             󱅞
 *.1pux             󱅞
+*.keychain         󰯄
 *.b64              󱨧
 *.base64           󱨧
 *.hash             󱨧
@@ -3392,6 +3422,8 @@ jest-preset.mjs                      
 *.nlt              󰗊
 *.qm               󰗊
 *.qph              󰗊
+*.loctable         󰗊
+*.strings          󰗊
 *.xcstrings        󰗊
 *.lang             󰗊
 *.lng              󰗊
@@ -3445,6 +3477,7 @@ jest-preset.mjs                      
 *.gresource        
 *.ui               
 *.blp              
+*.nib              
 *.xib              
 *.bicep            
 *.bicepparam       
@@ -3505,6 +3538,7 @@ jest-preset.mjs                      
 *.3ds              󰮄
 *.3mf              󰮄
 *.amf              󰮄
+*.bim              󰮄
 *.brep             󰮄
 *.c4d              󰮄
 *.catpart          󰮄
@@ -3517,6 +3551,7 @@ jest-preset.mjs                      
 *.gdl              󰮄
 *.glb              󰮄
 *.gltf             󰮄
+*.ifc              󰮄
 *.ipt              󰮄
 *.jt               󰮄
 *.lwo              󰮄
@@ -3527,6 +3562,7 @@ jest-preset.mjs                      
 *.mqo              󰮄
 *.obj              󰮄
 *.obz              󰮄
+*.off              󰮄
 *.ply              󰮄
 *.sab              󰮄
 *.sat              󰮄
@@ -3631,6 +3667,7 @@ jest-preset.mjs                      
 *.code-workspace   󰨞
 *.code-profile     󰨞
 *.code-snippets    󰨞
+*.lproj            󰗊
 *.proj             󰒪
 *.csproj           󰒪
 *.dbproj           󰒪
@@ -3688,11 +3725,13 @@ jest-preset.mjs                      
 *.myi              󰆼
 *.frm              󰆼
 *.ibd              󰆼
+*.sql3             󰆼
 *.sqlite           󰆼
 *.sqlite3          󰆼
 *.sqlitedb         󰆼
 *.dblite           󰆼
 *.dblite3          󰆼
+*.store            󰆼
 *.duckdb           󰆼
 *.ndf              󰆼
 *.realm            󰆼
@@ -3706,9 +3745,12 @@ jest-preset.mjs                      
 *.adp              󰆼
 *.dat              󰆻
 *.data             󰆻
+*.stats            󰆻
 *.dict             󰆻
 *.bdic             󰆻
 *.cache            󰆻
+*.metadb           󰆻
+*.bom              󰆻
 *.hve              󰆻
 *.zarr             󰆻
 *.h5ad             󰆻
@@ -3720,7 +3762,10 @@ jest-preset.mjs                      
 *.grib2            󰆻
 *.fits             󰆻
 *.lance            󰆻
+*.sql3-wal         󰮆
+*.db-wal           󰮆
 *.sqlite-wal       󰮆
+*.store-wal        󰮆
 *.db-journal       󰮆
 *.ldf              󰮆
 *.log              󰮆
@@ -3741,7 +3786,10 @@ jest-preset.mjs                      
 *.har              󰮆
 *.history          󰮆
 *._history         󰮆
+*.db-shm           󰗂
+*.sql3-shm         󰗂
 *.sqlite-shm       󰗂
+*.store-shm        󰗂
 *.dbml             󰆺
 *.rdf              󰴗
 *.ttl              󰴗
