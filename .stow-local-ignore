@@ -21,8 +21,8 @@ CVS
 
 ^\.git$
 ^\.gitmodules$
-^/.+/\.gitignore$
-^/.+/\.gitconfig$
+^\.gitignore$
+^/.gitconfig$
 
 ^dot-gitconfig$
 ^\.stow-local-ignore$
@@ -31,6 +31,7 @@ CVS
 ^keepassxc.ini$
 
 ^opencode.jsonc?$
+^/.config/opencode/AGENTS.md$
 
 ^Brewfile$
 
@@ -43,6 +44,8 @@ CVS
 ^/[^/]+\.sh$
 
 ^\.DS_Store$
+
+.*\.swp$
 
 ^/README.*
 ^/LICENSE.*
