@@ -10,17 +10,20 @@ set autoread
 set hidden
 set number
 set relativenumber
+set numberwidth=2
 set cursorline
 " set autoindent " Minimal automatic indenting for any filetype.
 set backspace=indent,eol,start " Intuitive backspace behavior.
 
 set nolist
 set listchars=space:·,tab:>-,trail:·,nbsp:+,eol:↵
+set fillchars+=eob:\
 
 set tabstop=4
 set softtabstop=4
 set shiftwidth=4
 set expandtab
+set smarttab
 
 set hlsearch
 set incsearch
@@ -29,29 +32,36 @@ set smartcase
 
 set wrap
 set whichwrap+=<,>,[,]
+set virtualedit=block
 set scrolloff=10
+set sidescrolloff=8
 set laststatus=2
 set ttimeoutlen=20
 set timeoutlen=400
 set path+=**
+set wildignore+=*/node_modules/*
 set wildmenu
 set wildmode=longest:full,full
 set synmaxcol=400
+set signcolumn=auto
+set foldcolumn=1
+set foldlevelstart=30
 
 set smoothscroll
-set linebreak
-set breakindent
 set splitkeep=screen
 set jumpoptions=stack
+
+set linebreak
+set breakindent
 set mouse=a
 set splitright splitbelow
 
-if has('clipboard')
-  set clipboard=unnamedplus
-endif
+" set lazyredraw
+set termguicolors
 
 set undodir=$XDG_DATA_HOME/vim/undo//
 set undofile
+set undolevels=1500
 
 set viminfofile=$XDG_DATA_HOME/vim/viminfo
 
@@ -92,7 +102,79 @@ let g:netrw_hide=1
 " Key mappings
 " ------------------------------------------------------------------------------
 
+let mapleader = " "
+
 nnoremap <silent> Q :call KillBufferOrCloseWindow()<CR>
+
+" <Esc> clears search highlight
+nnoremap <silent> <Esc> :nohlsearch<CR>
+
+" Move selected lines up/down (keeps selection)
+vnoremap <silent> K :move '<-2<CR>gv=gv
+vnoremap <silent> J :move '>+1<CR>gv=gv
+
+" Keep cursor centered while scrolling/searching
+nnoremap <silent> <C-d> <C-d>zz
+nnoremap <silent> <C-u> <C-u>zz
+nnoremap <silent> n nzzzv
+nnoremap <silent> N Nzzzv
+
+" Keep cursor in place while joining lines
+nnoremap <silent> J mzJ`z
+
+" Y behaves like C and D
+nnoremap Y y$
+
+" Paste over without losing the register
+xnoremap p "_dP
+
+" Delete to the black hole register (leader+d)
+nnoremap <silent> <leader>d "_d
+vnoremap <silent> <leader>d "_d
+
+" System clipboard: <space>y/Y to copy, <space>p/P to paste
+" (plain y/p use vim's internal registers)
+nnoremap <silent> <leader>y "+y
+vnoremap <silent> <leader>y "+y
+nnoremap <silent> <leader>Y "+Y
+vnoremap <silent> <leader>Y "+Y
+nnoremap <silent> <leader>p "+p
+vnoremap <silent> <leader>p "+p
+nnoremap <silent> <leader>P "+P
+vnoremap <silent> <leader>P "+P
+
+" Alt+h/l buffer switching, Alt+j/k quickfix navigation
+nnoremap <silent> <M-h> :bprevious<CR>
+nnoremap <silent> <M-l> :bnext<CR>
+nnoremap <silent> <M-j> :cnext<CR>
+nnoremap <silent> <M-k> :cprev<CR>
+
+" Replace word under cursor (Ctrl-S)
+nnoremap <C-s> :%s/<C-r><C-w>/<C-r><C-w>/gIc<Left><Left><Left><Left>
+vnoremap <C-s> :s///gIc<Left><Left><Left><Left><Left>
+
+" Toggle invisible characters
+nnoremap <silent> <leader>tl :set list!<CR>
+
+" Make current file executable
+nnoremap <silent> <leader>x :!chmod +x %<CR>
+
+" Yank the whole file to the system clipboard
+nnoremap <silent> <leader>[ :%yank +<CR>
+
+" Disable arrow keys (forces hjkl navigation)
+nnoremap <Up> <Nop>
+nnoremap <Down> <Nop>
+nnoremap <Left> <Nop>
+nnoremap <Right> <Nop>
+inoremap <Up> <Nop>
+inoremap <Down> <Nop>
+inoremap <Left> <Nop>
+inoremap <Right> <Nop>
+vnoremap <Up> <Nop>
+vnoremap <Down> <Nop>
+vnoremap <Left> <Nop>
+vnoremap <Right> <Nop>
 
 " ------------------------------------------------------------------------------
 " Autocmds
@@ -112,12 +194,90 @@ augroup text_filetype_specific_config
   autocmd FileType text,markdown,org,gitcommit setlocal spelllang=en_us,en_gb
 augroup END
 
+augroup code_filetype_specific_tab_config
+  autocmd!
+  autocmd FileType lua,yaml,json,vim setlocal tabstop=2 softtabstop=2 shiftwidth=2
+augroup END
+
+" Highlight the region just yanked/deleted (fades out)
+let s:yank_hl_id = 0
+function! s:yank_clear(...) abort
+  if s:yank_hl_id
+    silent! call matchdelete(s:yank_hl_id)
+    let s:yank_hl_id = 0
+  endif
+endfunction
+function! s:highlight_yank() abort
+  if v:event.operator !~# '^[yd]$'
+    return
+  endif
+  call s:yank_clear()
+  let l:start = getpos("'[")
+  let l:end = getpos("']")
+  let l:pos = []
+  if v:event.regtype ==# 'V'
+    call extend(l:pos, range(l:start[1], l:end[1]))
+  elseif l:start[1] == l:end[1]
+    call add(l:pos, [l:start[1], l:start[2], l:end[2] - l:start[2] + 1])
+  else
+    call add(l:pos, [l:start[1], l:start[2], 999])
+    call extend(l:pos, range(l:start[1] + 1, l:end[1] - 1))
+    call add(l:pos, [l:end[1], 1, l:end[2]])
+  endif
+  let s:yank_hl_id = matchaddpos('IncSearch', l:pos, 100)
+  call timer_start(200, function('s:yank_clear'))
+endfunction
+augroup highlight_yank
+  autocmd!
+  autocmd TextYankPost * silent! call s:highlight_yank()
+augroup END
+
+" Show cursorline only in the active window
+augroup cursorline_active
+  autocmd!
+  autocmd WinEnter,FocusGained * setlocal cursorline
+  autocmd WinLeave,FocusLost   * setlocal nocursorline
+augroup END
+
+" Trim trailing whitespace and empty lines on save
+function! s:trim_trailing() abort
+  if !&modifiable || line('$') > 10000
+    return
+  endif
+  let l:save = winsaveview()
+  if &filetype !=# 'markdown'
+    silent! keeppatterns %s/\s\+$//e
+  endif
+  silent! keeppatterns %s/\($\n\s*\)\+\%$//e
+  call winrestview(l:save)
+endfunction
+augroup trim_trailing
+  autocmd!
+  autocmd BufWritePre * call s:trim_trailing()
+augroup END
+
+" Drop expensive features for very large files
+function! s:large_file_init() abort
+  if getfsize(expand('%:p')) > 5 * 1024 * 1024
+    let b:is_large_file = 1
+    setlocal noswapfile noundofile nospell foldmethod=manual
+  endif
+endfunction
+augroup large_file
+  autocmd!
+  autocmd BufReadPre * call s:large_file_init()
+  autocmd BufReadPost * if exists('b:is_large_file') | setlocal syntax= | endif
+augroup END
+
 " ------------------------------------------------------------------------------
 " Commands and functions
 " ------------------------------------------------------------------------------
 
 " Allow files to be saved as root when forgetting to start vim using sudo
 command! W :execute ':silent! write !sudo tee %:S >/dev/null' | :edit!
+
+" Yank absolute path of current buffer
+command! Ypwd :let @+ = expand('%:p')
 
 function! KillBufferOrCloseWindow()
   " Exit if in command window (access with q: or Q)
@@ -185,11 +345,19 @@ endfunction
 " Color scheme
 " ------------------------------------------------------------------------------
 
+colorscheme tokyonight-storm
+
 highlight clear SpellBad
 highlight clear SpellCap
 highlight clear SpellRare
 highlight clear SpellLocal
-highlight SpellBad   cterm=underline gui=underline
-highlight SpellCap   cterm=underline gui=underline
-highlight SpellRare  cterm=underline gui=underline
-highlight SpellLocal cterm=underline gui=underline
+highlight Normal       guibg=NONE
+highlight NormalFloat  guibg=NONE
+highlight SignColumn   guibg=NONE
+highlight FoldColumn   guibg=NONE
+highlight CursorLine   cterm=NONE      gui=NONE
+highlight CursorLineNr cterm=NONE      gui=NONE
+highlight SpellBad     cterm=underline gui=underline
+highlight SpellCap     cterm=underline gui=underline
+highlight SpellRare    cterm=underline gui=underline
+highlight SpellLocal   cterm=underline gui=underline
