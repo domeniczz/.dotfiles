@@ -11,11 +11,11 @@ _shell=$(ps -p $$ -o comm=)
 _shell=${_shell##*/}
 _shell=${_shell#-}
 function _cached_init() {
-  local bin=$1 p cache=${XDG_CACHE_HOME:-$HOME/.cache}/shell/$1.$_shell
-  shift
-  p=$(command -v "$bin") || return
-  [[ -s $cache && ! $p -nt $cache ]] || { mkdir -p "${cache%/*}"; "$bin" "$@" >|"$cache"; }
-  source "$cache"
+    local bin=$1 p cache=${XDG_CACHE_HOME:-$HOME/.cache}/shell/$1.$_shell
+    shift
+    p=$(command -v "$bin") || return
+    [[ -s $cache && ! $p -nt $cache ]] || { mkdir -p "${cache%/*}"; "$bin" "$@" >|"$cache"; }
+    source "$cache"
 }
 _cached_init fzf --$_shell
 _cached_init zoxide init $_shell
@@ -23,13 +23,13 @@ unset _shell
 
 # Attach to tmux only when not attached yet
 if [[ "$TERM_PROGRAM" != "vscode" && "$TERM_PROGRAM" != "zed" && "$TERMINAL_EMULATOR" != "JetBrains-JediTerm" ]] &&
-   command -v tmux >/dev/null 2>&1 &&
-   [[ -z "$TMUX" ]] && [[ -o interactive ]] && [[ -t 0 ]]; then
-    if ! tmux ls &>/dev/null; then
-        exec tmux new-session -s general
-    elif [[ -z "$(tmux list-clients 2>/dev/null)" ]]; then
-        exec tmux attach-session
-    fi
+    command -v tmux >/dev/null 2>&1 &&
+    [[ -z "$TMUX" ]] && [[ -o interactive ]] && [[ -t 0 ]]; then
+      if ! tmux ls &>/dev/null; then
+          exec tmux new-session -s general
+      elif [[ -z "$(tmux list-clients 2>/dev/null)" ]]; then
+          exec tmux attach-session
+      fi
 fi
 
 if command -v fd >/dev/null 2>&1; then
@@ -68,35 +68,47 @@ _fzf_comprun() {
 # [[ -f $HOME/Clones/fzf-git.sh/fzf-git.sh ]] && source $HOME/Clones/fzf-git.sh/fzf-git.sh
 
 function condainit() {
-    local CONDA_BASE="$HOME/Programs"
-    if [[ -f "$CONDA_BASE/miniconda3/bin/activate" ]]; then
-        source "$CONDA_BASE/miniconda3/bin/activate"
-        return 0
-    elif [[ -f "$CONDA_BASE/anaconda3/bin/activate" ]]; then
-        source "$CONDA_BASE/anaconda3/bin/activate"
-        return 0
-    else
-        echo "Neither Miniconda nor Anaconda installation found in $CONDA_BASE"
-        return 1
+    _conda_base=$(command conda info --base 2>/dev/null)
+    if [ -n "$_conda_base" ]; then
+        . "$_conda_base/etc/profile.d/conda.sh"
+        unset _conda_base
+        return
     fi
+    for _conda_dir in "$HOME" "$HOME/Programs" /opt /usr/local; do
+        for _conda_name in miniconda3 miniconda anaconda3 anaconda miniforge3 mambaforge; do
+            _conda_sh="$_conda_dir/$_conda_name/etc/profile.d/conda.sh"
+            [ -r "$_conda_sh" ] && . "$_conda_sh" && unset _conda_base _conda_dir _conda_name _conda_sh && return
+        done
+    done
+    for _conda_sh in /opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh /usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh /etc/profile.d/conda.sh; do
+        [ -r "$_conda_sh" ] && . "$_conda_sh" && unset _conda_base _conda_dir _conda_name _conda_sh && return
+    done
+    unset _conda_base _conda_dir _conda_name _conda_sh
+    return 1
+}
+
+# Initialize conda automatically on the first `conda` command
+function conda() {
+    condainit || return
+    conda "$@"
 }
 
 # Initialize nvm efficiently
 export NVM_DIR="$HOME/.nvm"
 [[ -s "$NVM_DIR/nvm.sh" ]] || NVM_DIR="$HOME/.local/share/nvm"
 [[ -s "$NVM_DIR/alias/default" ]] && {
-  _nvm_version=$(<"$NVM_DIR/alias/default")
-  export PATH="$NVM_DIR/versions/node/v${_nvm_version#v}/bin:$PATH"
-  unset _nvm_version
+    _nvm_version=$(<"$NVM_DIR/alias/default")
+    export PATH="$NVM_DIR/versions/node/v${_nvm_version#v}/bin:$PATH"
+    unset _nvm_version
 }
 _nvm_completion="$NVM_DIR/bash_completion"
 [ -s "$_nvm_completion" ] || _nvm_completion="${HOMEBREW_PREFIX-}/opt/nvm/etc/bash_completion.d/nvm"
 if [ -n "${ZSH_VERSION-}" ]; then
-  zsh-defer source "$NVM_DIR/nvm.sh" --no-use
-  [ -s "$_nvm_completion" ] && zsh-defer source "$_nvm_completion"
+    zsh-defer source "$NVM_DIR/nvm.sh" --no-use
+    [ -s "$_nvm_completion" ] && zsh-defer source "$_nvm_completion"
 else
-  source "$NVM_DIR/nvm.sh" --no-use
-  [ -s "$_nvm_completion" ] && source "$_nvm_completion"
+    source "$NVM_DIR/nvm.sh" --no-use
+    [ -s "$_nvm_completion" ] && source "$_nvm_completion"
 fi
 unset _nvm_completion
 
