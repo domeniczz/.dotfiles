@@ -36,8 +36,6 @@ set virtualedit=block
 set scrolloff=10
 set sidescrolloff=8
 set laststatus=2
-set ttimeoutlen=20
-set timeoutlen=400
 set path+=**
 set wildignore+=*/node_modules/*
 set wildmenu
@@ -50,6 +48,11 @@ set foldlevelstart=30
 set smoothscroll
 set splitkeep=screen
 set jumpoptions=stack
+
+set updatetime=5000
+set updatecount=200
+set ttimeoutlen=20
+set timeoutlen=400
 
 set linebreak
 set breakindent
@@ -82,6 +85,10 @@ packadd! matchit
 let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
 let &t_te .= "\e[2 q"
+
+" Request focus reporting from the terminal so Vim can receives focus events.
+let &t_fe = "\e[?1004h"
+let &t_fd = "\e[?1004l"
 
 " ------------------------------------------------------------------------------
 " Netrw
