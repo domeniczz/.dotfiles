@@ -112,8 +112,6 @@ let g:netrw_hide=1
 
 let mapleader = " "
 
-nnoremap <silent> Q :call KillBufferOrCloseWindow()<CR>
-
 " <Esc> clears search highlight
 nnoremap <silent> <Esc> :nohlsearch<CR>
 
@@ -184,6 +182,17 @@ vnoremap <Down> <Nop>
 vnoremap <Left> <Nop>
 vnoremap <Right> <Nop>
 
+nnoremap <silent> Q :call SmartBufferClose()<CR>
+
+" ------------------------------------------------------------------------------
+" Commands
+" ------------------------------------------------------------------------------
+
+" Yank absolute path of current buffer
+command! Ypwd :let @+ = expand('%:p')
+
+command! W call SudoWrite()
+
 " ------------------------------------------------------------------------------
 " Autocmds
 " ------------------------------------------------------------------------------
@@ -205,39 +214,6 @@ augroup END
 augroup code_filetype_specific_tab_config
   autocmd!
   autocmd FileType lua,yaml,json,vim setlocal tabstop=2 softtabstop=2 shiftwidth=2
-augroup END
-
-" Highlight the region just yanked/deleted (fades out)
-let s:yank_hl_id = 0
-function! s:yank_clear(...) abort
-  if s:yank_hl_id
-    silent! call matchdelete(s:yank_hl_id)
-    let s:yank_hl_id = 0
-  endif
-endfunction
-function! s:highlight_yank() abort
-  if v:event.operator !~# '^[yd]$'
-    return
-  endif
-  call s:yank_clear()
-  let l:start = getpos("'[")
-  let l:end = getpos("']")
-  let l:pos = []
-  if v:event.regtype ==# 'V'
-    call extend(l:pos, range(l:start[1], l:end[1]))
-  elseif l:start[1] == l:end[1]
-    call add(l:pos, [l:start[1], l:start[2], l:end[2] - l:start[2] + 1])
-  else
-    call add(l:pos, [l:start[1], l:start[2], 999])
-    call extend(l:pos, range(l:start[1] + 1, l:end[1] - 1))
-    call add(l:pos, [l:end[1], 1, l:end[2]])
-  endif
-  let s:yank_hl_id = matchaddpos('IncSearch', l:pos, 100)
-  call timer_start(200, function('s:yank_clear'))
-endfunction
-augroup highlight_yank
-  autocmd!
-  autocmd TextYankPost * silent! call s:highlight_yank()
 augroup END
 
 " Show cursorline only in the active window
@@ -277,9 +253,44 @@ augroup large_file
   autocmd BufReadPost * if exists('b:is_large_file') | setlocal syntax= | endif
 augroup END
 
+augroup highlight_yank
+  autocmd!
+  autocmd TextYankPost * silent! call s:highlight_yank()
+augroup END
+
 " ------------------------------------------------------------------------------
-" Commands and functions
+" Util functions
 " ------------------------------------------------------------------------------
+
+let s:yank_hl_id = 0
+function! s:yank_clear(...) abort
+  if s:yank_hl_id
+    silent! call matchdelete(s:yank_hl_id)
+    let s:yank_hl_id = 0
+  endif
+endfunction
+
+" Highlight the region just yanked/deleted (fades out)
+function! s:highlight_yank() abort
+  if v:event.operator !~# '^[yd]$'
+    return
+  endif
+  call s:yank_clear()
+  let l:start = getpos("'[")
+  let l:end = getpos("']")
+  let l:pos = []
+  if v:event.regtype ==# 'V'
+    call extend(l:pos, range(l:start[1], l:end[1]))
+  elseif l:start[1] == l:end[1]
+    call add(l:pos, [l:start[1], l:start[2], l:end[2] - l:start[2] + 1])
+  else
+    call add(l:pos, [l:start[1], l:start[2], 999])
+    call extend(l:pos, range(l:start[1] + 1, l:end[1] - 1))
+    call add(l:pos, [l:end[1], 1, l:end[2]])
+  endif
+  let s:yank_hl_id = matchaddpos('IncSearch', l:pos, 100)
+  call timer_start(200, function('s:yank_clear'))
+endfunction
 
 function! s:PromptFilename() abort
   let l:filepath = input('Enter filename: ', getcwd() . '/', 'file')
@@ -311,82 +322,189 @@ function! SudoWrite() abort
   endif
   edit!
 endfunction
-command! W call SudoWrite()
-
-" Yank absolute path of current buffer
-command! Ypwd :let @+ = expand('%:p')
-
-function! KillBufferOrCloseWindow()
-  " Exit if in command window (access with q: or Q)
-  if getcmdwintype() != ''
-    quit
-    return
-  endif
-  let l:curbuf = bufnr('%')
-  " Handle multiple windows showing current buffer
-  if len(win_findbuf(l:curbuf)) > 1
-    close
-    return
-  endif
-  " Check if there are other valid buffers
-  let l:has_valid_buffer = 0
-  for buf in getbufinfo()
-    if buf.listed && buf.bufnr != l:curbuf
-      let l:has_valid_buffer = 1
-      break
-    endif
-  endfor
-  let l:should_quit = !l:has_valid_buffer
-  let l:ft = &filetype
-  if l:ft ==# "netrw"
-    if exists('b:netrw_curdir')
-      let l:netrw_dir = simplify(fnamemodify(b:netrw_curdir, ':p'))
-      for l:buf in getbufinfo()
-        if l:buf.bufnr != l:curbuf && l:buf.listed && empty(win_findbuf(l:buf.bufnr))
-              \ && !empty(l:buf.name) && isdirectory(l:buf.name)
-              \ && simplify(fnamemodify(l:buf.name, ':p')) ==# l:netrw_dir
-          execute 'silent! bdelete! ' . l:buf.bufnr
-          break
-        endif
-      endfor
-    endif
-    bdelete
-    return
-  endif
-  if &modified
-    let l:choice = confirm("Buffer has unsaved changes. Save before closing?", "&Yes\n&No\n&Cancel", 1)
-    if l:choice == 1
-      let l:filename = ""
-      if empty(bufname("%"))
-        let l:filename = input("Enter file name to save: ")
-        if empty(l:filename)
-          return
-        endif
-      endif
-      try
-        execute 'write ' . fnameescape(l:filename)
-      catch
-        echoerr "Failed to save buffer: " . v:exception
-        return
-      endtry
-    elseif l:choice == 2
-      bdelete!
-    else
-      return
-    endif
-  else
-    bdelete
-  endif
-  if l:should_quit && g:quit_on_empty
-    quit
-  endif
-endfunction
 
 function! Clearregs() abort
   let regs=split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"', '\zs')
   for r in regs
     call setreg(r, @_)
   endfor
+endfunction
+
+function! s:IsNormalBuffer(bufnr) abort
+  let l:buftype = getbufvar(a:bufnr, '&buftype')
+  return buflisted(a:bufnr) && (l:buftype ==# 'terminal'
+     \ || (empty(l:buftype) && getbufvar(a:bufnr, '&filetype') !=# 'netrw'))
+endfunction
+
+function! s:CloseCurrentWindow() abort
+  execute winnr('$') == 1 && tabpagenr('$') > 1 ? 'tabclose!' : 'close!'
+endfunction
+
+function! s:SelectBufferToSwitch(buffers) abort
+  let l:hidden = {'bufnr': -1, 'lastused': -1}
+  let l:any = {'bufnr': -1, 'lastused': -1}
+  for l:buffer in a:buffers
+    if l:buffer.lastused > l:any.lastused
+      let l:any = l:buffer
+    endif
+    if empty(l:buffer.windows) && l:buffer.lastused > l:hidden.lastused
+      let l:hidden = l:buffer
+    endif
+  endfor
+  return l:hidden.bufnr != -1 ? l:hidden.bufnr : l:any.bufnr
+endfunction
+
+function! s:ConsolidateWindows(valid_buffer_count) abort
+  let l:current_win = win_getid()
+  let l:primary = {}
+  let l:duplicates = []
+  let l:normal_win_count = 0
+
+  for l:window in getwininfo()
+    if get(l:window, 'popup', 0) || !s:IsNormalBuffer(l:window.bufnr)
+      continue
+    endif
+    let l:normal_win_count += 1
+    let l:key = string(l:window.bufnr)
+    if !has_key(l:primary, l:key)
+      let l:primary[l:key] = l:window.winid
+    elseif l:primary[l:key] == l:current_win
+      call add(l:duplicates, l:window.winid)
+    elseif l:window.winid == l:current_win
+      call add(l:duplicates, l:primary[l:key])
+      let l:primary[l:key] = l:current_win
+    else
+      call add(l:duplicates, l:window.winid)
+    endif
+  endfor
+
+  if l:normal_win_count <= a:valid_buffer_count
+    return
+  endif
+  for l:winid in reverse(l:duplicates)
+    if win_id2tabwin(l:winid)[0] != 0
+      call win_execute(l:winid, 'close!')
+    endif
+  endfor
+endfunction
+
+" Universal buffer close:
+" - Prompts to save modified and unnamed buffers
+" - Handles special buffers, terminals, and netrw duplicates
+" - Preserves window layouts and optionally quits when empty
+function! SmartBufferClose() abort
+  if getcmdwintype() !=# ''
+    quit
+    return
+  endif
+
+  let l:current = bufnr('%')
+  let l:current_windows = win_findbuf(l:current)
+  let l:force = 0
+  let l:destructive_hide = index(['delete', 'unload', 'wipe'], &bufhidden) != -1
+  let l:window_count = len(filter(getwininfo(), '!get(v:val, "popup", 0)'))
+  if !s:IsNormalBuffer(l:current) && &buftype !=# 'terminal' && l:window_count > 1
+     \ && (!&modified || !l:destructive_hide)
+    call s:CloseCurrentWindow()
+    return
+  endif
+
+  if &filetype ==# 'netrw' && exists('b:netrw_curdir')
+    let l:netrw_dir = simplify(fnamemodify(b:netrw_curdir, ':p'))
+    for l:buffer in getbufinfo({'buflisted': 1})
+      if l:buffer.bufnr != l:current && empty(win_findbuf(l:buffer.bufnr))
+         \ && !l:buffer.changed && getbufvar(l:buffer.bufnr, '&filetype') ==# 'netrw'
+         \ && !empty(l:buffer.name) && isdirectory(l:buffer.name)
+         \ && simplify(fnamemodify(l:buffer.name, ':p')) ==# l:netrw_dir
+        execute 'silent! bdelete! ' . l:buffer.bufnr
+        break
+      endif
+    endfor
+  endif
+
+  let l:remaining = []
+  for l:buffer in getbufinfo({'buflisted': 1})
+    if l:buffer.bufnr != l:current && s:IsNormalBuffer(l:buffer.bufnr)
+      call add(l:remaining, l:buffer)
+    endif
+  endfor
+
+  if empty(l:remaining) && len(l:current_windows) > 1 && &buftype !=# 'terminal'
+    call s:CloseCurrentWindow()
+    return
+  endif
+
+  if &modified && &buftype !=# 'terminal'
+    let l:choice = confirm('Save before closing the buffer?', "&Yes\n&No\n&Cancel", 1)
+    if l:choice == 1
+      let l:filepath = empty(bufname('%')) ? s:PromptFilename() : ''
+      if empty(bufname('%')) && empty(l:filepath)
+        return
+      endif
+      try
+        execute 'write ' . fnameescape(l:filepath)
+      catch
+        echoerr 'Failed to save buffer: ' . v:exception
+        return
+      endtry
+    elseif l:choice == 2
+      let l:force = 1
+    else
+      return
+    endif
+  endif
+
+  if &buftype ==# 'terminal' && !l:force && exists('*term_getjob')
+     \ && job_status(term_getjob(l:current)) ==# 'run'
+    if confirm('Terminal has a running job.', "&Ignore\n&Cancel", 1) != 1
+      return
+    endif
+    let l:force = 1
+  endif
+
+  if empty(l:remaining) && len(l:current_windows) > 1
+    call s:CloseCurrentWindow()
+    return
+  endif
+
+  if empty(l:remaining)
+    if get(g:, 'quit_on_empty', 1) && !l:force
+      try
+        quitall
+      catch
+        echoerr 'Failed to quit: ' . v:exception
+      endtry
+      return
+    endif
+    try
+      execute 'bdelete' . (l:force ? '!' : '') . ' ' . l:current
+    catch
+      echoerr 'Failed to close buffer: ' . v:exception
+      return
+    endtry
+    if get(g:, 'quit_on_empty', 1)
+      try
+        quitall
+      catch
+        echoerr 'Failed to quit: ' . v:exception
+      endtry
+    endif
+    return
+  endif
+
+  let l:switch_to = s:SelectBufferToSwitch(l:remaining)
+  try
+    for l:winid in l:current_windows
+      call win_execute(l:winid, 'buffer' . (l:force ? '!' : '') . ' ' . l:switch_to)
+    endfor
+    if buflisted(l:current) || bufloaded(l:current)
+      execute 'bdelete' . (l:force ? '!' : '') . ' ' . l:current
+    endif
+  catch
+    echoerr 'Failed to close buffer: ' . v:exception
+    return
+  endtry
+  call s:ConsolidateWindows(len(l:remaining))
 endfunction
 
 " ------------------------------------------------------------------------------
