@@ -194,6 +194,70 @@ command! Ypwd :let @+ = expand('%:p')
 command! W call SudoWrite()
 
 " ------------------------------------------------------------------------------
+" Plugins
+" ------------------------------------------------------------------------------
+
+" fzf.vim: lazy-loaded via pack/*/opt
+" Needs the main fzf repo's vim plugin also in opt/
+let g:fzf_layout = {'window': {'width': 1.0, 'height': 1.0, 'yoffset': 0, 'xoffset': 0, 'border': 'none'}}
+let g:fzf_vim = {'preview_window': ['up,60%,border-bottom', 'ctrl-/']}
+let $FZF_DEFAULT_COMMAND = 'fd --type f --hidden --exclude .git --exclude .venv --exclude node_modules'
+let $FZF_DEFAULT_OPTS = '--layout=reverse'
+
+autocmd VimEnter * packadd fzf
+autocmd VimEnter * packadd fzf.vim
+
+" files in cwd
+nnoremap <silent> <leader>fd :Files<CR>
+" recent files
+nnoremap <silent> <leader>fr :History<CR>
+" opened buffers
+nnoremap <silent> <leader>fo :Buffers<CR>
+" marks
+nnoremap <silent> <leader>fm :Marks<CR>
+" current buffer fuzzy find
+nnoremap <silent> <leader>ff :BLines<CR>
+" live grep in cwd
+nnoremap <silent> <leader>gd :Rg<CR>
+" grep word under cursor
+nnoremap <silent> <leader>gw :Rg <C-r><C-w><CR>
+" git files
+nnoremap <silent> <leader>fp :GFiles<CR>
+" git commits
+nnoremap <silent> <leader>gc :Commits<CR>
+" git commits of file
+nnoremap <silent> <leader>gf :BCommits<CR>
+" git status
+nnoremap <silent> <leader>gg :GFiles?<CR>
+" help tags
+nnoremap <silent> <leader>sh :Helptags<CR>
+
+let g:fzf_colors =
+\ { 'fg':      ['fg', 'Normal'],
+  \ 'bg':      ['bg', 'Normal'],
+  \ 'hl':      ['fg', 'PmenuMatch'],
+  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+  \ 'hl+':     ['fg', 'PmenuMatchSel'],
+  \ 'info':    ['fg', 'Comment'],
+  \ 'border':  ['fg', 'FloatBorder'],
+  \ 'prompt':  ['fg', 'PmenuMatch'],
+  \ 'pointer': ['bg', 'Foo'],
+  \ 'marker':  ['fg', 'Keyword'],
+  \ 'spinner': ['fg', 'Comment'],
+  \ 'header':  ['fg', 'Comment'],
+  \ 'gutter':  ['bg', 'Normal'] }
+
+" vim-fugitive: lazy-loaded via pack/*/opt
+" Plugin loads on <leader>gs mapping or any of the G* user commands below
+autocmd CmdUndefined Gsplit,Gdiffsplit,Gvdiffsplit,Gedit,Gread,Gwrite,Ggrep,GMove,GRename,GDelete,GRemove,GBrowse packadd fugitive
+
+command! -bang -nargs=? G   packadd fugitive | G<bang> <args>
+command! -bang -nargs=? Git packadd fugitive | Git<bang> <args>
+
+nnoremap <silent> <leader>gs :Git<CR>
+
+" ------------------------------------------------------------------------------
 " Autocmds
 " ------------------------------------------------------------------------------
 
