@@ -34,69 +34,97 @@ function M.is_current_large_file(max_filesize, prompt)
 end
 
 -- -----------------------------------------------------------------------------
--- Write with root priviledge
+-- Write with root privilege
 -- Credit: ibhagwan
 -- -----------------------------------------------------------------------------
 
-local function fast_event_aware_notify(msg, level, opts)
-  if vim.in_fast_event() then
-    vim.schedule(function()
-      vim.notify(msg, level, opts)
-    end)
-  else
-    vim.notify(msg, level, opts)
-  end
-end
-
-local function info(msg)
-  fast_event_aware_notify(msg, vim.log.levels.INFO, {})
-end
-
 local function warn(msg)
-  fast_event_aware_notify(msg, vim.log.levels.WARN, {})
+  vim.notify(msg, vim.log.levels.WARN)
 end
 
 local function err(msg)
-  fast_event_aware_notify(msg, vim.log.levels.ERROR, {})
+  vim.notify(msg, vim.log.levels.ERROR)
 end
 
-local function sudo_exec(cmd, print_output)
-  vim.fn.inputsave()
-  local password = vim.fn.inputsecret("Password: ")
-  vim.fn.inputrestore()
-  if not password or #password == 0 then
-    warn("Invalid password, sudo aborted!")
+local function prompt_filename()
+  local filepath = vim.fn.input("Enter filename: ", vim.fn.getcwd() .. "/", "file")
+  return filepath ~= "" and vim.fn.fnamemodify(filepath, ":p") or nil
+end
+
+local function sudo_exec(cmd)
+  local sudo = { "sudo", "-n", "--" }
+  local stdin
+  if vim.system({ "sudo", "-n", "-v" }, { text = true }):wait().code ~= 0 then
+    vim.fn.inputsave()
+    local ok, password = pcall(vim.fn.inputsecret, "Password: ")
+    vim.fn.inputrestore()
+    if not ok then
+      err(password)
+      return false
+    elseif password == "" then
+      warn("Sudo aborted")
+      return false
+    end
+    sudo = { "sudo", "-p", "", "-S", "--" }
+    stdin = password .. "\n"
+  end
+
+  local result = vim.system(vim.list_extend(sudo, cmd), { stdin = stdin, text = true }):wait()
+  if result.code ~= 0 then
+    local message = vim.trim(result.stderr ~= "" and result.stderr or result.stdout or "")
+    err(message ~= "" and message or string.format("sudo failed with exit code %d", result.code))
     return false
   end
-  local out = vim.fn.system(string.format("sudo -p '' -S %s", cmd), password)
-  if vim.v.shell_error ~= 0 then
-    print("\r\n")
-    err(out)
-    return false
-  end
-  if print_output then print("\r\n", out) end
   return true
 end
 
 function M.sudo_write(tmpfile, filepath)
-  if not tmpfile then tmpfile = vim.fn.tempname() end
-  if not filepath then filepath = vim.fn.expand("%") end
-  if not filepath or #filepath == 0 then
-    err("E32: No file name")
+  local set_name = vim.api.nvim_buf_get_name(0) == ""
+  if not filepath then filepath = vim.api.nvim_buf_get_name(0) end
+  if filepath == "" then
+    filepath = prompt_filename()
+    if not filepath then
+      warn("Sudo write cancelled")
+      return
+    end
+  end
+  filepath = vim.fn.fnamemodify(vim.fn.expand(filepath), ":p")
+  if set_name and vim.fn.bufnr(filepath) ~= -1 then
+    err("E95: Buffer with this name already exists")
     return
   end
-  -- `bs=1048576` is equivalent to `bs=1M` for GNU dd or `bs=1m` for BSD dd
-  -- Both `bs=1M` and `bs=1m` are non-POSIX
-  local cmd = string.format("dd if=%s of=%s bs=1048576", vim.fn.shellescape(tmpfile), vim.fn.shellescape(filepath))
-  -- no need to check error as this fails the entire function
-  vim.api.nvim_exec2(string.format("write! %s", tmpfile), { output = true })
-  if sudo_exec(cmd) then
-    -- refreshes the buffer and prints the "written" message
-    vim.cmd.checktime()
-    -- exit command mode
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+  if not tmpfile then tmpfile = vim.fn.tempname() end
+
+  local modified = vim.bo.modified
+  local ok, message = pcall(vim.api.nvim_cmd, {
+    cmd = "write",
+    bang = true,
+    args = { tmpfile },
+    mods = { silent = true },
+  }, {})
+  if set_name then
+    vim.api.nvim_buf_set_name(0, "")
+    vim.bo.modified = modified
   end
+  if not ok then
+    vim.fn.delete(tmpfile)
+    err(message)
+    return
+  end
+
+  local executed, written = pcall(sudo_exec, { "dd", "if=" .. tmpfile, "of=" .. filepath, "bs=1048576" })
   vim.fn.delete(tmpfile)
+
+  if not executed then
+    err(written)
+  elseif written then
+    if set_name then
+      vim.api.nvim_buf_set_name(0, filepath)
+    end
+    vim.bo.modified = false
+    vim.cmd("silent checktime")
+    vim.notify(string.format('Written "%s"', vim.fn.fnamemodify(filepath, ":~")))
+  end
 end
 
 -- -----------------------------------------------------------------------------
@@ -384,8 +412,8 @@ function M.smart_buffer_close(user_opts)
     if choice == 1 then
       local has_no_name = vim.api.nvim_buf_get_name(current_buf) == ""
       if has_no_name then
-        local filename = vim.fn.input("Enter filename: ", vim.fn.getcwd() .. "/", "file")
-        if filename ~= "" then
+        local filename = prompt_filename()
+        if filename then
           vim.cmd(string.format("silent! write %s", vim.fn.fnameescape(filename)))
         else
           vim.notify("Save cancelled, buffer not saved.", vim.log.levels.WARN)

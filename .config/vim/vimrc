@@ -281,8 +281,37 @@ augroup END
 " Commands and functions
 " ------------------------------------------------------------------------------
 
+function! s:PromptFilename() abort
+  let l:filepath = input('Enter filename: ', getcwd() . '/', 'file')
+  return empty(l:filepath) ? '' : fnamemodify(l:filepath, ':p')
+endfunction
+
 " Allow files to be saved as root when forgetting to start vim using sudo
-command! W :execute ':silent! write !sudo tee %:S >/dev/null' | :edit!
+function! SudoWrite() abort
+  let l:filepath = expand('%:p')
+  let l:unnamed = empty(l:filepath)
+  if l:unnamed
+    let l:filepath = s:PromptFilename()
+    if empty(l:filepath)
+      return
+    endif
+    if bufnr(l:filepath) != -1
+      echoerr 'E95: Buffer with this name already exists'
+      return
+    endif
+  endif
+
+  silent execute 'write !sudo tee ' . shellescape(l:filepath) . ' >/dev/null'
+  if v:shell_error != 0
+    echoerr 'sudo write failed'
+    return
+  endif
+  if l:unnamed
+    execute 'file ' . fnameescape(l:filepath)
+  endif
+  edit!
+endfunction
+command! W call SudoWrite()
 
 " Yank absolute path of current buffer
 command! Ypwd :let @+ = expand('%:p')
