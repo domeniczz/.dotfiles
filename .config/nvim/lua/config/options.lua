@@ -6,6 +6,7 @@ g.loaded_perl_provider = 0
 g.loaded_ruby_provider = 0
 
 g.max_filesize = 5 * 1024 * 1024
+g.quit_on_empty = vim.fn.isdirectory(vim.fn.argv(0)) == 0
 
 g.netrw_banner = 0
 g.netrw_altv = 1

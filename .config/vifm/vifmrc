@@ -265,7 +265,7 @@ nnoremap O :
       \|   execute '!' . g:program . ' %c %i'
       \| endif<CR>
 
-nnoremap <silent> E :!nvim +"lua vim.g.quit_on_empty = false" %d<CR>
+nnoremap <silent> E :!nvim %d<CR>
 
 " Fzf search and navigate to selection
 nnoremap <silent> <C-f> :

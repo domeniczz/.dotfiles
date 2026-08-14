@@ -24,7 +24,7 @@ function create_session() {
     if ! tmux has-session -t="$selected_name" 2>/dev/null; then
         tmux new-session -ds "$selected_name" -c "$selected" "env INCOGNITO=1 $SHELL"
         tmux new-window -t "$selected_name:2" -c "$selected" "env INCOGNITO=1 $SHELL"
-        tmux send-keys -t "$selected_name:1" "nvim +\"lua vim.g.quit_on_empty = false\" ." C-m
+        tmux send-keys -t "$selected_name:1" "nvim ." C-m
         tmux select-window -t "$selected_name:1"
     fi
 }

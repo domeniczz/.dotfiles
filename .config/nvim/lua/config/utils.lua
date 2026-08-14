@@ -320,7 +320,7 @@ end
 function M.smart_buffer_close(user_opts)
   local opts = apply_defaults(user_opts, {
     force = false,
-    quit_on_empty = true,
+    quit_on_empty = vim.g.quit_on_empty ~= false,
     prune_extra_wins = true,
   })
 
