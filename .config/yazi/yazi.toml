@@ -1,7 +1,7 @@
 [mgr]
 ratio = [1, 3, 4]
 show_hidden = true
-linemode = "size"
+linemode = "size_and_mtime"
 
 [preview]
 max_width = 1000
