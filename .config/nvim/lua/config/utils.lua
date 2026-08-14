@@ -354,6 +354,23 @@ function M.smart_buffer_close(user_opts)
     end
   end
 
+  if filetype == "netrw" and vim.b[current_buf].netrw_curdir then
+    local netrw_dir = vim.fs.normalize(vim.b[current_buf].netrw_curdir)
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      local name = vim.api.nvim_buf_get_name(buf)
+      if buf ~= current_buf
+        and vim.bo[buf].buflisted
+        and vim.fn.bufwinid(buf) == -1
+        and name ~= ""
+        and vim.fn.isdirectory(name) == 1
+        and vim.fs.normalize(name) == netrw_dir
+      then
+        vim.api.nvim_buf_delete(buf, { force = true })
+        break
+      end
+    end
+  end
+
   -- Get windows displaying current buffer
   local wins_displaying_current_buf = vim.tbl_filter(function(win)
     return vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == current_buf
@@ -436,10 +453,7 @@ function M.smart_buffer_close(user_opts)
   -- Do final buffer close
   local force_close = ignore_changes or buftype == "terminal"
   vim.cmd("silent! bdelete" .. (force_close and "!" or "") .. " " .. current_buf)
-  local ok, buflisted = pcall(function()
-    return vim.bo[current_buf].buflisted and vim.api.nvim_buf_is_valid(current_buf)
-  end)
-  if ok and buflisted then
+  if vim.api.nvim_buf_is_valid(current_buf) and vim.api.nvim_buf_is_loaded(current_buf) then
     vim.notify(string.format("Failed to delete buffer! (%s)", bufname), vim.log.levels.ERROR)
   end
 
