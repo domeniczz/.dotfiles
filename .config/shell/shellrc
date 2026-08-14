@@ -1,9 +1,3 @@
-export HOMEBREW_NO_ENV_HINTS=1
-export HOMEBREW_NO_AUTO_UPDATE=1
-export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
-export HOMEBREW_NO_ANALYTICS=1
-# export HOMEBREW_NO_INSTALL_CLEANUP=1
-
 export LESS="--wordwrap --RAW-CONTROL-CHARS --incsearch --ignore-case --search-options=W --file-size --use-color --HILITE-UNREAD --status-column --mouse --wheel-lines=2 --quiet"
 export LESSCHARSET=utf-8
 
