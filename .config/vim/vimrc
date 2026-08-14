@@ -2,8 +2,6 @@
 " Options
 " ------------------------------------------------------------------------------
 
-let g:netrw_home = $XDG_DATA_HOME."/vim"
-
 syntax on
 filetype plugin indent on
 set autoread
@@ -12,8 +10,8 @@ set number
 set relativenumber
 set numberwidth=2
 set cursorline
-" set autoindent " Minimal automatic indenting for any filetype.
-set backspace=indent,eol,start " Intuitive backspace behavior.
+" set autoindent " Minimal automatic indenting for any filetype
+set backspace=indent,eol,start " Intuitive backspace behavior
 
 set nolist
 set listchars=space:·,tab:>-,trail:·,nbsp:+,eol:↵
@@ -73,20 +71,23 @@ call mkdir($XDG_DATA_HOME.'/vim/undo', 'p')
 " % jumps across if/else/endif, HTML tags
 packadd! matchit
 
-" Use a line cursor within insert mode and a block cursor everywhere else.
+let g:netrw_home = $XDG_DATA_HOME."/vim"
+let g:quit_on_empty = !isdirectory(argv(0))
+
+" Use a line cursor within insert mode and a block cursor everywhere else
 " Reference chart of values:
-"   Ps = 0  -> blinking block.
-"   Ps = 1  -> blinking block (default).
-"   Ps = 2  -> steady block.
-"   Ps = 3  -> blinking underline.
-"   Ps = 4  -> steady underline.
-"   Ps = 5  -> blinking bar (xterm).
-"   Ps = 6  -> steady bar (xterm).
+"   Ps = 0  -> blinking block
+"   Ps = 1  -> blinking block (default)
+"   Ps = 2  -> steady block
+"   Ps = 3  -> blinking underline
+"   Ps = 4  -> steady underline
+"   Ps = 5  -> blinking bar (xterm)
+"   Ps = 6  -> steady bar (xterm)
 let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
 let &t_te .= "\e[2 q"
 
-" Request focus reporting from the terminal so Vim can receives focus events.
+" Request focus reporting from the terminal so Vim can receives focus events
 let &t_fe = "\e[?1004h"
 let &t_fd = "\e[?1004l"
 
@@ -309,6 +310,17 @@ function! KillBufferOrCloseWindow()
   let l:should_quit = !l:has_valid_buffer
   let l:ft = &filetype
   if l:ft ==# "netrw"
+    if exists('b:netrw_curdir')
+      let l:netrw_dir = simplify(fnamemodify(b:netrw_curdir, ':p'))
+      for l:buf in getbufinfo()
+        if l:buf.bufnr != l:curbuf && l:buf.listed && empty(win_findbuf(l:buf.bufnr))
+              \ && !empty(l:buf.name) && isdirectory(l:buf.name)
+              \ && simplify(fnamemodify(l:buf.name, ':p')) ==# l:netrw_dir
+          execute 'silent! bdelete! ' . l:buf.bufnr
+          break
+        endif
+      endfor
+    endif
     bdelete
     return
   endif
@@ -336,7 +348,7 @@ function! KillBufferOrCloseWindow()
   else
     bdelete
   endif
-  if l:should_quit
+  if l:should_quit && g:quit_on_empty
     quit
   endif
 endfunction
@@ -368,3 +380,8 @@ highlight SpellBad     cterm=underline gui=underline
 highlight SpellCap     cterm=underline gui=underline
 highlight SpellRare    cterm=underline gui=underline
 highlight SpellLocal   cterm=underline gui=underline
+" vim's `:highlight` only overrides the keys configured, and keeps leftover defaults:
+" - Visual default carries guifg=Black, which would render black on the dark bg
+" - IncSearch default carries gui=reverse, which inverts fg/bg
+highlight Visual       guifg=NONE
+highlight IncSearch    gui=NONE   cterm=NONE
