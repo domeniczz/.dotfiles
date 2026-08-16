@@ -6,6 +6,7 @@ syntax on
 filetype plugin indent on
 set autoread
 set hidden
+set confirm
 set number
 set relativenumber
 set numberwidth=2
@@ -35,6 +36,7 @@ set scrolloff=10
 set sidescrolloff=8
 set laststatus=2
 set path+=**
+set wildignorecase
 set wildignore+=*/node_modules/*
 set wildmenu
 set wildmode=longest:full,full
@@ -193,6 +195,8 @@ command! Ypwd :let @+ = expand('%:p')
 
 command! W call SudoWrite()
 
+command! Clearqf call setqflist([])
+
 " ------------------------------------------------------------------------------
 " Plugins
 " ------------------------------------------------------------------------------
@@ -201,11 +205,19 @@ command! W call SudoWrite()
 " Needs the main fzf repo's vim plugin also in opt/
 let g:fzf_layout = {'window': {'width': 1.0, 'height': 1.0, 'yoffset': 0, 'xoffset': 0, 'border': 'none'}}
 let g:fzf_vim = {'preview_window': ['up,60%,border-bottom', 'ctrl-/']}
+let g:fzf_rg_options = ['--bind', 'ctrl-l:select-all+accept']
+
+" Files: ctrl-l to put candidates into quickfix list
+let g:fzf_files_options = ['--bind', 'ctrl-l:select-all+print(FZF-QF)+accept']
+
 let $FZF_DEFAULT_COMMAND = 'fd --type f --hidden --exclude .git --exclude .venv --exclude node_modules'
 let $FZF_DEFAULT_OPTS = '--layout=reverse'
 
 autocmd VimEnter * packadd fzf
 autocmd VimEnter * packadd fzf.vim
+" Overrides :Files behaviour, re-define it to route through the custom sink
+" (ctrl-l -> quickfix), keeping -bang and arbitrary args
+autocmd VimEnter * command! -bang -nargs=* Files call s:fzf_files_qf(<q-args>, <bang>0)
 
 " files in cwd
 nnoremap <silent> <leader>fd :Files<CR>
@@ -217,10 +229,10 @@ nnoremap <silent> <leader>fo :Buffers<CR>
 nnoremap <silent> <leader>fm :Marks<CR>
 " current buffer fuzzy find
 nnoremap <silent> <leader>ff :BLines<CR>
-" live grep in cwd
-nnoremap <silent> <leader>gd :Rg<CR>
+" live grep in cwd (RG = non-fuzzy, rg re-runs per keystroke)
+nnoremap <silent> <leader>gd :RG<CR>
 " grep word under cursor
-nnoremap <silent> <leader>gw :Rg <C-r><C-w><CR>
+nnoremap <silent> <leader>gw :RG <C-r><C-w><CR>
 " git files
 nnoremap <silent> <leader>fp :GFiles<CR>
 " git commits
@@ -229,6 +241,9 @@ nnoremap <silent> <leader>gc :Commits<CR>
 nnoremap <silent> <leader>gf :BCommits<CR>
 " git status
 nnoremap <silent> <leader>gg :GFiles?<CR>
+" quickfix list
+nnoremap <silent> <leader>qf :call <SID>quickfix_fzf()<CR>
+
 " help tags
 nnoremap <silent> <leader>sh :Helptags<CR>
 
@@ -247,6 +262,8 @@ let g:fzf_colors =
   \ 'spinner': ['fg', 'Comment'],
   \ 'header':  ['fg', 'Comment'],
   \ 'gutter':  ['bg', 'Normal'] }
+
+" ------------------------------------------------------------------------------
 
 " vim-fugitive: lazy-loaded via pack/*/opt
 " Plugin loads on <leader>gs mapping or any of the G* user commands below
@@ -324,6 +341,50 @@ augroup END
 
 " ------------------------------------------------------------------------------
 " Util functions
+" ------------------------------------------------------------------------------
+
+" fzf sink: ctrl-l in :Files sends all candidates to the quickfix
+" select-all + a print marker lets the sink tell ctrl-l apart from Enter
+function! s:fzf_files_sink(lines) abort
+  if get(a:lines, 1, '') ==# 'FZF-QF'
+    call setqflist(map(a:lines[2:], '{"filename": fnamemodify(v:val, ":p"), "lnum": 1, "text": ""}'))
+    copen
+    return
+  endif
+  let pkey = get(get(g:, 'fzf_vim', {}), 'paste_key', 'alt-enter')
+  if get(a:lines, 0, '') ==# pkey
+    return fzf#vim#paste(a:lines[1:])
+  endif
+  for f in a:lines[1:]
+    execute 'edit' fnameescape(f)
+  endfor
+endfunction
+
+function! s:fzf_files_qf(arg, bang) abort
+  call fzf#vim#files(a:arg, extend(fzf#vim#with_preview(), {'sink*': function('s:fzf_files_sink')}), a:bang)
+endfunction
+
+" Focus quickfix window after ctrl-l
+function! s:fzf_listproc_qf(list) abort
+  call setqflist(a:list)
+  copen
+endfunction
+let g:fzf_vim = extend(get(g:, 'fzf_vim', {}), {'listproc': function('s:fzf_listproc_qf')})
+
+function! s:qf_sink(line)
+  let parts = matchlist(a:line, '\v^(.{-}):(\d+):(.*)$')
+  execute 'edit' fnameescape(parts[1])
+  call cursor(parts[2], 0)
+endfunction
+
+" fzf browser over the current quickfix list
+function! s:quickfix_fzf()
+  let qf = getqflist()
+  if empty(qf) | echo 'Quickfix is empty' | return | endif
+  let source = map(qf, {_, e -> empty(bufname(e.bufnr)) ? e.filename : bufname(e.bufnr) . ':' . e.lnum . ':' . e.text})
+  call fzf#run(fzf#wrap({'source': source, 'sink': function('s:qf_sink')}))
+endfunction
+
 " ------------------------------------------------------------------------------
 
 let s:yank_hl_id = 0
