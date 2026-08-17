@@ -1,0 +1,130 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "git": {
+    "inline_blame": {
+      "location": "status_bar",
+      "show_commit_summary": true,
+      "padding": 5,
+      "delay_ms": 200,
+      "enabled": true
+    }
+  },
+  "diff_view_style": "unified",
+  "use_smartcase_search": true,
+  "show_wrap_guides": true,
+  "soft_wrap": "editor_width",
+  "preferred_line_length": 100,
+  "sticky_scroll": {
+    "enabled": true
+  },
+  "scroll_beyond_last_line": "vertical_scroll_margin",
+  "vertical_scroll_margin": 5.0,
+  "scrollbar": {
+    "show": "system",
+    "axes": {
+      "vertical": true,
+      "horizontal": false
+    }
+  },
+  "edit_predictions": {
+    "allow_data_collection": "no"
+  },
+  "agent": {
+    "terminal_init_command": "",
+    "favorite_models": [],
+    "model_parameters": [],
+    "dock": "right",
+    "sidebar_side": "left",
+    "default_height": 400.0,
+    "default_width": 500.0
+  },
+  "vim_mode": true,
+  "vim": {
+    "toggle_relative_line_numbers": true,
+    "use_system_clipboard": "on_yank",
+    "use_smartcase_find": true,
+    "highlight_on_yank_duration": 200,
+    "cursor_shape": {
+      "normal": "block",
+      "insert": "bar",
+      "visual": "block",
+      "replace": "underline"
+    }
+  },
+  "terminal": {
+    "option_as_meta": true,
+    "toolbar": {
+      "breadcrumbs": false
+    },
+    "default_width": 640.0,
+    "default_height": 400.0,
+    "font_family": ".ZedMono",
+    "working_directory": "current_project_directory"
+  },
+  "project_panel": {
+    "auto_reveal_entries": false,
+    "git_status_indicator": true,
+    "entry_spacing": "standard",
+    "dock": "left",
+    "scrollbar": {
+      "show": "auto"
+    },
+    "indent_size": 12.0,
+    "default_width": 380.0
+  },
+  "collaboration_panel": {
+    "default_width": 300.0
+  },
+  "outline_panel": {
+    "dock": "left",
+    "default_width": 380.0
+  },
+  "git_panel": {
+    "show_count_badge": false,
+    "group_by": "staging",
+    "tree_view": true,
+    "entry_primary_click_action": "file_diff",
+    "dock": "left",
+    "default_width": 380.0
+  },
+  "tab_bar": {
+    "show_pinned_tabs_in_separate_row": true
+  },
+  "tabs": {
+    "close_position": "right",
+    "show_diagnostics": "errors"
+  },
+  "use_system_window_tabs": true,
+  "status_bar": {
+    "line_endings_button": true,
+    "active_encoding_button": "enabled"
+  },
+  "cursor_blink": false,
+  "session": {
+    "trust_all_worktrees": true
+  },
+  "calls": {
+    "mute_on_join": true
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+    "anthropic_retention": false
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 13.0,
+  "buffer_font_weight": 400.0,
+  "icon_theme": "Material Icon Theme",
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "One Dark Pro"
+  }
+}
