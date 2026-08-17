@@ -25,7 +25,7 @@ map({ "n", "i", "v", "x" }, "<Right>", "<Nop>", { noremap = true, silent = true 
 
 map("n", "<C-w>b", ":split<CR>", { noremap = true, silent = true, desc = "Split window horizontally" })
 
--- map("n", "<Esc>", "<CMD>nohlsearch<CR>", { noremap = true, silent = true })
+map("n", "<Esc>", "<CMD>nohlsearch<CR>", { noremap = true, silent = true })
 
 map('n', '<leader>tl', '<CMD>set list!<CR>', { noremap = true, silent = true, desc = 'Toggle invisible chars' })
 
@@ -47,6 +47,7 @@ map("n", "J", "mzJ`z", { noremap = true, silent = true })
 -- Scroll one page up/down while keeping cursor in the middle
 map("n", "<C-d>", "<C-d>zz", { noremap = true, silent = true })
 map("n", "<C-u>", "<C-u>zz", { noremap = true, silent = true })
+
 
 -- Keep cursor in the middle while navigating through search results
 map("n", "n", "nzzzv", { noremap = true, silent = true })

@@ -9,6 +9,10 @@ usercmd("Clearregs", function()
   print("All registers cleared!")
 end, { desc = "clear all registers" })
 
+usercmd("Clearqf", function()
+  vim.fn.setqflist({})
+end, { desc = "clear the quickfix list" })
+
 usercmd("Ypwd", function()
   vim.fn.setreg("+", vim.fn.expand("%:p"))
 end, { desc = "yank absolute path of current buffer" })

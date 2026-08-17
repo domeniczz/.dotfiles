@@ -14,19 +14,19 @@ autocmd("TextYankPost", {
   end,
 })
 
-local number_toggle = augroup("relativenumber_toggle")
-autocmd({ "VimEnter", "FocusGained", "InsertLeave", "WinEnter" }, {
-  group = number_toggle,
-  callback = function()
-    if vim.api.nvim_get_mode().mode ~= "i" then vim.opt.relativenumber = true end
-  end,
-})
-autocmd({ "BufLeave", "FocusLost", "InsertEnter", "WinLeave" }, {
-  group = number_toggle,
-  callback = function()
-    vim.opt.relativenumber = false
-  end,
-})
+-- local number_toggle = augroup("relativenumber_toggle")
+-- autocmd({ "VimEnter", "FocusGained", "InsertLeave", "WinEnter" }, {
+--   group = number_toggle,
+--   callback = function()
+--     if vim.api.nvim_get_mode().mode ~= "i" then vim.opt.relativenumber = true end
+--   end,
+-- })
+-- autocmd({ "BufLeave", "FocusLost", "InsertEnter", "WinLeave" }, {
+--   group = number_toggle,
+--   callback = function()
+--     vim.opt.relativenumber = false
+--   end,
+-- })
 
 local cursorline_toggle = augroup("cursorline_toggle")
 autocmd({ "VimEnter", "WinEnter", "BufWinEnter", "FocusGained" }, {
@@ -59,7 +59,6 @@ autocmd("FileType", {
   pattern = { "text", "markdown", "org", "gitcommit" },
   callback = function()
     vim.opt_local.list = true
-    vim.opt_local.listchars:append({ eol = "↲" })
     vim.opt_local.spell = true
     vim.opt_local.spelllang = "en_us,en_gb"
   end,

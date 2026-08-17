@@ -73,8 +73,10 @@ opt.smartindent = true
 opt.ignorecase = true
 opt.smartcase = true
 
-opt.foldlevel = 30
+opt.signcolumn = "auto"
+
 opt.foldcolumn = "1"
+opt.foldlevel = 30
 -- Set in treesitter plugin config instead, to make sure it's set after loading treesitter plugin
 -- opt.foldmethod = 'expr'
 -- opt.foldexpr = 'nvim_treesitter#foldexpr()'
@@ -99,21 +101,22 @@ end
 opt.undodir = xdg_data_home .. "/nvim/undodir"
 
 opt.updatetime = 5000
+opt.updatecount = 200
 opt.ttimeoutlen = 20
 opt.timeoutlen = 500
-
-opt.signcolumn = "yes"
 
 opt.encoding = "utf-8"
 opt.fileencoding = "utf-8"
 opt.fileformats = "unix,dos,mac"
 opt.autoread = true
 opt.hidden = true -- Allow switching buffers without saving
+opt.confirm = true -- Prompt rather than fail on unsaved changes
 opt.fillchars = { eob = " " }
 opt.inccommand = "nosplit"
 opt.showcmd = false
 opt.cmdheight = 1
 opt.laststatus = 3
 opt.shell = "zsh"
-opt.path:append({ "**" }) -- search file into subdirectories
+opt.path:append({ "**" }) -- Search file into subdirectories
+opt.wildignorecase = true
 opt.wildignore:append({ "*/node_modules/*" })

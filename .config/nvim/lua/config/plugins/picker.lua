@@ -196,7 +196,7 @@ return {
           file_icons = true,
           color_icons = true,
           actions = {
-            ["ctrl-q"] = { fn = fzf.actions.file_sel_to_qf, prefix = "select-all" },
+            ["ctrl-l"] = { fn = fzf.actions.file_sel_to_qf, prefix = "select-all" },
           },
         },
       })
