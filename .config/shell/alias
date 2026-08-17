@@ -1,5 +1,4 @@
 alias vi="nvim"
-alias update="sudo pacman -Sy --needed archlinux-keyring && sudo pacman -Syu && yay -Sua"
 alias grep="grep --color=auto"
 alias rm="rm -I"
 alias tmuxa="tmux new-session -A -s general"
@@ -42,29 +41,55 @@ alias myip="ip address | grep --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9
 alias ks="lsof -Pwni tcp | tail -n +2 | fzf --header='[kill:tcp]' --accept-nth=2 | uniq | xargs kill -15"
 alias ftr="realpath --quiet * | fzf --prompt='ftree ❯ ' --preview 'tree -C -L1 {}' --reverse --height 60%"
 alias fvi="fzf --prompt='nvim open ❯ ' --preview 'bat --number --color=always --line-range :500 {}' --bind='enter:execute(nvim {+})' --reverse --height 80%"
-alias fman="man -k . | awk -F' - ' '{print $1}' | fzf --prompt='man page ❯ ' --bind='enter:execute(man {1})' --reverse --height 60%"
+alias fman="man -k . 2>/dev/null | awk -F' - ' '{print $1}' | fzf --prompt='man page ❯ ' --bind='enter:execute(man {1})' --reverse --height 60%"
 alias ftldr="tldr --list --quiet | fzf --prompt='tldr ❯ ' --bind='enter:execute(tldr --no-raw --no-compact --short-options --long-options --color=always --quiet {} | less)' --preview 'tldr --no-raw --compact --short-options --long-options --color=always --quiet {}' --reverse --height 60%"
 alias fgl="git log | grep '^commit ' | cut -d' ' -f2 | fzf --prompt='git commit ❯ ' --preview 'git show {} | bat --number --color=always --language=diff --theme=base16' --bind 'enter:execute(git show {} | delta | less --RAW-CONTROL-CHARS)' --reverse --height 80%"
 alias fglf="fzf --prompt='git file history ❯ ' --preview 'git log --follow -p {} | bat --number --color=always --language=diff --theme=base16' --bind 'enter:execute(git log --follow -p {} | delta | less --RAW-CONTROL-CHARS)' --reverse --height 80%"
 
+function update() {
+    if command -v brew >/dev/null 2>&1; then
+        brew update && brew outdated && HOMEBREW_NO_ASK=1 brew upgrade
+    elif command -v pacman >/dev/null 2>&1; then
+        sudo pacman -Sy --needed archlinux-keyring && sudo pacman -Syu
+        if command -v yay >/dev/null 2>&1; then
+            yay -Sua
+        elif command -v paru >/dev/null 2>&1; then
+            paru -Sua
+        fi
+    elif command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get update && sudo apt-get dist-upgrade -y
+    elif command -v dnf >/dev/null 2>&1; then
+        sudo dnf upgrade --refresh
+    elif command -v zypper >/dev/null 2>&1; then
+        sudo zypper refresh && sudo zypper dup -y
+    else
+        echo "update: no supported package manager found" >&2
+        return 1
+    fi
+}
+
+function hist() {
+    local f=${HISTFILE:-$HOME/.$(basename "$SHELL")_history}
+    [[ -f $f ]] || f=$HOME/.local/share/$(basename "$SHELL")_history
+    [[ -f $f ]] || { echo "hist: no history file: $f" >&2; return 1; }
+    "${EDITOR:-vi}" "$f"
+}
+
+function unquarantine() {
+  xattr -dr com.apple.quarantine "/Applications/$1.app"
+}
+
 function fpi() {
     pacman -Qq | fzf --prompt="package info ❯ " --preview "pacman -Qi {}" --preview-window "70%,wrap" --reverse --height 60% --query="$1"
 }
-
 function fpc() {
     pacman -Qq | fzf --prompt='package cache ❯ ' --preview 'ls /var/cache/pacman/pkg/{}-[0-9]*.pkg.tar.zst' --reverse --height 60% --query="$1"
 }
-
 function fps() {
     pacman -Ssq | fzf --prompt="package search ❯ " --preview "pacman -Si {}" --bind="enter:become(echo {+} && sudo pacman -S {+})" --preview-window "70%,wrap" --reverse --height 60% --query="$1"
 }
-
 function fas() {
     yay -Slaq | fzf --prompt="aur package search ❯ " --preview "yay -Si {}" --bind="enter:become(echo {+} && yay -S {+})" --preview-window "70%,wrap" --reverse --height 60% --query="$1"
-}
-
-function ks() {
-    local pid=$()
 }
 
 function als() {
