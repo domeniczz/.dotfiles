@@ -5,7 +5,7 @@ setopt append_history inc_append_history share_history extended_history
 setopt hist_ignore_dups hist_ignore_all_dups hist_expire_dups_first
 setopt hist_ignore_space hist_reduce_blanks hist_verify
 setopt autocd check_jobs
-# setopt extended_glob
+setopt extended_glob
 
 HISTFILE=$XDG_DATA_HOME/zsh_history
 HISTSIZE=2000
@@ -37,7 +37,7 @@ bindkey -v
 
 zstyle ":completion:*" menu select completer _expand _complete _ignored _approximate
 zstyle :compinstall filename "$HOME/.zshrc"
-autoload -Uz compinit; compinit -d "$XDG_CACHE_HOME/zcompdump"
+autoload -Uz compinit; compinit -d "$HOME/.zcompdump"
 
 autoload -Uz url-quote-magic
 zle -N self-insert url-quote-magic
@@ -64,13 +64,16 @@ if [[ -r "$antidote_path" && -r "$zsh_plugins_txt" ]]; then
     if [[ ! -f "$zsh_plugins_zsh" || "$zsh_plugins_txt" -nt "$zsh_plugins_zsh" ]]; then
         (
             source "$antidote_path"
-            zstyle ':antidote:static' zcompile 'yes'
+            zstyle ':antidote:static' zcompile 'no'
             antidote bundle <"$zsh_plugins_txt" >|"$zsh_plugins_zsh"
         )
     fi
     source "$zsh_plugins_zsh"
 fi
 unset antidote_path
+
+# Fix suggestion faint text color in some themes
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=244"
 
 # Create a zkbd compatible hash for terminfo key mapping
 typeset -g -A key
