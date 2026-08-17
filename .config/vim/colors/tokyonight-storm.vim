@@ -320,3 +320,9 @@ hi! link MiniPickPreviewLine CursorLine
 hi! link MiniPickPreviewRegion IncSearch
 hi! link WinBar StatusLine
 hi! link WinBarNC StatusLineNC
+
+let g:terminal_ansi_colors = [
+  \ '#1d202f', '#f7768e', '#9ece6a', '#e0af68',
+  \ '#7aa2f7', '#bb9af7', '#7dcfff', '#a9b1d6',
+  \ '#414868', '#ff899d', '#9fe044', '#faba4a',
+  \ '#8db0ff', '#c7a9ff', '#a4daff', '#c0caf5']
