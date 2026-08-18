@@ -94,5 +94,11 @@ esac
 PATH="$PATH:$HOME/Programs/anaconda3/bin"
 PATH="$PATH:$HOME/Programs/miniconda3/bin"
 
-# Use GNU utils on macos by default
-export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+if [ -d /Library/TeX/texbin ]; then
+    export PATH="/Library/TeX/texbin:$PATH"
+fi
+
+if command -v brew >/dev/null 2>&1; then
+    export PATH="/opt/homebrew/bin:$PATH"
+    export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+fi
