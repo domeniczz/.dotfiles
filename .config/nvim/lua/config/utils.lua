@@ -33,9 +33,18 @@ function M.is_current_large_file(max_filesize, prompt)
   return false
 end
 
+-- Returns true if any line in the current buffer exceeds line_max_col
+function M.has_long_line(line_max_col)
+  for _, line in ipairs(vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), 0, -1, false)) do
+    if #line > line_max_col then
+      return true
+    end
+  end
+  return false
+end
+
 -- -----------------------------------------------------------------------------
 -- Write with root privilege
--- Credit: ibhagwan
 -- -----------------------------------------------------------------------------
 
 local function warn(msg)

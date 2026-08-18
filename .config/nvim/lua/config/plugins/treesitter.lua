@@ -44,6 +44,17 @@ return {
             pcall(vim.treesitter.stop)
             return
           end
+          -- Treesitter tokenizes whole lines (ignores synmaxcol), so a single long line stalls scroll/redraw
+          local line_max_col = 400
+          if require("config.utils").has_long_line(line_max_col) then
+            pcall(vim.treesitter.stop)
+            vim.notify(
+              string.format("Treesitter disabled - line longer than %d chars", line_max_col),
+              vim.log.levels.WARN,
+              { title = "Long Line" }
+            )
+            return
+          end
           if not vim.b[args.buf].ts_highlight then
             -- pcall so a missing/still-installing parser falls back to regex syntax
             pcall(vim.treesitter.start)
