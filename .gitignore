@@ -1,2 +1,5 @@
+node_modules/
+.codegraph/
+.search/
 .DS_Store
 *.swp
