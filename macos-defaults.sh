@@ -13,6 +13,7 @@
 # Appearance and general behavior
 defaults write -g AppleInterfaceStyleSwitchesAutomatically -bool true
 defaults write -g AppleActionOnDoubleClick -string "Fill"
+defaults write -g AppleMenuBarVisibleInFullscreen -bool true
 defaults write -g AppleShowScrollBars -string "WhenScrolling"
 defaults write -g AppleScrollerPagingBehavior -bool true
 defaults write -g AppleSpacesSwitchOnActivate -bool true
@@ -37,13 +38,48 @@ defaults write -g ApplePressAndHoldEnabled -bool false
 # Control + Command and left click to drag window from anywhere
 defaults write -g NSWindowShouldDragOnGesture -bool true
 
+# Pointer, scrolling, and alert behavior
+defaults write -g "com.apple.mouse.doubleClickThreshold" -float 0.5
+defaults write -g "com.apple.mouse.scaling" -float 1
+defaults write -g "com.apple.scrollwheel.scaling" -float 0.4412
+defaults write -g "com.apple.springing.delay" -float 0.5
+defaults write -g "com.apple.springing.enabled" -bool true
+defaults write -g "com.apple.trackpad.forceClick" -bool true
+defaults write -g "com.apple.sound.beep.feedback" -bool false
+defaults write -g "com.apple.sound.beep.flash" -bool false
+defaults write -g "com.apple.sound.uiaudio.enabled" -bool false
+
 # Trackpad preferences, including an external Magic Trackpad
 defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
 defaults write com.apple.AppleMultitouchTrackpad Dragging -bool true
+defaults write com.apple.AppleMultitouchTrackpad DragLock -bool false
 defaults write com.apple.AppleMultitouchTrackpad TrackpadRightClick -bool true
+defaults write com.apple.AppleMultitouchTrackpad TrackpadFiveFingerPinchGesture -int 2
+defaults write com.apple.AppleMultitouchTrackpad TrackpadFourFingerHorizSwipeGesture -int 2
+defaults write com.apple.AppleMultitouchTrackpad TrackpadFourFingerPinchGesture -int 2
+defaults write com.apple.AppleMultitouchTrackpad TrackpadFourFingerVertSwipeGesture -int 2
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool false
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerHorizSwipeGesture -int 2
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerTapGesture -int 0
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerVertSwipeGesture -int 2
+defaults write com.apple.AppleMultitouchTrackpad TrackpadTwoFingerDoubleTapGesture -int 1
+defaults write com.apple.AppleMultitouchTrackpad TrackpadTwoFingerFromRightEdgeSwipeGesture -int 3
+defaults write com.apple.AppleMultitouchTrackpad USBMouseStopsTrackpad -bool false
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Dragging -bool true
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad DragLock -bool false
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadRightClick -bool true
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadFiveFingerPinchGesture -int 2
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadFourFingerHorizSwipeGesture -int 2
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadFourFingerPinchGesture -int 2
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadFourFingerVertSwipeGesture -int 2
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool false
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerHorizSwipeGesture -int 2
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerTapGesture -int 0
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerVertSwipeGesture -int 2
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadTwoFingerDoubleTapGesture -int 1
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadTwoFingerFromRightEdgeSwipeGesture -int 3
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad USBMouseStopsTrackpad -bool false
 defaults write -g "com.apple.trackpad.scaling" -float 2
 
 # Automatically hide the Dock
@@ -82,17 +118,28 @@ defaults write com.apple.finder _FXSortFoldersFirst -bool true
 defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 defaults write com.apple.finder ShowPathbar -bool true
 defaults write com.apple.finder ShowStatusBar -bool true
+defaults write com.apple.finder ShowSidebar -bool true
+defaults write com.apple.finder ShowPreviewPane -bool false
+defaults write com.apple.finder ShowRecentTags -bool false
 # Show mounted external disks and servers on the desktop
+defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false
 defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool true
 defaults write com.apple.finder ShowMountedServersOnDesktop -bool true
 defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool true
 # Remove items from Trash after 30 days
 defaults write com.apple.finder FXRemoveOldTrashItems -bool true
+defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+defaults write com.apple.finder _FXSortFoldersFirstOnDesktop -bool true
 
 # Window management
 defaults write com.apple.WindowManager GloballyEnabled -bool false
 defaults write com.apple.WindowManager EnableStandardClickToShowDesktop -bool false
 defaults write com.apple.WindowManager EnableTiledWindowMargins -bool false
+
+# Spotlight clipboard history
+defaults write com.apple.spotlight PasteboardHistoryEnabled -bool true
+defaults write com.apple.spotlight PasteboardHistoryTimeout -int 604800
 
 # Menu bar clock
 defaults write com.apple.menuextra.clock IsAnalog -bool false
@@ -101,6 +148,7 @@ defaults write com.apple.menuextra.clock ShowDate -bool true
 defaults write com.apple.menuextra.clock ShowDayOfWeek -bool true
 defaults write com.apple.menuextra.clock ShowSeconds -bool true
 
+# Restart to take effect (Better just restart the computer)
 killall Dock
 killall Finder
 killall SystemUIServer
