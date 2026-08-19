@@ -94,11 +94,12 @@ declare -gA OPENER_CONFIG=(
     ["other"]="gui:xdg-open:single"
 )
 
-declare -gr INDEX_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/search"
-declare -gr INDEX_FILE="$INDEX_DIR/index"
-declare -gr PLAIN_INDEX_FILE="$INDEX_DIR/plain_index"
+declare -g INDEX_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/search"
+declare -gr LOCAL_INDEX_DIRNAME=".search"
+declare -g INDEX_FILE="$INDEX_DIR/index"
+declare -g PLAIN_INDEX_FILE="$INDEX_DIR/plain_index"
 declare -gr LOCK_FILE="${TMPDIR:-/tmp}/search.lock"
-declare -gr RELOAD_FLAG="$INDEX_DIR/.needs_reload"
+declare -g RELOAD_FLAG="$INDEX_DIR/.needs_reload"
 declare -gr SOCKET_FILE="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/search-server.sock"
 declare -gr PID_FILE="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/search-server.pid"
 declare -gr FZF_LISTEN_SOCK="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/search-fzf.sock"
@@ -115,6 +116,12 @@ declare -g FIND_CMD=""
 declare -g NEEDS_INDEX_REBUILD=0
 declare -g FORCE_INDEX_REBUILD=0
 declare -g INDEX_ALL=0
+
+declare -g LOCAL_MODE=0
+declare -g LOCAL_ROOT=""
+declare -g LOCAL_RESPECT_FILTERS=0
+declare -g USE_INDEX=-1
+declare -g SCAN_LABEL=""
 
 declare -gr RESOLVE_SYMLINK=0
 
@@ -146,16 +153,25 @@ fi
 
 function print_usage() {
     cat << 'EOF'
-Usage: search [OPTIONS]
+Usage: search [OPTIONS] [DIRECTORY]
 
 Search through the whole system with persistent index and perform actions
 (preview, open, delete) using an interactive fuzzy finder interface
 
+Given a DIRECTORY (e.g. `search .`), search under it instead of the whole
+system, using DIRECTORY/.search as its index
+
+An existing index is always reused; without one, DIRECTORY is scanned fresh and
+the system is indexed into ~/.local/share/search
+
 OPTIONS:
     -s, --search       Search query
+    -f, --filter       With DIRECTORY, respect the include/exclude lists
+    -i, --index        Build an index file if there is none
+    -ni, --noindex     Scan fresh, keeping no index file
     -c, --color        Enable colored output (default)
     -nc, --nocolor     Disable colored output
-    -r, --rebuild      Force rebuild of the search index
+    -r, --rebuild      Force rebuild of the index
     -a, --all          Index literally all files
     -o, --singleton    Run only one instance of the script
     -m, --multi        Run multiple instances of the script
@@ -169,14 +185,17 @@ INTERACTIVE KEYS:
     Enter              Open selected item(s)
     Ctrl-o             Open parent directory of selected item
     Ctrl-x / F9        Delete selected item(s)
-    Ctrl-r             Rebuild search index
+    Ctrl-r             Rescan / rebuild the file list
     Ctrl-q             Disconnect from server (server mode only)
 
 EXAMPLES:
     search
+    search --noindex
+    search .
+    search ~/projects --filter
+    search ~/projects --index
     search --rebuild
     search --nocolor
-    search --server
 EOF
 }
 
@@ -202,6 +221,18 @@ while (( $# > 0 )); do
                 echo "Error: --search requires an argument" >&2
                 exit 1
             fi
+            ;;
+        --filter|-f)
+            LOCAL_RESPECT_FILTERS=1
+            shift
+            ;;
+        --index|-i)
+            USE_INDEX=1
+            shift
+            ;;
+        --noindex|-ni)
+            USE_INDEX=0
+            shift
             ;;
         --color|-c)
             ENABLE_COLORS=1
@@ -280,17 +311,69 @@ while (( $# > 0 )); do
             done
             ;;
         *)
+            if [[ "$1" != -* ]]; then
+                if [[ ! -d "$1" ]]; then
+                    echo "Error: not a directory: $1" >&2
+                    exit 1
+                fi
+                LOCAL_MODE=1
+                LOCAL_ROOT="$1"
+            fi
             shift
             ;;
     esac
 done
 
 # ------------------------------------------------------------------------------
+# Resolve search scope and index location
+#
+#   search              system wide, persistent index in $INDEX_DIR   (default)
+#   search --noindex    system wide, fresh scan, index kept nowhere
+#   search DIR          under DIR, DIR/.search index if it exists, else a scan
+#   search DIR --index  under DIR, persistent index in DIR/.search
+#
+# Without an index file the scan is kept in a temp dir for the session, so that
+# previewing, deleting and reloading all behave the same in every mode
+#
+# SEARCH_DIR_ROOT / SEARCH_LIVE_STATE are exported so the action subprocesses
+# spawned by fzf join the same session instead of starting their own
+# ------------------------------------------------------------------------------
+
+(( LOCAL_MODE )) && export SEARCH_DIR_ROOT="$(cd -- "$LOCAL_ROOT" && pwd -P)"
+
+if [[ -n "${SEARCH_DIR_ROOT:-}" ]]; then
+    LOCAL_MODE=1
+    LOCAL_ROOT="$SEARCH_DIR_ROOT"
+    ENABLE_SINGLETON=0
+    INDEX_DIR="$LOCAL_ROOT/$LOCAL_INDEX_DIRNAME"
+    SCAN_LABEL="${LOCAL_ROOT/#$HOME/~}"
+    (( USE_INDEX < 0 )) && { [[ -f "$INDEX_DIR/index" ]] && USE_INDEX=1 || USE_INDEX=0; }
+else
+    (( USE_INDEX < 0 )) && USE_INDEX=1
+    SCAN_LABEL="the system"
+fi
+
+if (( ! USE_INDEX )); then
+    : "${SEARCH_LIVE_STATE:=$(mktemp -d "${TMPDIR:-/tmp}/search_live.XXXXXXXXXX")}"
+    export SEARCH_LIVE_STATE
+    INDEX_DIR="$SEARCH_LIVE_STATE"
+fi
+
+INDEX_FILE="$INDEX_DIR/index"
+PLAIN_INDEX_FILE="$INDEX_DIR/plain_index"
+RELOAD_FLAG="$INDEX_DIR/.needs_reload"
+
+if [[ -n "$SERVER_MODE" ]] && (( LOCAL_MODE || ! USE_INDEX )); then
+    echo "Error: server mode requires the persistent system index" >&2
+    exit 1
+fi
+
+# ------------------------------------------------------------------------------
 # Build index
 # ------------------------------------------------------------------------------
 
 function build_index() {
-    echo "Building index..."
+    echo "Indexing $SCAN_LABEL..."
     mkdir -p "$INDEX_DIR"
 
     if (( ENABLE_COLORS )); then
@@ -302,7 +385,11 @@ function build_index() {
     fi
 
     local count=$(wc -l < "$INDEX_FILE")
-    echo "Index built successfully with $count entries."
+    if (( USE_INDEX )); then
+        echo "Index files built with ${count// /} entries."
+    else
+        echo "${count// /} entries in total."
+    fi
 }
 
 function check_index() {
@@ -790,6 +877,12 @@ function delete_from_index() {
 
 function construct_find_command() {
     local search_cmd=""
+    local -i filtered=1
+    if (( LOCAL_MODE )); then
+        filtered=$LOCAL_RESPECT_FILTERS
+    else
+        filtered=$(( INDEX_ALL == 0 ))
+    fi
 
     if command -v fd >/dev/null 2>&1; then
         search_cmd="fd '' --hidden --no-ignore --absolute-path"
@@ -798,12 +891,16 @@ function construct_find_command() {
         else
             search_cmd+=" --color=always"
         fi
-        if (( INDEX_ALL != 0 )); then
+        if (( LOCAL_MODE )); then
+            search_cmd+=" --search-path \"${LOCAL_ROOT}\" --exclude \"${LOCAL_INDEX_DIRNAME}\""
+        elif (( ! filtered )); then
             search_cmd+=" --search-path /"
         else
             for dir in "${INCLUDED_DIRS[@]}"; do
                 search_cmd+=" --search-path \"${dir}\""
             done
+        fi
+        if (( filtered )); then
             for dir in "${EXCLUDED_DIRS_FD[@]}"; do
                 search_cmd+=" --exclude \"${dir}\""
             done
@@ -811,12 +908,16 @@ function construct_find_command() {
     else
         ENABLE_COLORS=0
         search_cmd="find -O2"
-        if (( INDEX_ALL != 0 )); then
+        if (( LOCAL_MODE )); then
+            search_cmd+=" \"${LOCAL_ROOT}\" -name \"${LOCAL_INDEX_DIRNAME}\" -prune -o"
+        elif (( ! filtered )); then
             search_cmd+=" /"
         else
             for dir in "${INCLUDED_DIRS[@]}"; do
                 search_cmd+=" \"${dir}\""
             done
+        fi
+        if (( filtered )); then
             for dir in "${EXCLUDED_DIRS_FIND[@]}"; do
                 search_cmd+=" -path \"${dir}\" -prune -o"
             done
@@ -1051,13 +1152,15 @@ function run_fzf() {
     local preview_cmd="$(construct_fzf_preview_command)"
     local self="$(readlink -f "$0")"
     (( ENABLE_COLORS == 0 )) && self+=" --nocolor"
+    (( LOCAL_RESPECT_FILTERS )) && self+=" --filter"
+    (( USE_INDEX )) && self+=" --index" || self+=" --noindex"
 
     local reload="+transform([[ -f $RELOAD_FLAG ]] && rm -f $RELOAD_FLAG && echo 'reload:cat $INDEX_FILE')"
 
     local -a args=(
         --ansi --smart-case --tabstop=4 --no-cycle --border=none --footer-border=none --multi --highlight-line
         --preview="$preview_cmd" --preview-window='right,50%,border-left,nocycle,nowrap'
-        --prompt='❯ '
+        --prompt="$( (( LOCAL_MODE )) && printf '%s ' "${LOCAL_ROOT/#$HOME/~}")❯ "
         --bind='focus:transform-header:stat --printf="%A %U:%G" {} || echo "---"'
         --bind='Esc:ignore'
         --bind='Ctrl-n:down,Ctrl-p:up'
@@ -1109,8 +1212,9 @@ function check_gui() {
 }
 
 function running_instance_check() {
+    (( ENABLE_SINGLETON )) || return 0
     exec 200>"$LOCK_FILE"
-    if (( ENABLE_SINGLETON == 1 )) && ! flock -n 200; then
+    if ! flock -n 200; then
         echo "Another instance of the script is already running." >&2
         read -r -p "Press Enter to continue..."
         exit 1
@@ -1125,7 +1229,10 @@ function cleanup() {
     [[ -n "$TMP_DIR" ]] && rm -rf "$TMP_DIR"
     # Only the main process should clean up shared resources
     if [[ -z "$ACTION_MODE" ]] && [[ "$SERVER_MODE" != "run" ]]; then
-        rm -f "$LOCK_FILE" "$RELOAD_FLAG"
+        rm -f "$RELOAD_FLAG"
+        (( USE_INDEX )) || rm -rf "$SEARCH_LIVE_STATE"
+        (( LOCAL_MODE )) && return
+        rm -f "$LOCK_FILE"
         if command -v fd >/dev/null 2>&1; then
             fd --type d --regex '^search_[a-zA-Z0-9]{10}$' "${TMPDIR:-/tmp}" --max-depth 1 --exec rm -rf '{}' ';' 2>/dev/null || true
         else
@@ -1269,7 +1376,7 @@ esac
 # ------------------------------------------------------------------------------
 
 function main() {
-    if server_is_running; then
+    if (( USE_INDEX && ! LOCAL_MODE )) && server_is_running; then
         abduco -e ^q -a "$SOCKET_FILE" || true
         local detach_reset_action="$(get_detach_reset_action)"
         if [[ -n "$detach_reset_action" ]] && [[ -S "$FZF_LISTEN_SOCK" ]]; then
@@ -1280,7 +1387,12 @@ function main() {
     running_instance_check
     construct_find_command
     check_index
-    (( NEEDS_INDEX_REBUILD )) && { build_index; print_separator; }
+    if (( NEEDS_INDEX_REBUILD )); then
+        build_index
+    else
+        echo "Index file used."
+    fi
+    print_separator
     rm -f "$RELOAD_FLAG"
     run_fzf "main"
 }
