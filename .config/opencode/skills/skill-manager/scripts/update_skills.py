@@ -102,14 +102,34 @@ def write_lock(lock: dict) -> None:
     )
 
 
+class RateLimitError(Exception):
+    """Raised when the GitHub API returns 403 (rate limit exceeded)."""
+
+
+def _ask_rate_limit_choice() -> str:
+    """Ask the user how to proceed once, applies to all remaining skills."""
+    answer = input(
+        "  [s] Skip update checks  [f] Force update all  > "
+    ).strip().lower()
+    return "force" if answer.startswith("f") else "skip"
+
+
 def github_api(url: str) -> dict:
     """GET a GitHub API URL, return parsed JSON."""
     req = Request(url, headers={"Accept": "application/vnd.github.v3+json"})
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if token:
         req.add_header("Authorization", f"token {token}")
-    with urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode())
+    try:
+        with urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode())
+    except HTTPError as e:
+        if e.code == 403:
+            raise RateLimitError(
+                "GitHub API rate limit exceeded (60 req/hr unauthenticated). "
+                "Set GITHUB_TOKEN or GH_TOKEN env var to raise the limit."
+            ) from e
+        raise
 
 
 # Cache: (source, ref) -> {path: sha} mapping from recursive tree
@@ -206,17 +226,22 @@ def get_tree_sha(source: str, path: str, ref: str) -> str:
 _tarball_cache: dict[tuple[str, str], bytes] = {}
 
 
-def _fetch_tarball(source: str, ref: str) -> bytes:
-    """Fetch and cache the tarball for a repo+ref."""
+def _fetch_tarball(source: str, ref: str, use_codeload: bool = False) -> bytes:
+    """Fetch and cache the tarball for a repo+ref.
+    codeload.github.com is not subject to the api.github.com rate limit."""
     cache_key = (source, ref)
     if cache_key in _tarball_cache:
         return _tarball_cache[cache_key]
 
-    tarball_url = f"https://api.github.com/repos/{source}/tarball/{ref}"
-    req = Request(tarball_url, headers={"Accept": "application/vnd.github.v3+json"})
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    if token:
-        req.add_header("Authorization", f"token {token}")
+    if use_codeload:
+        tarball_url = f"https://codeload.github.com/{source}/tar.gz/{ref}"
+        req = Request(tarball_url)
+    else:
+        tarball_url = f"https://api.github.com/repos/{source}/tarball/{ref}"
+        req = Request(tarball_url, headers={"Accept": "application/vnd.github.v3+json"})
+        token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+        if token:
+            req.add_header("Authorization", f"token {token}")
 
     with urlopen(req, timeout=120) as resp:
         data = resp.read()
@@ -257,9 +282,9 @@ def restore_backups(dest: Path, backups: list[tuple[Path, bytes]]) -> None:
         print(f"  Backed up: {rel} -> {rel}.bak")
 
 
-def download_and_extract(source: str, path: str, ref: str, dest: Path) -> None:
+def download_and_extract(source: str, path: str, ref: str, dest: Path, use_codeload: bool = False) -> None:
     """Download a subdirectory from a GitHub repo and extract to dest."""
-    tarball_bytes = _fetch_tarball(source, ref)
+    tarball_bytes = _fetch_tarball(source, ref, use_codeload=use_codeload)
 
     # The tarball contains a top-level dir like "owner-repo-sha/"
     # We need to find entries under "owner-repo-sha/{path}/"
@@ -349,6 +374,7 @@ def sync_skills() -> None:
     updated = []
     skipped = []
     errors = []
+    rate_limited_choice = None  # None=not hit yet, "skip", or "force"
 
     for entry in skills:
         source = entry["source"]
@@ -359,34 +385,49 @@ def sync_skills() -> None:
 
         print(f"\n--- {name} ({source}/{path}@{ref}) ---")
 
-        try:
-            remote_sha = get_tree_sha(source, path, ref)
-        except Exception as e:
-            print(f"  ERROR fetching remote SHA: {e}")
-            errors.append(name)
+        if rate_limited_choice == "skip":
+            print("  Skipped (rate limited).")
+            skipped.append(name)
             continue
+
+        remote_sha = None
+        if rate_limited_choice != "force":
+            try:
+                remote_sha = get_tree_sha(source, path, ref)
+            except RateLimitError as e:
+                print(f"  {e}")
+                rate_limited_choice = _ask_rate_limit_choice()
+                if rate_limited_choice == "skip":
+                    skipped.append(name)
+                    continue
+            except Exception as e:
+                print(f"  ERROR fetching remote SHA: {e}")
+                errors.append(name)
+                continue
 
         local_info = lock_skills.get(name)
         local_sha = local_info["installed_sha"] if local_info else None
         dest = SKILLS_DIR / name
         dir_exists = dest.exists() and (dest / "SKILL.md").exists()
 
-        if local_sha == remote_sha and dir_exists:
+        if remote_sha is not None and local_sha == remote_sha and dir_exists:
             print(f"  Up to date (SHA: {remote_sha[:12]})")
             skipped.append(name)
             continue
 
-        if local_sha == remote_sha and not dir_exists:
+        if remote_sha is not None and local_sha == remote_sha and not dir_exists:
             print(f"  Re-installing (SHA matches but directory missing)...")
-        action = "Updating" if local_sha else "Installing"
-        print(f"  {action}... (local: {(local_sha or 'none')[:12]}, remote: {remote_sha[:12]})")
+        if remote_sha is None:
+            print("  Force-installing via codeload (no version check)...")
+        else:
+            action = "Updating" if local_sha else "Installing"
+            print(f"  {action}... (local: {(local_sha or 'none')[:12]}, remote: {remote_sha[:12]})")
 
         try:
-            dest = SKILLS_DIR / name
             backups = []
             if local_info and dir_exists:
                 backups = backup_modified_files(dest, local_info["installed_at"])
-            download_and_extract(source, path, ref, dest)
+            download_and_extract(source, path, ref, dest, use_codeload=(remote_sha is None))
             if backups:
                 restore_backups(dest, backups)
         except Exception as e:
