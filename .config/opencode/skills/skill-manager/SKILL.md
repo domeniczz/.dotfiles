@@ -9,7 +9,7 @@ Manages skills defined in `~/.config/opencode/skills.jsonc`. Installs new skills
 
 ## How it works
 
-- `skills.jsonc` — user-managed list of skills to install (source repo, path, optional ref)
+- `skills.jsonc` — user-managed list of skills to install (source repo, path or glob, optional ref)
 - `skills.lock.json` — auto-managed lock file tracking installed commit SHAs
 - `scripts/update_skills.py` — the sync engine that compares local vs remote and installs/updates
 
@@ -31,13 +31,14 @@ If `python` is not found, try the following in order:
 
 1. Reads `skills.jsonc` to get the list of desired skills
 2. Reads `skills.lock.json` to see what's currently installed
-3. For each skill, checks the GitHub API for the current tree SHA
-4. If the skill is missing locally → installs it
-5. If the SHA differs → updates it
-6. If the SHA matches → skips it
-7. Writes updated `skills.lock.json`
+3. Expands wildcard paths to directories containing `SKILL.md`
+4. For each skill, checks the GitHub API for the current tree SHA
+5. If the skill is missing locally → installs it
+6. If the SHA differs → updates it
+7. If the SHA matches → skips it
+8. Writes updated `skills.lock.json`
 
-## Adding a new skill
+## Installing a new skill
 
 Edit `~/.config/opencode/skills.jsonc` and add an entry:
 
@@ -46,6 +47,14 @@ Edit `~/.config/opencode/skills.jsonc` and add an entry:
 ```
 
 Then run `/update-skills`.
+
+## Installing all skills in a directory
+
+Use `*`, `?`, or character ranges within a path segment. Wildcards only match directories containing `SKILL.md`.
+
+```jsonc
+{ "source": "anthropics/skills", "path": "skills/*" }
+```
 
 ## Pinning a version
 

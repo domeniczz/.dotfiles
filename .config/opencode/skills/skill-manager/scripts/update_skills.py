@@ -12,6 +12,7 @@ import sys
 import stat
 import tarfile
 from datetime import datetime, timezone
+from fnmatch import fnmatchcase
 from io import BytesIO
 from pathlib import Path
 from urllib.error import HTTPError
@@ -134,6 +135,7 @@ def github_api(url: str) -> dict:
 
 # Cache: (source, ref) -> {path: sha} mapping from recursive tree
 _tree_cache: dict[tuple[str, str], dict[str, str]] = {}
+_skill_path_cache: dict[tuple[str, str], set[str]] = {}
 
 
 def _resolve_commit_sha(source: str, ref: str) -> str:
@@ -203,11 +205,15 @@ def _fetch_full_tree(source: str, ref: str) -> dict[str, str]:
     )
 
     path_to_sha = {}
+    skill_paths = set()
     for item in tree_data.get("tree", []):
         if item["type"] == "tree":
             path_to_sha[item["path"]] = item["sha"]
+        elif item["type"] == "blob" and item["path"].endswith("/SKILL.md"):
+            skill_paths.add(item["path"].rsplit("/", 1)[0])
 
     _tree_cache[cache_key] = path_to_sha
+    _skill_path_cache[cache_key] = skill_paths
     return path_to_sha
 
 
@@ -248,6 +254,47 @@ def _fetch_tarball(source: str, ref: str, use_codeload: bool = False) -> bytes:
 
     _tarball_cache[cache_key] = data
     return data
+
+
+def _matches_path_pattern(path: str, pattern: str) -> bool:
+    """Match glob wildcards within path segments (so * never crosses /)."""
+    path_parts = path.rstrip("/").split("/")
+    pattern_parts = pattern.rstrip("/").split("/")
+    return len(path_parts) == len(pattern_parts) and all(
+        fnmatchcase(part, pattern_part)
+        for part, pattern_part in zip(path_parts, pattern_parts)
+    )
+
+
+def get_matching_skill_paths(
+    source: str, pattern: str, ref: str, use_codeload: bool = False
+) -> list[str]:
+    """Return skill directories matching a glob path."""
+    cache_key = (source, ref)
+    if use_codeload:
+        tarball_bytes = _fetch_tarball(source, ref, use_codeload=True)
+        with tarfile.open(fileobj=BytesIO(tarball_bytes), mode="r:gz") as tar:
+            members = tar.getmembers()
+            if not members:
+                raise ValueError(f"Empty tarball from {source}@{ref}")
+            prefix = members[0].name.split("/")[0] + "/"
+            skill_paths = {
+                member.name[len(prefix):].rsplit("/", 1)[0]
+                for member in members
+                if member.isfile()
+                and member.name.startswith(prefix)
+                and member.name.endswith("/SKILL.md")
+            }
+    else:
+        _fetch_full_tree(source, ref)
+        skill_paths = _skill_path_cache[cache_key]
+
+    matches = sorted(
+        path for path in skill_paths if _matches_path_pattern(path, pattern)
+    )
+    if not matches:
+        raise ValueError(f"Pattern '{pattern}' matched no skills in {source}@{ref}")
+    return matches
 
 
 def _rm_readonly(func, path, exc_info):
@@ -346,11 +393,12 @@ def sync_skills() -> None:
         template = """\
 {
   // Add skills to install from GitHub repos.
-  // Each entry needs "source" (owner/repo) and "path" (directory in repo).
+  // Each entry needs "source" (owner/repo) and "path" (directory or glob in repo).
   // Optional "ref" to pin a branch, tag, or commit SHA (defaults to "main").
   //
   // Example:
   //   { "source": "anthropics/skills", "path": "skills/docx" }
+  //   { "source": "anthropics/skills", "path": "skills/*" }
   //   { "source": "anthropics/skills", "path": "skills/pdf", "ref": "v1.0.0" }
   "skills": []
 }
@@ -376,11 +424,12 @@ def sync_skills() -> None:
     errors = []
     rate_limited_choice = None  # None=not hit yet, "skip", or "force"
 
-    for entry in skills:
+    skills = list(skills)
+    while skills:
+        entry = skills.pop(0)
         source = entry["source"]
         path = entry["path"]
         ref = entry.get("ref", "main")
-        # Derive skill name from the last segment of the path
         name = path.rstrip("/").split("/")[-1]
 
         print(f"\n--- {name} ({source}/{path}@{ref}) ---")
@@ -388,6 +437,34 @@ def sync_skills() -> None:
         if rate_limited_choice == "skip":
             print("  Skipped (rate limited).")
             skipped.append(name)
+            continue
+
+        if any(char in path for char in "*?["):
+            try:
+                matches = get_matching_skill_paths(
+                    source, path, ref, use_codeload=(rate_limited_choice == "force")
+                )
+            except RateLimitError as e:
+                print(f"  {e}")
+                rate_limited_choice = _ask_rate_limit_choice()
+                if rate_limited_choice == "skip":
+                    skipped.append(name)
+                    continue
+                try:
+                    matches = get_matching_skill_paths(
+                        source, path, ref, use_codeload=True
+                    )
+                except Exception as e:
+                    print(f"  ERROR expanding wildcard: {e}")
+                    errors.append(name)
+                    continue
+            except Exception as e:
+                print(f"  ERROR expanding wildcard: {e}")
+                errors.append(name)
+                continue
+
+            print(f"  Matched {len(matches)} skills.")
+            skills[0:0] = [{**entry, "path": match} for match in matches]
             continue
 
         remote_sha = None
