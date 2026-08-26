@@ -39,7 +39,6 @@ System32/               
 SysWOW64/               
 Runtime/                
 runtime/                
-ProgramData/            󱁿
 tmp/                    󰪻
 temp/                   󰪻
 lost+found/             󱞊
@@ -81,6 +80,8 @@ caches/                 󱂷
 cached/                 󱂷
 Cache/                  󱂷
 AppData/                󱂷
+ProgramData/            󱂷
+"Application Support/"  󱂷
 Desktop/                󰇄
 Template/               󰉪
 Templates/              󰉪
@@ -90,6 +91,9 @@ Doc/                    󱧶
 Docs/                   󱧶
 Documentation/          󱧶
 Documentations/         󱧶
+Manual/                 󱧶
+Manuals/                󱧶
+Note/                   󱧶
 Note/                   󱧶
 Notes/                  󱧶
 Article/                󱧶
@@ -181,14 +185,16 @@ Favorite/               󰚝
 Favorites/              󰚝
 favicon/                
 favicons/               
+developer/              
 development/            
-Repository/             
-Repositories/           
-repository/             
-repositories/           
-repo/                   
-repos/                  
-Clones/                 
+Repository/             
+Repositories/           
+repository/             
+repositories/           
+repo/                   
+repos/                  
+Clone/                  
+Clones/                 
 manpages/               󱔗
 man/                    󱔗
 man0/                   󱔗
@@ -256,6 +262,16 @@ histories/              󰝉
 archive/                
 archives/               
 archival/               
+snapshot/               󰆔
+snapshots/              󰆔
+profile/                󰙄
+profiles/               󰙄
+account/                󰛋
+accounts/               󰛋
+contact/                󰛋
+contacts/               󰛋
+user/                   
+users/                  
 admin/                  
 admins/                 
 manager/                
@@ -345,6 +361,8 @@ function/               󰡱
 functions/              󰡱
 lambda/                 󰡱
 lambdas/                󰡱
+algorithm/              󰡱
+algorithms/             󰡱
 math/                   󰡱
 maths/                  󰡱
 calc/                   󰡱
@@ -407,6 +425,8 @@ tasks/                  
 tickets/                
 plans/                  
 todos/                  
+timeline/               󱖶
+timelines/              󱖶
 menu/                   
 menus/                  
 list/                   
@@ -499,6 +519,8 @@ macros/                 󰯃
 batch/                  󰐑
 batchs/                 󰐑
 batches/                󰐑
+graphic/                󰒕
+graphics/               󰒕
 shader/                 󰒕
 shaders/                󰒕
 glsl/                   󰒕
@@ -582,18 +604,25 @@ book/                   
 books/                  
 bibliography/           
 bibliographies/         
+dict/                   
+dictionary/             
+dictionaries/           
 resource/               
 resources/              
 asset/                  
 assets/                 
 static/                 
-markdown/               󰍔
 changes/                󰇂
 changeset/              󰇂
 changesets/             󰇂
 changelog/              󰇂
 changelogs/             󰇂
 versions/               
+markdown/               󰍔
+bookmark/               󰸕
+bookmarks/              󰸕
+tag/                    
+tags/                   
 labels/                 󱍵
 .metadata/              󱐎
 metadata/               󱐎
@@ -613,6 +642,7 @@ svg/                    󰜡
 svgs/                   󰜡
 vector/                 󰜡
 vectors/                󰜡
+redis/                  
 css/                    
 stylesheet/             
 stylesheets/            
@@ -711,6 +741,10 @@ lua/                    
 .rust/                  
 rust/                   
 rustup/                 
+.ruby/                  󰴭
+ruby/                   󰴭
+.swift/                 
+swift/                  
 .go/                    
 go/                     
 .scala/                 
@@ -911,6 +945,8 @@ tests/                  
 testing/                
 testfiles/              
 __tests__/              
+experiment/             
+experiments/            
 debug/                  
 debugger/               
 debugging/              
@@ -1017,7 +1053,9 @@ ipynb/                  󰱛
 jupyter/                󰱛
 .conda/                 
 conda/                  
+anaconda/               
 anaconda3/              
+miniconda/              
 miniconda3/             
 .yarn/                  
 yarn/                   
@@ -1029,8 +1067,12 @@ npm/                    
 cargo/                  
 .docker/                
 docker/                 
+dockerfile/             
 dockerfiles/            
+docker-compose/         
 dockerhub/              
+docker-desktop/         
+"Docker Desktop/"       
 .kube/                  󱃾
 kube/                   󱃾
 .kubernetes/            󱃾
@@ -1065,6 +1107,8 @@ vscode/                 󰨞
 "Code - OSS/"           󰨞
 .sublime/               
 sublime/                
+sublime-text/           
+"Sublime Text/"         
 .wine/                  󰍖
 wine/                   󰍖
 .cloudflare/            
@@ -1077,6 +1121,10 @@ azure/                  
 gcloud/                 󱇶
 .Dropbox/               󰇣
 Dropbox/                󰇣
+.OneDrive/              󰏊
+OneDrive/               󰏊
+.iCloud/                󰀸
+iCloud/                 󰀸
 gdrive/                 󰊶
 "Google Drive/"         󰊶
 Google-Drive/           󰊶
@@ -1095,6 +1143,8 @@ chocolatey/             
 macports/               
 .brew/                  
 homebrew/               
+.linuxbrew/             
+linuxbrew/              
 pacman/                 󰣇
 pacman.d/               󰣇
 yay/                    󰣇
@@ -1142,6 +1192,7 @@ windows/                
 Windows/                
 win/                    
 win32/                  
+win64/                  
 windows11/              
 windows10/              
 windowsxp/              
@@ -1169,6 +1220,8 @@ Google/                 󰊭
 microsoft/              󰍲
 Microsoft/              󰍲
 
+safari/                 
+webkit/                 
 firefox/                󰈹
 mercury/                󰈹
 .mozilla/               󰈹
@@ -1194,6 +1247,8 @@ yazi/                   󰇥
 newsboat/               
 neomutt/                󰇮
 ImageMagick/            󱡄
+tex/                    
+latex/                  
 texlive/                
 TeXLive/                
 miktex/                 
@@ -1269,6 +1324,8 @@ WeChat/                 󰘑
 .xwechat/               󰘑
 xwechat_files/          󰘑
 "Wechat Files/"         󰘑
+telegram/               
+Telegram/               
 TelegramDesktop/        
 "Telegram Desktop/"     
 discord/                󰙯
@@ -2585,6 +2642,7 @@ jest-preset.mjs                      
 *tauri.macos.conf.json               
 *.nginx.conf                         
 *nginx.conf                          
+*.flake8                             󱄅
 *.flake.lock                         󱄅
 *flake.lock                          󱄅
 *.yarnrc                             
@@ -2676,6 +2734,8 @@ jest-preset.mjs                      
 *shadow                              󰯄
 *db                                  󰆼
 *db-journal                          󰮆
+*lock                                󱀰
+*LOCK                                󱀰
 *robots.txt                          󰚩
 *known_hosts                         󱆅
 *hosts                               󱦂
@@ -2746,6 +2806,7 @@ jest-preset.mjs                      
 *.fpx              
 *.gif              
 *.gpr              
+*.hdr              
 *.heic             
 *.heif             
 *.hif              
@@ -2839,6 +2900,7 @@ jest-preset.mjs                      
 *.m2ts             
 *.m1v              
 *.m2v              
+*.m4s              
 *.m4v              
 *.m4u              
 *.mjpg             
@@ -3019,6 +3081,7 @@ jest-preset.mjs                      
 *.xpc              󰏔
 *.appex            󱧕
 *.axbundle         󱧕
+*.plugin           󱧕
 
 *.jar              󰏓
 *.war              󰏓
@@ -3076,6 +3139,7 @@ jest-preset.mjs                      
 *.sub              󰨖
 *.sbv              󰨖
 *.vtt              󰨖
+*.webvtt           󰨖
 *.ttml             󰨖
 *.dfxp             󰨖
 *.lrc              󰨖
@@ -3220,6 +3284,7 @@ jest-preset.mjs                      
 *.nfo              󰋼
 *.app              󰋼
 *.plist            󰋼
+*.sfl4             󰋼
 *.appexpt          󰋼
 *.entitlements     󰋼
 *.manifest         󰋼
@@ -3227,12 +3292,15 @@ jest-preset.mjs                      
 *.policy           󰊛
 *.map              󰣰
 *.pp               
-*.aux              󰓻
+*.aux              󱍵
+*.tag              
 *.pid              
 *.schema           
 *.idl              
 *.aidl             
 *.avdl             
+*.webidl           
+*.ipdl             
 *.winmd            
 *.thrift           
 *.http             󱅲
@@ -3252,6 +3320,7 @@ jest-preset.mjs                      
 *.cfg              󰒓
 *.cnf              󰒓
 *.default          󰒓
+*.defaults         󰒓
 *.ecf              󰒓
 *.ini              󰒓
 *.inf              󰒓
@@ -3291,6 +3360,7 @@ jest-preset.mjs                      
 *.dkpg-dist        
 *.dkpg-new         
 *.dkpg-old         
+*.copy             
 *.temp             󱋢
 *.tmp              󱋢
 *.part             󰦗
@@ -3356,6 +3426,7 @@ jest-preset.mjs                      
 *.sha256sums       󱨧
 *.sha384sums       󱨧
 *.sha512sums       󱨧
+*.uuid             󱨧
 *.enc              󱀰
 *.age              󱀰
 *.crypt            󱀰
@@ -3430,6 +3501,7 @@ jest-preset.mjs                      
 *.arb              󰗊
 *.aff              󰓆
 *.dic              󰓆
+*.lex              󰓆
 *.icc              
 *.icm              
 *.cur              
@@ -3479,6 +3551,7 @@ jest-preset.mjs                      
 *.blp              
 *.nib              
 *.xib              
+*.qtz              
 *.bicep            
 *.bicepparam       
 *.azcli            󰿕
@@ -3530,6 +3603,7 @@ jest-preset.mjs                      
 *.clip             󰻬
 *.dwg              󰻬
 *.dxf              󰻬
+*.gcx              󰻬
 *.iges             󰻬
 *.igs              󰻬
 *.skp              󰻬
@@ -3667,6 +3741,7 @@ jest-preset.mjs                      
 *.code-workspace   󰨞
 *.code-profile     󰨞
 *.code-snippets    󰨞
+*.localized        󰗊
 *.lproj            󰗊
 *.proj             󰒪
 *.csproj           󰒪
@@ -3748,8 +3823,10 @@ jest-preset.mjs                      
 *.stats            󰆻
 *.dict             󰆻
 *.bdic             󰆻
+*.rcache           󰆻
 *.cache            󰆻
 *.metadb           󰆻
+*.record           󰆻
 *.bom              󰆻
 *.hve              󰆻
 *.zarr             󰆻
@@ -3762,10 +3839,7 @@ jest-preset.mjs                      
 *.grib2            󰆻
 *.fits             󰆻
 *.lance            󰆻
-*.sql3-wal         󰮆
-*.db-wal           󰮆
-*.sqlite-wal       󰮆
-*.store-wal        󰮆
+*-wal              󰮆
 *.db-journal       󰮆
 *.ldf              󰮆
 *.log              󰮆
@@ -3786,10 +3860,7 @@ jest-preset.mjs                      
 *.har              󰮆
 *.history          󰮆
 *._history         󰮆
-*.db-shm           󰗂
-*.sql3-shm         󰗂
-*.sqlite-shm       󰗂
-*.store-shm        󰗂
+*-shm              󰗂
 *.dbml             󰆺
 *.rdf              󰴗
 *.ttl              󰴗
@@ -3820,6 +3891,7 @@ jest-preset.mjs                      
 *.xquery           󰤏
 *.qry              󰤏
 *.sqr              󰤏
+*.atx              󱋶
 *.mmdb             󱋶
 *.osm              󱋶
 *.gdb              󱋶
@@ -3853,6 +3925,10 @@ jest-preset.mjs                      
 *.dylib            󰱿
 *.icl              󰱿
 *.node             󰱿
+*.hi               󰱿
+*.dyn_hi           󰱿
+*.ppl              󰱿
+*.ppu              󰱿
 *.ash              
 *.bash             
 *.csh              
@@ -3893,6 +3969,7 @@ jest-preset.mjs                      
 *.hjsonl           
 *.ndjson           
 *.jsonnet          
+*.sjs              
 *.kdl              
 *.czml             
 *.sarif            
@@ -4069,6 +4146,8 @@ jest-preset.mjs                      
 *.edmx             󰗀
 *.csdl             󰗀
 *.qgs              󰗀
+*.wxs              󰗀
+*.ent              󰗀
 *.page             󰗀
 *.hx               
 *.hxml             
@@ -4136,6 +4215,7 @@ jest-preset.mjs                      
 *.kt               󱈙
 *.kts              󱈙
 *.rb               󰴭
+*.rbi              󰴭
 *.erb              󰴭
 *.rbs              󰴭
 *.rake             󰴭
@@ -4254,6 +4334,7 @@ jest-preset.mjs                      
 *.prl              󰨾
 *.pro              󰨾
 *.props            󰨾
+*.upp              󰨾
 *.vcl              󰨾
 *.nswag            󰨾
 *.dhall            󰨾
@@ -4263,6 +4344,7 @@ jest-preset.mjs                      
 *.feature          󰨾
 *.features         󰨾
 *.cue              󰨾
+*.tbd              󰨾
 *.src              󰅴
 *.test             󰅴
 *.in               󰅴
@@ -4270,6 +4352,8 @@ jest-preset.mjs                      
 *.awk              󰅴
 *.sed              󰅴
 *.jq               󰅴
+*.liq              󰅴
+*.ld               󰅴
 *.sip              󰅴
 *.scm              󰅴
 *.ss               󰅴
@@ -4307,6 +4391,7 @@ jest-preset.mjs                      
 *.pony             󰅴
 *.gleam            󰅴
 *.ps               󰅴
+*.ppd              󰅴
 *.pdl              󰅴
 *.nsh              󰅴
 *.nsi              󰅴
@@ -4323,12 +4408,14 @@ jest-preset.mjs                      
 *.frag             󰒕
 *.wgsl             󰒕
 *.metal            󰒕
+*.msl              󰒕
 *.rahit            󰒕
 *.rcall            󰒕
 *.rchit            󰒕
 *.rgen             󰒕
 *.rint             󰒕
 *.rmiss            󰒕
+*.sksl             󰒕
 *.tesc             󰒕
 *.tese             󰒕
 *.vert             󰒕
@@ -4353,7 +4440,7 @@ jest-preset.mjs                      
 *.aea              󱤓
 *.argus            󱤓
 *.mitigus          󱤓
-*.binsource        󱤓
+*.objdump          󱤓
 *.wasm             
 *.wat              
 *.wast             
