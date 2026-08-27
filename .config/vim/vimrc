@@ -24,6 +24,8 @@ set shiftwidth=4
 set expandtab
 set smarttab
 
+set commentstring=#\ %s
+
 set hlsearch
 set incsearch
 set ignorecase
@@ -68,15 +70,13 @@ set undolevels=1500
 
 set viminfofile=$XDG_DATA_HOME/vim/viminfo
 
-call mkdir($XDG_DATA_HOME.'/vim/undo', 'p')
-
 " % jumps across if/else/endif, HTML tags
 packadd! matchit
 
 let g:netrw_home = $XDG_DATA_HOME."/vim"
 let g:quit_on_empty = !isdirectory(argv(0))
 
-" Use a line cursor within insert mode and a block cursor everywhere else
+" Use a bar cursor in Insert mode, a block cursor in Normal mode, and an underline in Replace mode
 " Reference chart of values:
 "   Ps = 0  -> blinking block
 "   Ps = 1  -> blinking block (default)
@@ -87,7 +87,9 @@ let g:quit_on_empty = !isdirectory(argv(0))
 "   Ps = 6  -> steady bar (xterm)
 let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
-let &t_te .= "\e[2 q"
+let &t_SR = "\e[4 q"
+let &t_ti .= "\e[2 q"
+let &t_te .= "\e[0 q"
 
 " Request focus reporting from the terminal so Vim can receives focus events
 let &t_fe = "\e[?1004h"
@@ -273,6 +275,11 @@ command! -bang -nargs=? G   packadd fugitive | G<bang> <args>
 command! -bang -nargs=? Git packadd fugitive | Git<bang> <args>
 
 nnoremap <silent> <leader>gs :Git<CR>
+
+" ------------------------------------------------------------------------------
+
+" vim-commentary: lazy-loaded via pack/*/opt
+autocmd VimEnter * packadd vim-commentary
 
 " ------------------------------------------------------------------------------
 " Autocmds
