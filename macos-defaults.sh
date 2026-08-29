@@ -88,7 +88,7 @@ defaults write -g "com.apple.trackpad.scaling" -float 2
 
 # Automatically hide the Dock
 defaults write com.apple.dock autohide -bool true
-# Show Dock without delay
+# Show Dock without delay (when Dock auto-hide on)
 defaults write com.apple.dock autohide-delay -float 0
 # Set Dock icon size
 defaults write com.apple.dock tilesize -int 34
@@ -138,6 +138,8 @@ defaults write com.apple.finder _FXSortFoldersFirstOnDesktop -bool true
 
 # Window management
 defaults write com.apple.WindowManager GloballyEnabled -bool false
+# Show Stage Manager strip without delay (with Stage Manager auto-hide on)
+defaults write com.apple.WindowManager AutoHideDelay -float 0
 defaults write com.apple.WindowManager EnableStandardClickToShowDesktop -bool false
 defaults write com.apple.WindowManager EnableTiledWindowMargins -bool false
 

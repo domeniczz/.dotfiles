@@ -12,6 +12,8 @@ brew "coreutils"
 brew "csvlens"
 # View disk space usage and delete unwanted data, fast
 brew "dua-cli"
+# Select default apps for documents and URL schemes on macOS
+brew "duti"
 # Modern, maintained replacement for ls
 brew "eza"
 # Simple, fast and user-friendly alternative to find
@@ -38,10 +40,14 @@ brew "nvm"
 brew "ripgrep"
 # AI coding agent, built for the terminal
 brew "opencode"
+# PDF rendering library (based on the xpdf-3.0 code base)
+brew "poppler"
 # Persistent key-value database, with built-in net interface
-brew "redis", restart_service: :changed
+brew "redis"
 # CLI proxy to minimize LLM token consumption
 brew "rtk"
+# 7-Zip is a file archiver with a high compression ratio
+brew "sevenzip"
 # Organize software neatly under a single directory tree (e.g. /usr/local)
 brew "stow"
 # Open source continuous file synchronization application
@@ -66,8 +72,6 @@ cask "chatgpt"
 cask "dingtalk"
 # Voice and text chat software
 cask "discord"
-# App to build and share containerised applications and microservices
-cask "docker-desktop"
 # Social software for creating music short videos
 cask "douyin"
 # English dictionary
@@ -80,10 +84,14 @@ cask "google-chrome"
 cask "iterm2"
 # File archiver
 cask "keka"
+# Blocks all Keyboard and TouchBar input
+cask "keyboardcleantool"
+# Customise mouse behavior
+cask "linearmouse"
 # Open-source cross-platform alternative to AirDrop
 cask "localsend"
-# Mouse utility to add gesture functions and smooth scrolling to 3rd party mice
-cask "mac-mouse-fix"
+# Full TeX Live distribution without GUI applications
+cask "mactex-no-gui"
 # Office suite
 cask "microsoft-office"
 # Minimal installer for conda
@@ -96,14 +104,14 @@ cask "opencode-desktop"
 cask "pearcleaner"
 # Instant messaging tool
 cask "qq"
-# App switcher driven by the Right Command key
-cask "rcmd"
 # Music streaming service
 cask "spotify"
 # System monitor for the menu bar
 cask "stats"
 # Text editor for code, markup and prose
 cask "sublime-text"
+# Native database client for many database types
+cask "tablepro"
 # Messaging app with a focus on speed and security
 cask "telegram"
 # Cleanup and system status tool
@@ -138,4 +146,5 @@ vscode "pkief.material-icon-theme"
 vscode "qiu8310.minapp-vscode"
 vscode "vue.volar"
 vscode "zhuangtongfa.material-theme"
+npm "@colbymchenry/codegraph"
 npm "corepack"
