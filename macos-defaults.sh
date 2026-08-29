@@ -20,6 +20,10 @@ defaults write -g AppleSpacesSwitchOnActivate -bool true
 defaults write -g AppleWindowTabbingMode -string "fullscreen"
 defaults write -g NSQuitAlwaysKeepsWindows -bool true
 
+# Disable charging notification sound
+defaults delete com.apple.PowerChime ChimeOnAllHardware
+defaults write com.apple.PowerChime ChimeOnNoHardware -bool true
+
 # Language, region, and keyboard
 defaults write -g AppleLanguages -array "en-CN" "zh-Hans-CN"
 defaults write -g AppleLocale -string "en_CN"
@@ -152,6 +156,11 @@ defaults write com.apple.menuextra.clock ShowSeconds -bool true
 killall Dock
 killall Finder
 killall SystemUIServer
+killall PowerChime
 
 # Disable google chrome auto-update
 echo '{"updatePolicies":{"global":{"UpdateDefault":2}}}' | sudo plutil -convert xml1 - -o /Library/Managed\ Preferences/com.google.Keystone.plist
+
+# Disable macOS automatic update
+sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool false
+sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool false
