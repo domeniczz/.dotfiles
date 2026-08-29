@@ -15,7 +15,7 @@ Resolve a Python interpreter with `paramiko` installed by running:
 bash scripts/setup_env.sh
 ```
 
-This prefers conda (creates/reuses a `skill-ssh-operation` env), falls back to a local `.venv-skill-ssh-operation` venv if only `python3` is available, and exits with an error if neither exists. Capture its stdout - that's the interpreter path to use for every `ssh_exec.py` call below. Only run this once per session; reuse the path for subsequent commands.
+This prefers conda (creates/reuses a `skill-ssh-operation` env), falls back to a local `.venv-skill-ssh-operation` venv if only `python` (`python3`) is available, and exits with an error if neither exists. Capture its stdout - that's the interpreter path to use for every `ssh_exec.py` call below. Only run this once per session; reuse the path for subsequent commands.
 
 ## Connecting and running commands
 
@@ -36,6 +36,8 @@ Reach for diagnostic, listing, and viewing commands first: `ls`, `cat`, `less`/`
 Before running *any* command, judge it yourself first: would this change state on the server (install, restart, delete, edit, kill, permission/user change...) or put real load on it (unscoped scans, bulk archiving/transfer, anything that walks the whole filesystem or a big log)? You understand intent and context far better than a pattern list ever could - an oddly-phrased or aliased command that's clearly a restart-in-disguise should get the same pause as `systemctl restart` spelled out plainly. Don't wait to be blocked before thinking about this.
 
 As a backstop, `ssh_exec.py` also checks every command against a list of destructive and resource-intensive patterns (installs, restarts, deletes, edits, kills, reboots, unscoped `find`/`du`/`grep` over `/`, `tar`/`zip`/`rsync`...) and refuses to run a match, exiting with code 3 and `needs_confirmation: true`. This exists so the guardrail holds even if a step gets skipped - but it's a regex heuristic, not a shell parser, so it will miss obfuscated or unusual phrasings. Treat it as a safety net under your own judgment, not a substitute for it: if the script lets something through that you already flagged as risky, still ask.
+
+The guard also blocks shell redirections, opaque nested interpreters, filesystem scans (`find`, `du`, recursive grep), bulk archive/transfer commands, and unbounded log reads. Bounded `journalctl -n N` and `docker logs --tail N` reads are allowed. This is conservative shell-text analysis, not a sandbox: aliases, encoded payloads, remote scripts, and commands hidden from the checker can still evade classification. Never treat `--confirmed` as an agent-only permission; use it only after explicit user approval for the exact command and its expected impact.
 
 Either way - whether you caught it yourself or the script blocked it - handle it the same way:
 1. Tell the user plainly what command you want to run and why, and its concrete effect (e.g. "this restarts nginx, which drops active connections for a few seconds" or "this greps the entire filesystem, which can spike CPU on a live server"). Make this a standalone ask, not folded into a longer explanation.
