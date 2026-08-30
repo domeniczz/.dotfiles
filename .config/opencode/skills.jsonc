@@ -6,6 +6,8 @@
     { "source": "anthropics/skills", "path": "skills/pptx" },
     { "source": "anthropics/skills", "path": "skills/xlsx" },
     { "source": "anthropics/skills", "path": "skills/pdf" },
-    { "source": "anthropics/skills", "path": "skills/skill-creator" }
+    { "source": "anthropics/skills", "path": "skills/skill-creator" },
+    { "source": "mattpocock/skills", "path": "skills/productivity/grilling" },
+    { "source": "wangyafu/resume-skills", "path": "skills/resume-master" }
   ]
 }
