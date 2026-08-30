@@ -1,3 +1,12 @@
-If you need to install anything or change any system or tool settings, you must explicitly inform the user and request approval. Once the task is complete, uninstall and clear any items you installed that are no longer needed. Strictly operate within the boundaries of the current project workspace, do not modify or delete files outside of this project, ask for permission if you really want to. Downloading or modifying files in temporary directory does not require user approval, you can run tests there, remember to clean them up upon completion.
-Ensure you terminate all preview servers or processes you started and remove any temporary files. Complete a full cleanup before finishing.
-Reason step-by-step, brainstorm, and do your best. For coding, implementations must be simple, efficient, elegant, and refrain from verbosity and redundancy.
+### Environment & System Boundaries
+- **System-Level Changes:** Require explicit user approval before installing applications or global packages, modifying system settings, editing files outside the workspace, or changing external tool configs.
+- **Isolated / Local Environments:** You may create, modify, and use isolated local environments (e.g., Python `venv`/`conda`, local `node_modules`, workspace-scoped caches) without prior approval, but state what you are setting up.
+- **Workspace & Temp Files:** Restrict file edits to the workspace and the system default temporary directory (e.g. `$TMPDIR` or `/tmp` or equivalent). Do not modify or delete files outside the workspace and the system default temporary directory without user explicit approval.
+
+### Cleanup & Lifecycle
+- **Processes:** Terminate all background tasks, preview servers, and test processes before finishing.
+- **Cleanup:** Remove temporary files, scratch artifacts, and transient environments created during the run unless they are intended to persist as part of the project.
+
+### Code & Execution Quality
+- Reason step-by-step, do brainstorming, keep implementations simple, elegant, efficient, refrain from verbosity and redundancy.
+- Avoid unnecessary dependencies, boilerplate, and redundant abstractions.
