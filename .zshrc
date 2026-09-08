@@ -4,8 +4,8 @@ setopt prompt_subst
 setopt append_history inc_append_history share_history extended_history
 setopt hist_ignore_dups hist_ignore_all_dups hist_expire_dups_first
 setopt hist_ignore_space hist_reduce_blanks hist_verify
-setopt autocd check_jobs
-setopt extended_glob
+setopt extended_glob numeric_glob_sort
+setopt autocd nobeep check_jobs
 
 HISTFILE=$XDG_DATA_HOME/zsh_history
 HISTSIZE=2000
@@ -36,6 +36,7 @@ PROMPT="$PROMPT_SHELL_NAME$PROMPT_USER$PROMPT_DIR$PROMPT_GIT$PROMPT_SYMBOL"
 bindkey -v
 
 zstyle ":completion:*" menu select completer _expand _complete _ignored _approximate
+zstyle ":completion:*" matcher-list "m:{a-z}={A-Za-z}"
 zstyle :compinstall filename "$HOME/.zshrc"
 autoload -Uz compinit; compinit -d "$HOME/.zcompdump"
 
@@ -98,6 +99,11 @@ bindkey "^[[3~" delete-char
 bindkey "^[[Z" reverse-menu-complete
 bindkey "^P" history-beginning-search-backward
 bindkey "^N" history-beginning-search-forward
+
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+bindkey '^OA' history-substring-search-up
+bindkey '^OB' history-substring-search-down
 
 function zle-line-init {
     echo -ne '\e[4 q'
