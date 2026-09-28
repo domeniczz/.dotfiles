@@ -1,9 +1,12 @@
-alias vi="nvim"
 alias grep="grep --color=auto"
 alias rm="rm -I"
 alias tmuxa="tmux new-session -A -s general"
 alias ls="eza --group-directories-first --classify --color=always --git --git-repos-no-status --long"
-alias cat="bat --plain --color=auto"
+if command -v bat >/dev/null 2>&1; then
+    alias cat="bat --plain --color=auto"
+elif command -v batcat >/dev/null 2>&1; then
+    alias cat="batcat --plain --color=auto"
+fi
 alias cd="z"
 
 alias mpvyt="mpv --profile=yt"
@@ -30,11 +33,19 @@ alias clearmem="echo 3 | sudo tee /proc/sys/vm/drop_caches"
 alias rmpkgcache="sudo paccache -vruk0 && sudo paccache -vrk2"
 alias rmorphan="pacman -Qdtq | xargs -r -o sudo pacman -Rns"
 
-alias suspend="systemctl suspend"
-alias hibernate="systemctl hibernate"
-alias shutdown="systemctl poweroff"
-alias poweroff="systemctl poweroff"
-alias reboot="systemctl reboot"
+_os="$(uname -s)"
+if [ "$_os" = Darwin ]; then
+  suspend()   { pmset sleepnow; }
+  hibernate() { pmset sleepnow; }
+  shutdown()  { sudo launchctl reboot halt; }
+  reboot()    { sudo launchctl reboot; }
+elif [ "$_os" = Linux ]; then
+  suspend()   { systemctl suspend; }
+  hibernate() { systemctl hibernate; }
+  shutdown()  { systemctl poweroff; }
+  reboot()    { systemctl reboot; }
+fi
+unset _os
 
 alias myip="ip address | grep --color=never -oP 'inet \K(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)[0-9.]+(?=\/)'"
 
@@ -48,7 +59,7 @@ alias fglf="fzf --prompt='git file history ❯ ' --preview 'git log --follow -p 
 
 function update() {
     if command -v brew >/dev/null 2>&1; then
-        brew update && brew outdated && HOMEBREW_NO_ASK=1 brew upgrade
+        brew update && brew outdated --greedy-auto-updates && HOMEBREW_NO_ASK=1 brew upgrade
     elif command -v pacman >/dev/null 2>&1; then
         sudo pacman -Sy --needed archlinux-keyring && sudo pacman -Syu
         if command -v yay >/dev/null 2>&1; then
