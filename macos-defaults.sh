@@ -139,7 +139,7 @@ defaults write com.apple.finder _FXSortFoldersFirstOnDesktop -bool true
 # Window management
 defaults write com.apple.WindowManager GloballyEnabled -bool false
 # Show Stage Manager strip without delay (with Stage Manager auto-hide on)
-defaults write com.apple.WindowManager AutoHideDelay -float 0
+# defaults write com.apple.WindowManager AutoHideDelay -float 0
 defaults write com.apple.WindowManager EnableStandardClickToShowDesktop -bool false
 defaults write com.apple.WindowManager EnableTiledWindowMargins -bool false
 
@@ -154,11 +154,15 @@ defaults write com.apple.menuextra.clock ShowDate -bool true
 defaults write com.apple.menuextra.clock ShowDayOfWeek -bool true
 defaults write com.apple.menuextra.clock ShowSeconds -bool true
 
+# Do not restore Terminal windows on relaunch
+defaults write com.apple.Terminal NSQuitAlwaysKeepsWindows -bool false
+
 # Restart to take effect (Better just restart the computer)
 killall Dock
 killall Finder
 killall SystemUIServer
 killall PowerChime
+killall WindowManager
 
 # Disable google chrome auto-update
 echo '{"updatePolicies":{"global":{"UpdateDefault":2}}}' | sudo plutil -convert xml1 - -o /Library/Managed\ Preferences/com.google.Keystone.plist
@@ -166,3 +170,8 @@ echo '{"updatePolicies":{"global":{"UpdateDefault":2}}}' | sudo plutil -convert 
 # Disable macOS automatic update
 sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool false
 sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool false
+
+# Fix MacOS clipboard not sharing with other apple devices
+# Better restart computer after running the command
+# defaults write ~/Library/Preferences/com.apple.coreservices.useractivityd.plist ClipboardSharingEnabled 1
+# killall useractivityd sharingd
