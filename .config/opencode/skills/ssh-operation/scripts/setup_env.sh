@@ -27,9 +27,11 @@ if command -v conda >/dev/null 2>&1; then
 fi
 
 if command -v python3 >/dev/null 2>&1; then
-  VENV_DIR="./.venv-skill-ssh-operation"
+  CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}"
+  VENV_DIR="$CACHE_DIR/skill-ssh-operation/venv"
   echo "no conda; using python3 venv at $VENV_DIR" >&2
   if [ ! -d "$VENV_DIR" ]; then
+    mkdir -p "$(dirname "$VENV_DIR")"
     python3 -m venv "$VENV_DIR" >&2
   fi
   "$VENV_DIR/bin/python" -m pip install -q -r "$REQ_FILE" >&2

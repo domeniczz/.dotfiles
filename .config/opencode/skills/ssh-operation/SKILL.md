@@ -9,21 +9,37 @@ Run commands on a remote server the user gives you access to. The core risk here
 
 ## Setup (once per session)
 
-Resolve a Python interpreter with `paramiko` installed by running:
+Resolve a Python interpreter with `paramiko` installed:
 
-```bash
-bash scripts/setup_env.sh
-```
+- **macOS / Linux (bash)**:
+  ```bash
+  bash scripts/setup_env.sh
+  ```
+- **Windows (PowerShell)**:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts/setup_env.ps1
+  ```
 
-This prefers conda (creates/reuses a `skill-ssh-operation` env), falls back to a local `.venv-skill-ssh-operation` venv if only `python` (`python3`) is available, and exits with an error if neither exists. Capture its stdout - that's the interpreter path to use for every `ssh_exec.py` call below. Only run this once per session; reuse the path for subsequent commands.
+This prefers conda (creates/reuses a `skill-ssh-operation` env), falls back to a centralized user-level venv (`${XDG_CACHE_HOME:-$HOME/.cache}/skill-ssh-operation/venv` on macOS/Linux, `$env:LOCALAPPDATA\skill-ssh-operation\venv` on Windows) if only Python is available, and exits with an error if neither exists. Capture its stdout - that's the interpreter path to use for every `ssh_exec.py` call below. Only run this once per session; reuse the path for subsequent commands.
 
 ## Connecting and running commands
 
 Each call to `scripts/ssh_exec.py` is a single stateless SSH connection that runs one command and exits. There's no persistent session to manage - chain multiple commands with `&&` inside the one `command` argument if a task needs a sequence (e.g. `cd /var/log && ls -la`).
 
-```bash
-SSH_PASSWORD='<password>' <python> scripts/ssh_exec.py --host <host> --user <user> -- <command>
-```
+- **macOS / Linux (bash)**:
+  ```bash
+  SSH_PASSWORD='<password>' <python> scripts/ssh_exec.py --host <host> --user <user> -- <command>
+  ```
+- **Windows (PowerShell)**:
+  ```powershell
+  $env:SSH_PASSWORD = '<password>'
+  try {
+    & <python> scripts/ssh_exec.py --host <host> --user <user> '--' <command>
+  } finally {
+    Remove-Item Env:SSH_PASSWORD -ErrorAction SilentlyContinue
+  }
+  ```
+  *(Quote `'--'` in PowerShell so PowerShell passes `--` through to `ssh_exec.py` rather than consuming it as a PowerShell argument separator.)*
 
 - Password goes through the `SSH_PASSWORD` env var, never as a CLI argument - keeps it out of shell history and process listings.
 - The script only trusts hosts already in `~/.ssh/known_hosts`. If the user hasn't connected to this host before, it'll fail with a message telling them to run `ssh user@host` once by hand to accept the host key. Don't work around this by adding host-key auto-accept logic - that's the one guardrail standing between this skill and a silent man-in-the-middle on an unfamiliar network.
